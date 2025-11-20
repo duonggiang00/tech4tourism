@@ -26,7 +26,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CountrySeeder::class,
             ProvinceSeeder::class,
-            DestinationSeeder::class
+            DestinationSeeder::class,
+            CategorySeeder::class,
+            TourSeeder::class,
         ]);
     }
 }

@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Example;
-use App\Http\Requests\StoreExampleRequest;
-use App\Http\Requests\UpdateExampleRequest;
+use App\Models\Tour;
+use App\Http\Requests\StoreTourRequest;
+use App\Http\Requests\UpdateTourRequest;
+use Inertia\Inertia;
 
-class ExampleController extends Controller
+class TourController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -14,6 +15,8 @@ class ExampleController extends Controller
     public function index()
     {
         //
+        $tours = Tour::all();
+        return Inertia::render('Tours/index',compact('tours'));
     }
 
     /**
@@ -27,7 +30,7 @@ class ExampleController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreExampleRequest $request)
+    public function store(StoreTourRequest $request)
     {
         //
     }
@@ -35,7 +38,7 @@ class ExampleController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Example $example)
+    public function show(Tour $tour)
     {
         //
     }
@@ -43,7 +46,7 @@ class ExampleController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Example $example)
+    public function edit(Tour $tour)
     {
         //
     }
@@ -51,7 +54,7 @@ class ExampleController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateExampleRequest $request, Example $example)
+    public function update(UpdateTourRequest $request, Tour $tour)
     {
         //
     }
@@ -59,7 +62,7 @@ class ExampleController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Example $example)
+    public function destroy(Tour $tour)
     {
         //
     }

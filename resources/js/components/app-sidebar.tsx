@@ -11,11 +11,13 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import countries from '@/routes/countries';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, PlaneIcon } from 'lucide-react';
 import AppLogo from './app-logo';
-import countries from '@/routes/countries';
+import categories from '@/routes/categories';
+import tour from '@/routes/tour';
 
 
 const mainNavItems: NavItem[] = [
@@ -29,6 +31,18 @@ const mainNavItems: NavItem[] = [
         href: countries.index(),
         icon: LayoutGrid,
     },
+    {
+        title: 'Categories',
+        href: categories.index(),
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Tour',
+        href: tour.index(),
+        icon: LayoutGrid,
+    },
+   
+  
 ];
 
 const footerNavItems: NavItem[] = [
