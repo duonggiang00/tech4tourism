@@ -11,14 +11,14 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import categories from '@/routes/categories';
 import countries from '@/routes/countries';
+import test from '@/routes/test';
+import tour from '@/routes/tours';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid, PlaneIcon } from 'lucide-react';
 import AppLogo from './app-logo';
-import categories from '@/routes/categories';
-import tour from '@/routes/tour';
-
 
 const mainNavItems: NavItem[] = [
     {
@@ -41,8 +41,11 @@ const mainNavItems: NavItem[] = [
         href: tour.index(),
         icon: LayoutGrid,
     },
-   
-  
+    {
+        title: 'Test',
+        href: test.index(),
+        icon: PlaneIcon,
+    },
 ];
 
 const footerNavItems: NavItem[] = [

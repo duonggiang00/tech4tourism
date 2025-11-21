@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('category_id');
             $table->string('title', 255)->isNotEmpty();
+            $table->integer('status');
             $table->integer('day')->isNotEmpty();
             $table->integer('night')->isNotEmpty();
             $table->string('thumbnail', 255)->nullable();

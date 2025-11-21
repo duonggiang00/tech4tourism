@@ -2,68 +2,83 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Tour;
 use App\Http\Requests\StoreTourRequest;
 use App\Http\Requests\UpdateTourRequest;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class TourController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
         $tours = Tour::all();
-        return Inertia::render('Tours/index',compact('tours'));
+        $categories = Category::all();
+        return Inertia::render('Tours/index', compact('tours', 'categories'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(StoreTourRequest $request)
     {
-        //
+        $data = $request->validated();
+
+        if ($request->hasFile('thumbnail')) {
+            $path = $request->file('thumbnail')->store('tours', 'public');
+            $data['thumbnail'] = $path;
+        }
+
+        $tour = Tour::create($data);
+
+        return redirect()->route('tours.show', $tour)->with('message', 'Tạo tour mới thành công!');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Tour $tour)
     {
-        //
+        $categories = Category::all();
+        return Inertia::render('Tours/detail', compact('tour', 'categories'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Tour $tour)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(UpdateTourRequest $request, Tour $tour)
     {
-        //
+        $data = $request->validated();
+
+        // Kiểm tra xem người dùng có upload ảnh mới không
+        if ($request->hasFile('thumbnail')) {
+
+            // 1. Lấy đường dẫn gốc từ DB (bỏ qua Accessor url đầy đủ)
+            $oldThumbnail = $tour->getRawOriginal('thumbnail');
+
+            // 2. Kiểm tra và xóa ảnh cũ trên đĩa
+            if ($oldThumbnail && Storage::disk('public')->exists($oldThumbnail)) {
+                Storage::disk('public')->delete($oldThumbnail);
+            }
+
+            // 3. Lưu ảnh mới và cập nhật đường dẫn
+            $path = $request->file('thumbnail')->store('tours', 'public');
+            $data['thumbnail'] = $path;
+        } else {
+            // Nếu không có ảnh mới, loại bỏ key thumbnail để không ghi đè null vào DB
+            unset($data['thumbnail']);
+        }
+
+        $tour->update($data);
+
+        return redirect()->back()->with('message', 'Cập nhật tour thành công!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Tour $tour)
     {
-        //
+        // 1. Lấy đường dẫn gốc từ DB
+        $thumbnail = $tour->getRawOriginal('thumbnail');
+
+        // 2. Xóa ảnh vật lý trước
+        if ($thumbnail && Storage::disk('public')->exists($thumbnail)) {
+            Storage::disk('public')->delete($thumbnail);
+        }
+
+        // 3. Xóa record trong DB
+        $tour->delete();
+
+        return redirect()->route('tours.index')->with('message', 'Xóa tour thành công!');
     }
 }

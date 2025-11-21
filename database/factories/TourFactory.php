@@ -24,7 +24,8 @@ class TourFactory extends Factory
         return [
             //
             'category_id' => $categoryId,
-            'title' =>fake()->unique()->sentence(6),
+            'title' =>fake()->unique()->sentence(2),
+            'status'=>fake()->numberBetween(0,2),
             'day'=>fake()->numberBetween(2,10),
             'night'=>fake()->numberBetween(1,9),
             'thumbnail'=>fake()->imageUrl(640,480,'travel',true),

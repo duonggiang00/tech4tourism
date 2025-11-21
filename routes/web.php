@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CountryController;
+use App\Http\Controllers\TestController;
 use App\Http\Controllers\TourController;
+use App\Http\Controllers\TourImagesController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -25,7 +27,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/countries/{country}/update', [CountryController::class, 'update'])->name('countries.update');
     Route::delete('/countries/{country}', [CountryController::class, 'destroy'])->name('countries.destroy');
     Route::resource('categories',CategoryController::class);
-    Route::resource('tour', TourController::class);
+    Route::resource('tours', TourController::class);
+    Route::resource('test', TestController::class);
+    Route::resource('tour-images', TourImagesController::class);
 });
 
 require __DIR__ . '/settings.php';
