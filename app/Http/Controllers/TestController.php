@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Example;
-use App\Http\Requests\StoreExampleRequest;
-use App\Http\Requests\UpdateExampleRequest;
+use App\Models\Test;
+use App\Http\Requests\StoreTestRequest;
+use App\Http\Requests\UpdateTestRequest;
+use Inertia\Inertia;
 
-class ExampleController extends Controller
+class TestController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -14,6 +15,8 @@ class ExampleController extends Controller
     public function index()
     {
         //
+        $tests = Test::all();
+        return Inertia::render('Tests/index', compact('tests'));
     }
 
     /**
@@ -22,12 +25,13 @@ class ExampleController extends Controller
     public function create()
     {
         //
+        return Inertia::render('Tests/create');
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreExampleRequest $request)
+    public function store(StoreTestRequest $request)
     {
         //
     }
@@ -35,7 +39,7 @@ class ExampleController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Example $example)
+    public function show(Test $test)
     {
         //
     }
@@ -43,7 +47,7 @@ class ExampleController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Example $example)
+    public function edit(Test $test)
     {
         //
     }
@@ -51,7 +55,7 @@ class ExampleController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateExampleRequest $request, Example $example)
+    public function update(UpdateTestRequest $request, Test $test)
     {
         //
     }
@@ -59,7 +63,7 @@ class ExampleController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Example $example)
+    public function destroy(Test $test)
     {
         //
     }
