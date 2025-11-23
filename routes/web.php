@@ -11,6 +11,7 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\ServiceTypesController;
 
 // Chỉ Admin mới được vào group này
 Route::middleware(['auth', 'role:1'])->group(function () {
@@ -35,13 +36,13 @@ Route::middleware(['auth', 'role:1'])->group(function () { // role:1 hoặc role
 
     // Quản lý danh sách booking
     Route::get('/admin/bookings', [BookingController::class, 'index'])->name('admin.bookings.index');
-    
+
     // Xem chi tiết booking
     Route::get('/admin/bookings/{booking}', [BookingController::class, 'show'])->name('admin.bookings.show');
-    
+
     // Cập nhật trạng thái booking
     Route::put('/admin/bookings/{booking}', [BookingController::class, 'update'])->name('admin.bookings.update');
-    
+
     // Xóa booking
     Route::delete('/admin/bookings/{booking}', [BookingController::class, 'destroy'])->name('admin.bookings.destroy');
 });
@@ -85,6 +86,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('tours', TourController::class);
     Route::resource('test', TestController::class);
     Route::resource('tour-images', TourImagesController::class);
+    Route::resource('service-types', ServiceTypesController::class);
 });
 
 require __DIR__ . '/settings.php';
