@@ -16,9 +16,10 @@ import countries from '@/routes/countries';
 import test from '@/routes/test';
 import tour from '@/routes/tours';
 import users from '@/routes/users';
+import bookings from '@/routes/admin/bookings';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, PlaneIcon, Users } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, PlaneIcon, Users, Calendar } from 'lucide-react';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
@@ -52,6 +53,8 @@ export function AppSidebar() {
             href: test.index(),
             icon: PlaneIcon,
         },
+
+        
         // Chỉ hiển thị menu Users cho Admin
         ...(isAdmin
             ? [
@@ -59,6 +62,15 @@ export function AppSidebar() {
                       title: 'Quản lý người dùng',
                       href: users.index(),
                       icon: Users,
+                  },
+              ]
+            : []),
+        ...(isAdmin
+            ? [
+                  {
+                      title: 'Quản lý Bookings',
+                      href: bookings.index(),
+                      icon: Calendar,
                   },
               ]
             : []),
