@@ -21,7 +21,10 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
 
     const handleLogout = () => {
         cleanup();
-        router.flushAll();
+        router.post(logout.url(), {}, {
+            preserveState: false,
+            preserveScroll: false,
+        });
     };
 
     return (
@@ -48,16 +51,14 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-                <Link
-                    className="block w-full"
-                    href={logout()}
-                    as="button"
+                <button
+                    className="block w-full text-left"
                     onClick={handleLogout}
                     data-test="logout-button"
                 >
                     <LogOut className="mr-2" />
                     Log out
-                </Link>
+                </button>
             </DropdownMenuItem>
         </>
     );
