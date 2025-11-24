@@ -32,7 +32,9 @@ class DatabaseSeeder extends Seeder
             TourSeeder::class,
             TestSeeder::class,
             TourImageSeeder::class,
-            BookingSeeder::class,
+            TourScheduleSeeder::class,
+            DepartmentSeeder::class,
+            EmployeeSeeder::class,
         ]);
     }
 }
