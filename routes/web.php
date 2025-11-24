@@ -64,8 +64,8 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['jwt.inertia'])->group(function () {
 
     Route::get('/', function () {
-        return Inertia::render('Home'); // Trang chủ đặt tour
-    })->name('home');
+        return Inertia::render('login'); // Trang chủ đặt tour
+    })->name('login');
 
     // Các route quản lý đặt tour ở đây...
 });

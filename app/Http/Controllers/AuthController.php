@@ -68,7 +68,7 @@ class AuthController extends Controller
         // Token sẽ tồn tại 60 phút (tùy chỉnh theo config)
         $cookie = cookie('jwt_token', $token, 60); 
 
-        return redirect()->route('home')->withCookie($cookie);
+        return redirect()->route('dashboard')->withCookie($cookie);
     }
 
     // Đăng xuất
