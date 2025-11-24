@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
         //     ]
         // );
         $this->call([
+            UserSeeder::class,
             CountrySeeder::class,
             ProvinceSeeder::class,
             DestinationSeeder::class,
@@ -31,6 +32,7 @@ class DatabaseSeeder extends Seeder
             TourSeeder::class,
             TestSeeder::class,
             TourImageSeeder::class,
+            BookingSeeder::class,
         ]);
     }
 }

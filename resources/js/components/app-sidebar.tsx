@@ -17,73 +17,54 @@ import test from '@/routes/test';
 import tour from '@/routes/tours';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import {
-    BookOpen,
-    Folder,
-    GamepadIcon,
-    LayoutGrid,
-    Navigation,
-    PlaneIcon,
-} from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, PlaneIcon } from 'lucide-react';
 import AppLogo from './app-logo';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Countries',
-        href: countries.index(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Categories',
-        href: categories.index(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Tour',
-        href: tour.index(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Test',
-        href: test.index(),
-        icon: PlaneIcon,
-    },
-    {
-        title: 'Quản lý địa điểm',
-        href: countries.index(),
-        icon: Navigation,
-    },
-    {
-        title: 'Quản lý tỉnh thành',
-        href: countries.index(),
-        icon: Navigation,
-    },
-    {
-        title: 'Quản lý điểm đến',
-        href: countries.index(),
-        icon: GamepadIcon,
-    },
-];
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
-    },
-];
-
 export function AppSidebar() {
+    const page = usePage<SharedData>();
+    const currentUser = page.props.auth?.user;
+    const isAdmin = currentUser?.role === 1;
+
+    const mainNavItems: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Countries',
+            href: countries.index(),
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Categories',
+            href: categories.index(),
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Tour',
+            href: tour.index(),
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Test',
+            href: test.index(),
+            icon: PlaneIcon,
+        },
+    ];
+
+    const footerNavItems: NavItem[] = [
+        {
+            title: 'Repository',
+            href: 'https://github.com/laravel/react-starter-kit',
+            icon: Folder,
+        },
+        {
+            title: 'Documentation',
+            href: 'https://laravel.com/docs/starter-kits#react',
+            icon: BookOpen,
+        },
+    ];
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>

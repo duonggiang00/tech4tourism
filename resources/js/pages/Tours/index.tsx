@@ -178,7 +178,12 @@ export default function Index() {
                                     {tour.day} ngày {tour.night} đêm
                                 </TableCell>
                                 <TableCell className="font-medium text-green-600">
-                                    ${tour.price_adult}
+                                    {new Intl.NumberFormat('en-US', {
+                                        style: 'currency',
+                                        currency: 'USD',
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    }).format(tour.price_adult)}
                                 </TableCell>
                                 <TableCell>
                                     <Badge

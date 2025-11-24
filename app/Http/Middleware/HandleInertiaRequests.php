@@ -36,6 +36,7 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        // Giữ nguyên phần random quote nếu bạn muốn
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
         return [
@@ -45,10 +46,21 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+
+            // --- SỬA PHẦN NÀY ---
             'flash' => [
+                // Hứng message 'success' từ Controller (dùng cho đăng ký/đăng nhập thành công)
+                'success' => fn() => $request->session()->get('success'),
+
+                // Hứng message 'error' nếu có (dùng cho lỗi logic)
+                'error' => fn() => $request->session()->get('error'),
+
+                // Giữ lại 'message' nếu hệ thống cũ của bạn có dùng
                 'message' => fn() => $request->session()->get('message')
             ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            // --------------------
+
+            'sidebarOpen' => !$request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
 }

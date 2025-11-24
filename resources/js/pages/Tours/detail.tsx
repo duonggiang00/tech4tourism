@@ -226,16 +226,22 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
                                         value={
                                             <div className="flex flex-col gap-1">
                                                 <span>
-                                                    Người lớn: $
-                                                    {Number(
-                                                        tour.price_adult,
-                                                    ).toLocaleString()}
+                                                    Người lớn:{' '}
+                                                    {new Intl.NumberFormat('en-US', {
+                                                        style: 'currency',
+                                                        currency: 'USD',
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                    }).format(tour.price_adult)}
                                                 </span>
                                                 <span>
-                                                    Trẻ em: $
-                                                    {Number(
-                                                        tour.price_children,
-                                                    ).toLocaleString()}
+                                                    Trẻ em:{' '}
+                                                    {new Intl.NumberFormat('en-US', {
+                                                        style: 'currency',
+                                                        currency: 'USD',
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                    }).format(tour.price_children)}
                                                 </span>
                                             </div>
                                         }
