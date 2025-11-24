@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
         //     ]
         // );
         $this->call([
+            UserSeeder::class,
             CountrySeeder::class,
             ProvinceSeeder::class,
             DestinationSeeder::class,

@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/AuthController.php
 
 namespace App\Http\Controllers;
 
@@ -11,12 +10,14 @@ use Inertia\Inertia;
 class AuthController extends Controller
 {
     // Hiển thị form đăng ký
-    public function showRegister() {
+    public function showRegister()
+    {
         return Inertia::render('auth/register');
     }
 
     // Xử lý đăng ký
-    public function register(Request $request) {
+    public function register(Request $request)
+    {
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
@@ -35,12 +36,14 @@ class AuthController extends Controller
     }
 
     // Hiển thị form đăng nhập
-    public function showLogin() {
+    public function showLogin()
+    {
         return Inertia::render('auth/login');
     }
 
     // Xử lý đăng nhập & Tạo JWT Token
-    public function login(Request $request) {
+    public function login(Request $request)
+    {
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
@@ -48,7 +51,7 @@ class AuthController extends Controller
 
         // Kiểm tra user có tồn tại và đang hoạt động không
         $user = User::where('email', $credentials['email'])->first();
-        
+
         if (!$user) {
             return back()->withErrors(['email' => 'Thông tin đăng nhập không chính xác.']);
         }
@@ -58,31 +61,44 @@ class AuthController extends Controller
             return back()->withErrors(['email' => 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.']);
         }
 
-        // Thử đăng nhập và lấy token
-        if (! $token = auth('api')->attempt($credentials)) {
-             // Trả về lỗi cho Inertia hiển thị
+        // Thử đăng nhập và lấy token qua API Guard (JWT)
+        if (!$token = auth('api')->attempt($credentials)) {
+            // Trả về lỗi cho Inertia hiển thị
             return back()->withErrors(['email' => 'Thông tin đăng nhập không chính xác.']);
+        }
+
+        // FIX: Lấy đối tượng User đã được xác thực
+        $authenticatedUser = auth('api')->user();
+
+        // FIX: Đăng nhập thủ công User đó vào Session Guard (guard mặc định 'web')
+        if ($authenticatedUser) {
+            Auth::login($authenticatedUser);
+        } else {
+            // Lỗi bất ngờ: không có user sau khi attempt thành công
+            return back()->withErrors(['email' => 'Lỗi hệ thống khi thiết lập phiên.']);
         }
 
         // --- MẤU CHỐT: Lưu JWT vào Cookie ---
         // Token sẽ tồn tại 60 phút (tùy chỉnh theo config)
-        $cookie = cookie('jwt_token', $token, 60); 
+        $cookie = cookie('jwt_token', $token, 60);
 
-        return redirect()->route('home')->withCookie($cookie);
+        // Chuyển hướng đến dashboard (bây giờ sẽ thành công vì Session đã được thiết lập)
+        return redirect()->route('dashboard')->withCookie($cookie);
     }
 
     // Đăng xuất
-    public function logout(Request $request) {
-        // Đăng xuất khỏi session nếu có
+    public function logout(Request $request)
+    {
+        // Đăng xuất khỏi session 
         Auth::logout();
-        
+
         // Xóa cookie JWT token
         $cookie = cookie()->forget('jwt_token');
-        
+
         // Invalidate session
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        
+
         return redirect()->route('login')->withCookie($cookie);
     }
 }

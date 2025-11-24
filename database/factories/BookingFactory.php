@@ -37,7 +37,7 @@ class BookingFactory extends Factory
         
         return [
             'code' => 'BK-' . strtoupper(Str::random(6)),
-            'id_tour_instance' => $tour->id,
+            'tour_id' => $tour->id,
             'date_start' => $dateStart,
             'date_end' => $dateEnd,
             'client_name' => fake()->name(),
