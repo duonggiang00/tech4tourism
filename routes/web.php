@@ -10,7 +10,6 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\EmployeesController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\TourController;
-
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
