@@ -17,7 +17,14 @@ import test from '@/routes/test';
 import tour from '@/routes/tours';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, PlaneIcon } from 'lucide-react';
+import {
+    BookOpen,
+    Folder,
+    GamepadIcon,
+    LayoutGrid,
+    Navigation,
+    PlaneIcon,
+} from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -45,6 +52,21 @@ const mainNavItems: NavItem[] = [
         title: 'Test',
         href: test.index(),
         icon: PlaneIcon,
+    },
+    {
+        title: 'Quản lý địa điểm',
+        href: countries.index(),
+        icon: Navigation,
+    },
+    {
+        title: 'Quản lý tỉnh thành',
+        href: countries.index(),
+        icon: Navigation,
+    },
+    {
+        title: 'Quản lý điểm đến',
+        href: countries.index(),
+        icon: GamepadIcon,
     },
 ];
 

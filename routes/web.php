@@ -5,6 +5,7 @@ use App\Http\Controllers\CountryController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\TourImagesController;
+use App\Http\Controllers\ProvincesController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -30,6 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('tours', TourController::class);
     Route::resource('test', TestController::class);
     Route::resource('tour-images', TourImagesController::class);
+    Route::resource('provinces', ProvincesController::class);
 });
 
 require __DIR__ . '/settings.php';
