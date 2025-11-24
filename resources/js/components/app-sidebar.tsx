@@ -22,6 +22,49 @@ import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid, PlaneIcon, Users, Calendar } from 'lucide-react';
 import AppLogo from './app-logo';
 
+
+const mainNavItems: NavItem[] = [
+    {
+        title: 'Dashboard',
+        href: dashboard(),
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Countries',
+        href: countries.index(),
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Categories',
+        href: categories.index(),
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Tour',
+        href: tour.index(),
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Test',
+        href: test.index(),
+        icon: PlaneIcon,
+    },
+   
+];
+
+const footerNavItems: NavItem[] = [
+    {
+        title: 'Repository',
+        href: 'https://github.com/laravel/react-starter-kit',
+        icon: Folder,
+    },
+    {
+        title: 'Documentation',
+        href: 'https://laravel.com/docs/starter-kits#react',
+        icon: BookOpen,
+    },
+];
+
 export function AppSidebar() {
     const page = usePage<SharedData>();
     const currentUser = page.props.auth?.user;

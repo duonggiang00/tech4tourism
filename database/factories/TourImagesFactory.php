@@ -16,16 +16,15 @@ class TourImagesFactory extends Factory
      *
      * @return array<string, mixed>
      */
-
     protected $model = TourImages::class;
     public function definition(): array
     {
         $tourId = Tour::inRandomOrder()->first()->id;
         return [
             //
-            'tour_id'=>$tourId,
-            'img_url'=>fake()->imageUrl(640,480,'travel',true),
-            'alt'=>fake()->sentence(3),
+            'tour_id' => $tourId,
+            'img_url' => fake()->imageUrl(640,480,'travel',true),
+            'alt'=>fake()->sentence(2),
             'order'=>fake()->numberBetween(1,10)
         ];
     }

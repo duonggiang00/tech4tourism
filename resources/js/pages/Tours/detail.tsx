@@ -15,18 +15,21 @@ import AppLayout from '@/layouts/app-layout';
 import tourUrl from '@/routes/tours'; // SỬA: Dùng route tour (số ít)
 import { BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
+import axios from 'axios';
 import {
     ArrowLeft,
-    Calendar,
     Clock,
     DollarSign,
+    MapIcon,
     MapPin,
     Pencil,
+    Plus,
     Trash2,
     Users,
 } from 'lucide-react';
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { TourFormDialog } from './dialog';
+import { TourImageDialog } from './tourImage';
 
 interface Category {
     id: number;
@@ -53,14 +56,66 @@ interface Tour {
     capacity?: number;
 }
 
+interface TourImage {
+    id: number;
+    tour_id: number;
+    img_url: string;
+    alt: string;
+    order: number;
+}
+
 interface TourDetailProps {
     tour: Tour;
     categories: Category[];
 }
 
+interface TourSchedule {
+    id: number;
+    tour_id: number;
+    name: string;
+    description: string;
+    date: number;
+    breakfast: boolean;
+    lunch: boolean;
+    dinner: boolean;
+}
+
 export default function TourDetail({ tour, categories }: TourDetailProps) {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+    const [galleryImages, setGalleryImages] = useState<TourImage[]>([]);
+    const [addImageOpen, setAddImageOpen] = useState(false);
+    const fetchImages = () => {
+        if (tour.id) {
+            axios
+                .get(`/tours/${tour.id}/images`)
+                .then((response) => {
+                    setGalleryImages(response.data);
+                })
+                .catch((error) => {
+                    console.error('Failed to fetch tour images:', error);
+                });
+        }
+    };
+    const [schedules, setSchedules] = useState<TourSchedule[]>([]);
+
+    useEffect(() => {
+        if (tour.id) {
+            fetchImages();
+            axios
+                .get(`/tours/${tour.id}/schedules`)
+                .then((response) => {
+                    const sortedSchedules = response.data.sort(
+                        (a: TourSchedule, b: TourSchedule) => a.date - b.date,
+                    );
+                    setSchedules(sortedSchedules);
+                })
+                .catch((error) =>
+                    console.error('Failed to fetch schedules:', error),
+                );
+        }
+    }, [tour.id]);
 
     const breadcrumbs: BreadcrumbItem[] = useMemo(
         () => [
@@ -178,19 +233,72 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
                         <div className="space-y-6 lg:col-span-2">
                             <Card className="overflow-hidden">
                                 <CardContent className="p-0">
+                                    {/* Ảnh Thumbnail Chính */}
                                     <img
                                         src={
                                             tour.thumbnail ||
                                             'https://placehold.co/600x400?text=No+Image'
                                         }
                                         alt={tour.title}
-                                        className="h-64 w-full rounded-lg object-cover"
+                                        className="block h-auto w-full"
                                     />
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardContent>
-                                    <div className="">
+
+                                    {/* 5. Phần hiển thị Gallery Ảnh Phụ */}
+                                    <div className="border-t bg-gray-50 p-4">
+                                        {/* 3. Tiêu đề và nút thêm ảnh */}
+                                        <div className="mb-3 flex items-center justify-between">
+                                            <h4 className="text-sm font-semibold text-gray-700">
+                                                Thư viện ảnh
+                                            </h4>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-8 gap-1 text-xs"
+                                                onClick={() =>
+                                                    setAddImageOpen(true)
+                                                }
+                                            >
+                                                <Plus className="h-3.5 w-3.5" />
+                                                Thêm ảnh
+                                            </Button>
+                                        </div>
+
+                                        {galleryImages.length > 0 ? (
+                                            <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+                                                {galleryImages.map(
+                                                    (img, index) => (
+                                                        <div
+                                                            key={
+                                                                img.id || index
+                                                            }
+                                                            className="group aspect-square cursor-pointer overflow-hidden rounded-md border border-gray-200"
+                                                        >
+                                                            <img
+                                                                src={
+                                                                    img.img_url.startsWith(
+                                                                        'http',
+                                                                    )
+                                                                        ? img.img_url
+                                                                        : `/storage/${img.img_url}`
+                                                                }
+                                                                alt={
+                                                                    img.alt ||
+                                                                    `Gallery ${index}`
+                                                                }
+                                                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                                            />
+                                                        </div>
+                                                    ),
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="py-4 text-center text-sm text-gray-500">
+                                                Chưa có ảnh phụ nào.
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="p-6">
                                         <h3 className="mb-3 text-xl font-semibold text-gray-900">
                                             Mô tả chi tiết
                                         </h3>
@@ -198,14 +306,6 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
                                             {tour.description}
                                         </p>
                                     </div>
-                                </CardContent>
-                                <CardContent>
-                                    <h3 className="mb-3 text-xl font-semibold text-gray-900">
-                                        Mô tả ngắn
-                                    </h3>
-                                    <p className="leading-relaxed whitespace-pre-line text-gray-600">
-                                        {tour.short_description}
-                                    </p>
                                 </CardContent>
                             </Card>
                         </div>
@@ -278,25 +378,66 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
 
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Lịch trình</CardTitle>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <MapIcon className="h-5 w-5 text-blue-600" />
+                                        Lịch trình chi tiết
+                                    </CardTitle>
                                 </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <InfoItem
-                                        icon={
-                                            <Calendar className="h-5 w-5 text-blue-600" />
-                                        }
-                                        bg="bg-blue-50"
-                                        label="Ngày bắt đầu"
-                                        value={formatDate(tour.start_date)}
-                                    />
-                                    <InfoItem
-                                        icon={
-                                            <Calendar className="h-5 w-5 text-orange-600" />
-                                        }
-                                        bg="bg-orange-50"
-                                        label="Ngày kết thúc"
-                                        value={formatDate(tour.end_date)}
-                                    />
+                                <CardContent>
+                                    {schedules.length > 0 ? (
+                                        <div className="relative ml-3 space-y-8 border-l-2 border-blue-100 py-2">
+                                            {schedules.map(
+                                                (schedule, index) => (
+                                                    <div
+                                                        key={schedule.id}
+                                                        className="relative pl-8"
+                                                    >
+                                                        {/* Dấu chấm tròn trên dòng kẻ */}
+                                                        <div className="absolute top-1 -left-[9px] h-4 w-4 rounded-full border-2 border-white bg-blue-600 shadow-sm"></div>
+
+                                                        <h4 className="mb-1 text-lg font-semibold text-gray-900">
+                                                            Ngày {schedule.date}
+                                                            : {schedule.name}
+                                                        </h4>
+                                                        <p className="leading-relaxed whitespace-pre-line text-gray-600">
+                                                            {
+                                                                schedule.description
+                                                            }
+                                                        </p>
+                                                        <div className="mt-2 flex gap-3 text-sm text-gray-500">
+                                                            <h4>Bữa ăn: </h4>
+                                                            {schedule.breakfast ? (
+                                                                <span className="flex items-center gap-1">
+                                                                    ☕ Sáng
+                                                                </span>
+                                                            ) : (
+                                                                ''
+                                                            )}
+                                                            {schedule.lunch ? (
+                                                                <span className="flex items-center gap-1">
+                                                                    🍽️ Trưa
+                                                                </span>
+                                                            ) : (
+                                                                ''
+                                                            )}
+                                                            {schedule.dinner ? (
+                                                                <span className="flex items-center gap-1">
+                                                                    🌙 Tối
+                                                                </span>
+                                                            ) : (
+                                                                ''
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ),
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="py-8 text-center text-gray-500 italic">
+                                            Chưa có lịch trình chi tiết cho tour
+                                            này.
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
                         </div>
@@ -309,6 +450,12 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
                         initialData={tour}
                         title="Chỉnh sửa Tour"
                         categories={categories || []}
+                    />
+
+                    <TourImageDialog
+                        open={addImageOpen}
+                        onOpenChange={setAddImageOpen}
+                        tourId={tour.id}
                     />
 
                     <AlertDialog

@@ -9,11 +9,10 @@ class TourImages extends Model
 {
     /** @use HasFactory<\Database\Factories\TourImagesFactory> */
     use HasFactory;
-
     protected $fillable = [
-        'id_tour',
+        'tour_id',
         'img_url',
         'alt',
-        'order'
+        'order',
     ];
 }

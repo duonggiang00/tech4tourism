@@ -1,10 +1,16 @@
 <?php
 
+
+
+use App\Http\Controllers\Api\TourImagesController;
+use App\Http\Controllers\Api\TourScheduleController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CountryController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\EmployeesController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\TourController;
-use App\Http\Controllers\TourImagesController;
+
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -73,18 +79,14 @@ Route::middleware(['jwt.inertia'])->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
-    })->name('dashboard');
-
-    Route::get('countries', [CountryController::class, 'index'])->name('countries.index');
-    Route::get('/countries/create', [CountryController::class, 'create'])->name('countries.create');
-    Route::post('/countries', [CountryController::class, 'store'])->name('countries.store');
-    Route::get('/countries/{country}/edit', [CountryController::class, 'edit'])->name('countries.edit');
-    Route::put('/countries/{country}/update', [CountryController::class, 'update'])->name('countries.update');
-    Route::delete('/countries/{country}', [CountryController::class, 'destroy'])->name('countries.destroy');
-    Route::resource('categories', CategoryController::class);
+    })->name('dashboard');  
+    Route::resource('countries', CountryController::class);
+    Route::resource('categories',CategoryController::class);
     Route::resource('tours', TourController::class);
     Route::resource('test', TestController::class);
-    Route::resource('tour-images', TourImagesController::class);
+    Route::apiResource('tours/{tour}/images', TourImagesController::class);
+    Route::get('tours/{tour}/schedules', [TourScheduleController::class, 'index']);
+    // Route::apiResource('tour_images', TourImagesController::class);
 });
 
 require __DIR__ . '/settings.php';

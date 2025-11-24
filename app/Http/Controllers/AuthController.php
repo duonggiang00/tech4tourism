@@ -83,7 +83,7 @@ class AuthController extends Controller
         $cookie = cookie('jwt_token', $token, 60);
 
         // Chuyển hướng đến dashboard (bây giờ sẽ thành công vì Session đã được thiết lập)
-        return redirect()->route('dashboard')->withCookie($cookie);
+        return redirect()->route('home')->withCookie($cookie);
     }
 
     // Đăng xuất
