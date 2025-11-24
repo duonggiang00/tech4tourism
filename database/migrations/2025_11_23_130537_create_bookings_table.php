@@ -14,8 +14,7 @@ return new class extends Migration {
         Schema::create('bookings', function (Blueprint $table) {
             $table->id();
             // Liên kết với Tour Template
-            $table->unsignedBigInteger('id_tour_instance');
-            $table->foreign('id_tour_instance')->references('id')->on('tour_templates')->onDelete('cascade');
+            $table->foreignId('tour_id');
 
             $table->string('code')->unique(); // Mã Booking (VD: BK-2024-001)
 

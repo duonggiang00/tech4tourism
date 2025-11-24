@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
@@ -51,6 +52,22 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the model is an admin user with specific credentials.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'name' => 'Admin',
+            'email' => 'admin@mail.com', // Email cụ thể
+            'password' => Hash::make('123456789'), // Mật khẩu cụ thể đã được băm
+            'role' => 1, // Vai trò Admin
+            'two_factor_secret' => null, // Tùy chọn: tắt 2FA cho admin được tạo bởi seeder
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
         ]);
