@@ -14,19 +14,25 @@ import { dashboard } from '@/routes';
 import bookings from '@/routes/admin/bookings';
 import categories from '@/routes/categories';
 import countries from '@/routes/countries';
+import providers from '@/routes/providers';
+import serviceAttributes from '@/routes/service-attributes';
 import serviceTypes from '@/routes/service-types';
+import services from '@/routes/services';
 import test from '@/routes/test';
 import tour from '@/routes/tours';
 import users from '@/routes/users';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import {
+    BananaIcon,
+    BanIcon,
     BookOpen,
     Calendar,
     Folder,
     LayoutGrid,
     ListIcon,
     PlaneIcon,
+    User2Icon,
     Users,
 } from 'lucide-react';
 import AppLogo from './app-logo';
@@ -66,6 +72,21 @@ export function AppSidebar() {
             title: 'Service_Types', //quản lý loại hình dịch vụ
             href: serviceTypes.index(),
             icon: ListIcon,
+        },
+        {
+            title: 'Services', //quản lý dịch vụ
+            href: services.index(),
+            icon: BanIcon,
+        },
+        {
+            title: 'Provider', //quản lý nhà cung cấp
+            href: providers.index(),
+            icon: User2Icon,
+        },
+        {
+            title: 'Service_attributes',
+            href: serviceAttributes.index(),
+            icon: BananaIcon,
         },
 
         // Chỉ hiển thị menu Users cho Admin

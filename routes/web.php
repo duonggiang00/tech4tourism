@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CountryController;
+use App\Http\Controllers\ServiceAttributesController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\TourImagesController;
@@ -11,6 +12,8 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\ProvidersController;
+use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\ServiceTypesController;
 
 // Chỉ Admin mới được vào group này
@@ -87,6 +90,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('test', TestController::class);
     Route::resource('tour-images', TourImagesController::class);
     Route::resource('service-types', ServiceTypesController::class);
+    Route::resource('services', ServicesController::class);
+    Route::resource('providers', ProvidersController::class);
+    Route::resource('service-attributes', ServiceAttributesController::class);
 });
 
 require __DIR__ . '/settings.php';
