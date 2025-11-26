@@ -84,7 +84,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('tours', TourController::class);
     Route::resource('test', TestController::class);
     Route::apiResource('tours/{tour}/images', TourImagesController::class);
-    Route::get('tours/{tour}/schedules', [TourScheduleController::class, 'index']);
+    Route::apiResource('tours/{tour}/schedules', TourScheduleController::class);
     // Route::apiResource('tour_images', TourImagesController::class);
 });
 

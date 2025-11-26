@@ -11,7 +11,7 @@ class UpdateTourScheduleRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,12 @@ class UpdateTourScheduleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => 'sometimes|required|string|max:200',
+            'description' => 'nullable|string',
+            'date' => 'sometimes|required|integer|min:1',
+            'breakfast' => 'boolean',
+            'lunch' => 'boolean',
+            'dinner' => 'boolean',
         ];
     }
 }

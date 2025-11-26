@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTourImagesRequest;
+use App\Models\Tour;
 use App\Models\TourImages;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class TourImagesController extends Controller
 {
@@ -68,8 +70,32 @@ class TourImagesController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(TourImages $tourImages)
+    public function destroy(Tour $tour, TourImages $image)
     {
-        //
+        // 1. (Tuỳ chọn) Kiểm tra xem ảnh này có thuộc về Tour đó không để bảo mật
+        if ($image->tour_id !== $tour->id) {
+            return response()->json(['message' => 'Ảnh không thuộc về tour này.'], 403);
+        }
+
+        try {
+            // 2. Xóa file ảnh vật lý trong thư mục storage (nếu tồn tại)
+            // Giả sử bạn lưu trong disk 'public' và đường dẫn trong DB là 'tours/filename.jpg'
+            if ($image->img_url && Storage::disk('public')->exists($image->img_url)) {
+                Storage::disk('public')->delete($image->img_url);
+            }
+
+            // 3. Xóa bản ghi trong database
+            $image->delete();
+
+            return response()->json([
+                'message' => 'Xóa ảnh thành công'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Lỗi khi xóa ảnh',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

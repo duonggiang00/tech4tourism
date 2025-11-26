@@ -1,3 +1,4 @@
+import { Category, Tour } from '@/app';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -20,24 +21,7 @@ import { useForm } from '@inertiajs/react';
 import { UploadCloud, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-interface Tour {
-    id: number;
-    category_id: number;
-    title: string;
-    status: number;
-    day: number;
-    night: number;
-    thumbnail: string;
-    description: string;
-    short_description: string;
-    price_adult: number;
-    price_children: number;
-}
 
-interface Category {
-    id: number;
-    title: string;
-}
 
 type TourFormData = Omit<
     Tour,
