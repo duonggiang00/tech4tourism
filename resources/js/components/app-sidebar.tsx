@@ -14,6 +14,7 @@ import { dashboard } from '@/routes';
 import bookings from '@/routes/admin/bookings';
 import categories from '@/routes/categories';
 import countries from '@/routes/countries';
+import destinationUrl from '@/routes/destination';
 import provinceUrl from '@/routes/province';
 import test from '@/routes/test';
 import tour from '@/routes/tours';
@@ -26,6 +27,7 @@ import {
     ChartBarIcon,
     Folder,
     LayoutGrid,
+    LoaderCircle,
     LocateIcon,
     PlaneIcon,
     Users,
@@ -64,9 +66,14 @@ export function AppSidebar() {
             icon: ChartBarIcon,
         },
         {
-            title: 'Quản lý Tỉnh thành',
+            title: 'Quản lý tỉnh thành',
             href: provinceUrl.index(),
             icon: LocateIcon,
+        },
+        {
+            title: 'Quản lý điểm đến',
+            href: destinationUrl.index(),
+            icon: LoaderCircle,
         },
 
         // Chỉ hiển thị menu Users cho Admin

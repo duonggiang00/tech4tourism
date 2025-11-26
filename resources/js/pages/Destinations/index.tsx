@@ -9,7 +9,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
-import { default as provinceUrl } from '@/routes/province';
+import destinationUrl from '@/routes/destination';
 import { BreadcrumbItem } from '@/types';
 
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
@@ -17,15 +17,17 @@ import { CircleCheck } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Tỉnh thành',
-        href: provinceUrl.index().url,
+        title: 'Điểm đến',
+        href: destinationUrl.index().url,
     },
 ];
 
-interface Province {
+interface Destination {
     id: number;
     name: string;
-    country_id: string;
+    province_id: string;
+    address: string;
+    status: string;
     description: string;
 }
 
@@ -33,15 +35,15 @@ interface PageProps {
     flash: {
         message?: string;
     };
-    provinces: Province[];
+    destinations: Destination[];
 }
 
 export default function Index() {
-    const { provinces, flash } = usePage().props as PageProps;
+    const { destinations, flash } = usePage().props as PageProps;
     const { processing, delete: destroy } = useForm();
     const handleDelete = (id: number, name: string) => {
         if (confirm(`Bạn có chắc muốn xóa tỉnh thành ${name} id: ${id} ?`)) {
-            destroy(provinceUrl.destroy(id).url);
+            destroy(destinationUrl.destroy(id).url);
         }
     };
     return (
@@ -59,32 +61,38 @@ export default function Index() {
                 </div>
             </div>
             <div className="m-4">
-                <Link href={provinceUrl.create()}>
+                <Link href={destinationUrl.create()}>
                     <Button className="cursor-pointer">
-                        Thêm tỉnh thành mới
+                        Thêm điểm đến mới
                     </Button>
                 </Link>
             </div>
-            {provinces.length > 0 && (
+            {destinations.length > 0 && (
                 <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead>STT</TableHead>
-                            <TableHead>Tên Tỉnh</TableHead>
-                            <TableHead>Quốc gia</TableHead>
+                            <TableHead>Tên địa điểm</TableHead>
+                            <TableHead>Tỉnh thành</TableHead>
+                            <TableHead>Địa chỉ</TableHead>
+                            <TableHead>Trạng thái</TableHead>
                             <TableHead>Mô tả</TableHead>
                             <TableHead>Hành Động</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {provinces.map((pro) => (
+                        {destinations.map((des) => (
                             <TableRow>
-                                <TableCell>{pro.id}</TableCell>
-                                <TableCell>{pro.name}</TableCell>
-                                <TableCell>{pro.country_id}</TableCell>
-                                <TableCell>{pro.description}</TableCell>
+                                <TableCell>{des.id}</TableCell>
+                                <TableCell>{des.name}</TableCell>
+                                <TableCell>{des.province_id}</TableCell>
+                                <TableCell>{des.address}</TableCell>
+                                <TableCell>{des.status}</TableCell>
+                                <TableCell>{des.description}</TableCell>
                                 <TableCell className="space-x-7 text-center">
-                                    <Link href={provinceUrl.edit(pro.id).url}>
+                                    <Link
+                                        href={destinationUrl.edit(des.id).url}
+                                    >
                                         <Button className="bg-amber-500 hover:bg-amber-700">
                                             Edit
                                         </Button>
@@ -92,7 +100,7 @@ export default function Index() {
                                     <Button
                                         disabled={processing}
                                         onClick={() =>
-                                            handleDelete(pro.id, pro.name)
+                                            handleDelete(des.id, des.name)
                                         }
                                         className="bg-red-500 hover:bg-red-700"
                                     >

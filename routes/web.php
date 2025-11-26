@@ -3,6 +3,7 @@
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\ProvinceController;
+use App\Http\Controllers\DestinationController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\TourImagesController;
@@ -88,6 +89,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('tour-images', TourImagesController::class);
     Route::resource("countries", CountryController::class);
     Route::resource("province", ProvinceController::class);
+    Route::resource("destination", DestinationController::class);
 });
 
 require __DIR__ . '/settings.php';
