@@ -29,7 +29,7 @@ interface Country {
     description: string;
 }
 
-interface PageProps {
+interface PropsPage {
     flash: {
         message?: string;
     };
@@ -37,7 +37,7 @@ interface PageProps {
 }
 
 export default function Index() {
-    const { countries, flash } = usePage().props as PageProps;
+    const { countries, flash } = usePage<any>().props;
     const { processing, delete: destroy } = useForm();
     const handleDelete = (id: number, name: string) => {
         if (confirm(`Bạn có chắc muốn xóa quốc gia ${name} id: ${id} ?`)) {
@@ -53,9 +53,7 @@ export default function Index() {
                         <Alert variant="default">
                             <CircleCheck />
                             <AlertTitle>Thông báo!</AlertTitle>
-                            <AlertDescription>
-                               {flash.message}
-                            </AlertDescription>
+                            <AlertDescription>{flash.message}</AlertDescription>
                         </Alert>
                     )}
                 </div>
@@ -77,7 +75,7 @@ export default function Index() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {countries.map((country) => (
+                        {countries.map((country: any) => (
                             <TableRow>
                                 <TableCell>{country.id}</TableCell>
                                 <TableCell>{country.name}</TableCell>
