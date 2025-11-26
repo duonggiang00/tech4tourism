@@ -23,7 +23,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Create() {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
-        countryId: '',
+        country_id: '',
         description: '',
     });
 
@@ -67,16 +67,16 @@ export default function Create() {
                         <Label htmlFor="province_countryId">Tên Quốc gia</Label>
                         <Input
                             placeholder="Nhập tên quốc gia"
-                            value={data.countryId}
+                            value={data.country_id}
                             onChange={(e) =>
-                                setData('countryId', e.target.value)
+                                setData('country_id', e.target.value)
                             }
                         ></Input>
                     </div>
                     <div className="gap-1.5">
                         <Label htmlFor="province_description">Mô tả</Label>
                         <Textarea
-                            placeholder="Country Description"
+                            placeholder="Nhập mổ tả"
                             value={data.description}
                             onChange={(e) =>
                                 setData('description', e.target.value)

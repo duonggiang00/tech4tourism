@@ -34,7 +34,14 @@ class ProvinceController extends Controller
     public function store(StoreProvinceRequest $request)
     {
         //
-        
+        $request->validate([
+            "name" => "required|string|max:255",
+            "country_id"=> "required|string",
+            "description" => "required|string",
+        ]);
+
+        Province::create($request->all());
+        return redirect()->route("province.index")->with("message", "Thêm tỉnh thành mới thành công");
     }
 
     /**
@@ -43,7 +50,7 @@ class ProvinceController extends Controller
     public function show(Province $province)
     {
         //
-        
+  
     }
 
     /**
@@ -61,6 +68,19 @@ class ProvinceController extends Controller
     public function update(UpdateProvinceRequest $request, Province $province)
     {
         //
+        $request->validate([
+            "name" => "required|string|max:255",
+            "country_id"=> "required|string",
+            "description" => "required|string",
+        ]);
+
+        $province->update([
+            'name' => $request->input("name"),
+            'country_id' => $request->input("country_id"),
+            'description' => $request->input("description"),
+        ]);
+
+        return redirect()->route("province.index")->with("message", "Sửa tỉnh thành, thành công!");
     }
 
     /**
@@ -70,6 +90,6 @@ class ProvinceController extends Controller
     {
         //
         $province->delete();
-        return redirect()->route("Province.index")->whit("message","Xoá tỉnh thành thành công");
+        return redirect()->route("province.index")->with("message","Xoá tỉnh thành thành công");
     }
 }

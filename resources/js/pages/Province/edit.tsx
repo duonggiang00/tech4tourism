@@ -14,7 +14,7 @@ import { useMemo } from 'react';
 interface Province {
     id: number;
     name: string;
-    countryId: string;
+    country_id: string;
     description: string;
 }
 
@@ -40,7 +40,7 @@ export default function Edit({ province }: Props) {
 
     const { data, setData, put, processing, errors } = useForm({
         name: province.name,
-        countryId: province.countryId,
+        country_id: province.country_id,
         description: province.description,
     });
 
@@ -84,9 +84,9 @@ export default function Edit({ province }: Props) {
                         <Label htmlFor="province_countryId">Tên Quốc gia</Label>
                         <Input
                             placeholder="Nhập tên Quốc gia"
-                            value={data.countryId}
+                            value={data.country_id}
                             onChange={(e) =>
-                                setData('countryId', e.target.value)
+                                setData('country_id', e.target.value)
                             }
                         ></Input>
                     </div>
