@@ -51,7 +51,6 @@ class AuthController extends Controller
 
         // Kiểm tra user có tồn tại và đang hoạt động không
         $user = User::where('email', $credentials['email'])->first();
-
         if (!$user) {
             return back()->withErrors(['email' => 'Thông tin đăng nhập không chính xác.']);
         }

@@ -1,0 +1,14 @@
+[33mf0fca96[m[33m ([m[1;36mHEAD[m[33m)[m HEAD@{0}: checkout: moving from Hieu to f0fca96
+[33mbde2497[m[33m ([m[1;31morigin/Hieu[m[33m, [m[1;32mHieu[m[33m)[m HEAD@{1}: reset: moving to HEAD
+[33mbde2497[m[33m ([m[1;31morigin/Hieu[m[33m, [m[1;32mHieu[m[33m)[m HEAD@{2}: reset: moving to HEAD
+[33mbde2497[m[33m ([m[1;31morigin/Hieu[m[33m, [m[1;32mHieu[m[33m)[m HEAD@{3}: reset: moving to HEAD
+[33mbde2497[m[33m ([m[1;31morigin/Hieu[m[33m, [m[1;32mHieu[m[33m)[m HEAD@{4}: rebase (abort): returning to refs/heads/Hieu
+[33m0451080[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{5}: rebase (start): checkout origin/main
+[33mbde2497[m[33m ([m[1;31morigin/Hieu[m[33m, [m[1;32mHieu[m[33m)[m HEAD@{6}: rebase (abort): returning to refs/heads/Hieu
+[33m0451080[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{7}: rebase (start): checkout origin/main
+[33mbde2497[m[33m ([m[1;31morigin/Hieu[m[33m, [m[1;32mHieu[m[33m)[m HEAD@{8}: reset: moving to HEAD
+[33mbde2497[m[33m ([m[1;31morigin/Hieu[m[33m, [m[1;32mHieu[m[33m)[m HEAD@{9}: reset: moving to HEAD
+[33mbde2497[m[33m ([m[1;31morigin/Hieu[m[33m, [m[1;32mHieu[m[33m)[m HEAD@{10}: reset: moving to HEAD
+[33mbde2497[m[33m ([m[1;31morigin/Hieu[m[33m, [m[1;32mHieu[m[33m)[m HEAD@{11}: checkout: moving from Hieu to Hieu
+[33mbde2497[m[33m ([m[1;31morigin/Hieu[m[33m, [m[1;32mHieu[m[33m)[m HEAD@{12}: commit: crud service types
+[33mf0fca96[m[33m ([m[1;36mHEAD[m[33m)[m HEAD@{13}: commit (initial): merger tuan
