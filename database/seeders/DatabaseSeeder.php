@@ -2,6 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\Providers;
+use App\Models\ServiceAttributes;
+use App\Models\Services;
+use App\Models\ServiceTypes;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -32,9 +36,11 @@ class DatabaseSeeder extends Seeder
             TourSeeder::class,
             TestSeeder::class,
             TourImageSeeder::class,
-            TourScheduleSeeder::class,
-            DepartmentSeeder::class,
-            EmployeeSeeder::class,
+            BookingSeeder::class,
+            ServiceTypesSeeder::class,
+            ProvidersSeeder::class,
+            ServicesSeeder::class,
+            ServiceAttributesSeeder::class,
         ]);
     }
 }

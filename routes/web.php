@@ -6,8 +6,6 @@ use App\Http\Controllers\Api\TourImagesController;
 use App\Http\Controllers\Api\TourScheduleController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CountryController;
-use App\Http\Controllers\DepartmentController;
-use App\Http\Controllers\EmployeesController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\TourController;
 
@@ -17,6 +15,10 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\ProvidersController;
+use App\Http\Controllers\ServiceAttributesController;
+use App\Http\Controllers\ServicesController;
+use App\Http\Controllers\ServiceTypesController;
 
 // Chỉ Admin mới được vào group này
 Route::middleware(['auth', 'role:1'])->group(function () {
@@ -86,6 +88,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('test', TestController::class);
     Route::apiResource('tours/{tour}/images', TourImagesController::class);
     Route::apiResource('tours/{tour}/schedules', TourScheduleController::class);
+    Route::resource('service-types', ServiceTypesController::class);
+    Route::resource('services', ServicesController::class);
+    Route::resource('providers', ProvidersController::class);
+    Route::resource('service-attributes', ServiceAttributesController::class);
     // Route::apiResource('tour_images', TourImagesController::class);
 });
 

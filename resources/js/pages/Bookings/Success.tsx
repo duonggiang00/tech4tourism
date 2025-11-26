@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CircleCheck, Home, CheckCircle2 } from 'lucide-react';
 import booking from '@/routes/booking';
-import home from '@/routes';
+// import home from '@/routes';
 
 interface Props {
     code: string;

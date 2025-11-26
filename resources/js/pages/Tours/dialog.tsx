@@ -22,7 +22,6 @@ import { UploadCloud, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 
-
 type TourFormData = Omit<
     Tour,
     | 'id'
