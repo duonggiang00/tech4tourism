@@ -11,7 +11,7 @@ class StoreTourScheduleRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,13 @@ class StoreTourScheduleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+          
+            'name' => 'required|string|max:200',
+            'description' => 'nullable|string',
+            'date' => 'required|integer|min:1',
+            'breakfast' => 'boolean',
+            'lunch' => 'boolean',
+            'dinner' => 'boolean',
         ];
     }
 }

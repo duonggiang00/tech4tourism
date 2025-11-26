@@ -1,3 +1,4 @@
+import { Category, Tour, TourImage, TourSchedule } from '@/app';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -12,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
-import tourUrl from '@/routes/tours'; // SỬA: Dùng route tour (số ít)
+import tourUrl from '@/routes/tours';
 import { BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import axios from 'axios';
@@ -26,103 +27,106 @@ import {
     Plus,
     Trash2,
     Users,
+    X,
 } from 'lucide-react';
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { TourFormDialog } from './dialog';
 import { TourImageDialog } from './tourImage';
-
-interface Category {
-    id: number;
-    title: string;
-}
-
-interface Tour {
-    id: number;
-    category_id: number;
-    title: string;
-    status: number;
-    day: number;
-    night: number;
-    thumbnail: string;
-    description: string;
-    short_description: string;
-    price_adult: number;
-    price_children: number;
-    highlights?: string[] | null;
-    included?: string[] | null;
-    start_date?: string;
-    end_date?: string;
-    destination?: string;
-    capacity?: number;
-}
-
-interface TourImage {
-    id: number;
-    tour_id: number;
-    img_url: string;
-    alt: string;
-    order: number;
-}
+import { FormTourScheduleDialog } from './tourSchedule';
 
 interface TourDetailProps {
     tour: Tour;
     categories: Category[];
 }
 
-interface TourSchedule {
-    id: number;
-    tour_id: number;
-    name: string;
-    description: string;
-    date: number;
-    breakfast: boolean;
-    lunch: boolean;
-    dinner: boolean;
-}
-
 export default function TourDetail({ tour, categories }: TourDetailProps) {
+    // --- State: Dialogs Visibility ---
     const [editDialogOpen, setEditDialogOpen] = useState(false);
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-    const [galleryImages, setGalleryImages] = useState<TourImage[]>([]);
+    const [deleteTourDialogOpen, setDeleteTourDialogOpen] = useState(false);
     const [addImageOpen, setAddImageOpen] = useState(false);
-    const fetchImages = () => {
-        if (tour.id) {
-            axios
-                .get(`/tours/${tour.id}/images`)
-                .then((response) => {
-                    setGalleryImages(response.data);
-                })
-                .catch((error) => {
-                    console.error('Failed to fetch tour images:', error);
-                });
-        }
-    };
+    const [addScheduleOpen, setAddScheduleOpen] = useState(false);
+
+    // --- State: Data ---
+    const [galleryImages, setGalleryImages] = useState<TourImage[]>([]);
     const [schedules, setSchedules] = useState<TourSchedule[]>([]);
+
+    // --- State: Selection for Actions ---
+    const [editSchedule, setEditSchedule] = useState<TourSchedule | null>(null);
+    const [deleteSchedule, setDeleteSchedule] = useState<TourSchedule | null>(
+        null,
+    );
+    const [deleteImageId, setDeleteImageId] = useState<number | null>(null); // New: State để xóa ảnh bằng Dialog
+
+    const currentCategory = categories.find((c) => c.id === tour.category_id);
+
+    // --- Fetch Data ---
+    const fetchImages = () => {
+        if (!tour.id) return;
+        axios
+            .get(`/tours/${tour.id}/images`)
+            .then((response) => setGalleryImages(response.data))
+            .catch((error) =>
+                console.error('Failed to fetch tour images:', error),
+            );
+    };
+
+    const fetchSchedules = () => {
+        if (!tour.id) return;
+        axios
+            .get(`/tours/${tour.id}/schedules`)
+            .then((response) => setSchedules(response.data))
+            .catch((error) =>
+                console.error('Failed to fetch schedules:', error),
+            );
+    };
 
     useEffect(() => {
         if (tour.id) {
             fetchImages();
-            axios
-                .get(`/tours/${tour.id}/schedules`)
-                .then((response) => {
-                    const sortedSchedules = response.data.sort(
-                        (a: TourSchedule, b: TourSchedule) => a.date - b.date,
-                    );
-                    setSchedules(sortedSchedules);
-                })
-                .catch((error) =>
-                    console.error('Failed to fetch schedules:', error),
-                );
+            fetchSchedules();
         }
     }, [tour.id]);
 
+    // --- Handlers ---
+    const onConfirmDeleteImage = () => {
+        if (!deleteImageId) return;
+        axios
+            .delete(`/tours/${tour.id}/images/${deleteImageId}`)
+            .then(() => {
+                setGalleryImages((prev) =>
+                    prev.filter((img) => img.id !== deleteImageId),
+                );
+                setDeleteImageId(null);
+            })
+            .catch((error) => {
+                console.error(error);
+                alert('Xóa ảnh thất bại!'); // Có thể thay bằng Toast notification
+                setDeleteImageId(null);
+            });
+    };
+
+    const onConfirmDeleteSchedule = () => {
+        if (!deleteSchedule) return;
+        axios
+            .delete(`/tours/${tour.id}/schedules/${deleteSchedule.id}`)
+            .then(() => {
+                setSchedules((prev) =>
+                    prev.filter((s) => s.id !== deleteSchedule.id),
+                );
+                setDeleteSchedule(null);
+            })
+            .catch(() => alert('Xoá lịch trình thất bại'));
+    };
+
+    const onConfirmDeleteTour = () => {
+        router.delete(tourUrl.destroy(tour.id).url);
+        setDeleteTourDialogOpen(false);
+    };
+
+    // --- Utilities ---
     const breadcrumbs: BreadcrumbItem[] = useMemo(
         () => [
-            {
-                title: 'Danh Sách Tour',
-                href: tourUrl.index().url,
-            },
+            { title: 'Danh Sách Tour', href: tourUrl.index().url },
             {
                 title: `Chi tiết: ${tour.title}`,
                 href: tourUrl.show(tour.id).url,
@@ -130,14 +134,6 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
         ],
         [tour.id, tour.title],
     );
-
-    const onBack = () => {
-        router.visit(tourUrl.index().url);
-    };
-
-    const onDelete = (id: number) => {
-        router.delete(tourUrl.destroy(id).url);
-    };
 
     const getStatusColor = (status: number) => {
         switch (status) {
@@ -165,30 +161,17 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
         }
     };
 
-    const confirmDelete = () => {
-        onDelete(tour.id);
-        setDeleteDialogOpen(false);
-    };
-
-    const formatDate = (dateString?: string) => {
-        if (!dateString) return 'N/A';
-        return new Date(dateString).toLocaleDateString('vi-VN', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        });
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <div className="min-h-screen bg-gray-50 p-8">
                 <Head title={`Chi tiết: ${tour.title}`} />
 
                 <div className="mx-auto max-w-6xl">
+                    {/* Header Section */}
                     <div className="mb-6">
                         <Button
                             variant="ghost"
-                            onClick={onBack}
+                            onClick={() => router.visit(tourUrl.index().url)}
                             className="mb-4 pl-0 hover:bg-transparent hover:text-blue-600"
                         >
                             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -207,45 +190,49 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
                                         {getStatusLabel(tour.status)}
                                     </Badge>
                                 </div>
+                                <h4 className="text-gray-400">
+                                    {currentCategory
+                                        ? currentCategory.title
+                                        : 'Chưa phân loại'}
+                                </h4>
                             </div>
                             <div className="flex gap-2">
                                 <Button
                                     variant="outline"
                                     onClick={() => setEditDialogOpen(true)}
                                 >
-                                    <Pencil className="mr-2 h-4 w-4" />
-                                    Sửa
+                                    <Pencil className="mr-2 h-4 w-4" /> Sửa
                                 </Button>
                                 <Button
                                     variant="destructive"
-                                    onClick={() => setDeleteDialogOpen(true)}
+                                    onClick={() =>
+                                        setDeleteTourDialogOpen(true)
+                                    }
                                 >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Xóa
+                                    <Trash2 className="mr-2 h-4 w-4" /> Xóa
                                 </Button>
                             </div>
                         </div>
                     </div>
 
-                    {/* Nội dung chi tiết tour */}
+                    {/* Main Content Grid */}
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                        {/* Cột Chính */}
+                        {/* LEFT COLUMN: Images & Description */}
                         <div className="space-y-6 lg:col-span-2">
                             <Card className="overflow-hidden">
                                 <CardContent className="p-0">
-                                    {/* Ảnh Thumbnail Chính */}
+                                    {/* Main Thumbnail */}
                                     <img
                                         src={
                                             tour.thumbnail ||
                                             'https://placehold.co/600x400?text=No+Image'
                                         }
                                         alt={tour.title}
-                                        className="block h-auto w-full"
+                                        className="block h-auto max-h-[400px] w-full object-cover"
                                     />
 
-                                    {/* 5. Phần hiển thị Gallery Ảnh Phụ */}
+                                    {/* Gallery Section */}
                                     <div className="border-t bg-gray-50 p-4">
-                                        {/* 3. Tiêu đề và nút thêm ảnh */}
                                         <div className="mb-3 flex items-center justify-between">
                                             <h4 className="text-sm font-semibold text-gray-700">
                                                 Thư viện ảnh
@@ -258,7 +245,7 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
                                                     setAddImageOpen(true)
                                                 }
                                             >
-                                                <Plus className="h-3.5 w-3.5" />
+                                                <Plus className="h-3.5 w-3.5" />{' '}
                                                 Thêm ảnh
                                             </Button>
                                         </div>
@@ -271,7 +258,7 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
                                                             key={
                                                                 img.id || index
                                                             }
-                                                            className="group aspect-square cursor-pointer overflow-hidden rounded-md border border-gray-200"
+                                                            className="group relative aspect-square cursor-pointer overflow-hidden rounded-md border border-gray-200"
                                                         >
                                                             <img
                                                                 src={
@@ -287,6 +274,21 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
                                                                 }
                                                                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                                                             />
+                                                            {/* Delete Image Button */}
+                                                            <button
+                                                                onClick={(
+                                                                    e,
+                                                                ) => {
+                                                                    e.stopPropagation();
+                                                                    setDeleteImageId(
+                                                                        img.id,
+                                                                    );
+                                                                }}
+                                                                className="absolute top-1 right-1 hidden h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white shadow-md group-hover:flex hover:bg-red-600"
+                                                                title="Xóa ảnh"
+                                                            >
+                                                                <X className="h-3 w-3" />
+                                                            </button>
                                                         </div>
                                                     ),
                                                 )}
@@ -298,6 +300,7 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
                                         )}
                                     </div>
 
+                                    {/* Description */}
                                     <div className="p-6">
                                         <h3 className="mb-3 text-xl font-semibold text-gray-900">
                                             Mô tả chi tiết
@@ -310,8 +313,9 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
                             </Card>
                         </div>
 
-                        {/* Cột Sidebar */}
+                        {/* RIGHT COLUMN: Info & Schedules */}
                         <div className="space-y-6">
+                            {/* Tour Info Card */}
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Thông tin Tour</CardTitle>
@@ -327,21 +331,13 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
                                             <div className="flex flex-col gap-1">
                                                 <span>
                                                     Người lớn:{' '}
-                                                    {new Intl.NumberFormat('en-US', {
-                                                        style: 'currency',
-                                                        currency: 'USD',
-                                                        minimumFractionDigits: 2,
-                                                        maximumFractionDigits: 2,
-                                                    }).format(tour.price_adult)}
+                                                    {tour.price_adult?.toLocaleString()}{' '}
+                                                    đ
                                                 </span>
                                                 <span>
                                                     Trẻ em:{' '}
-                                                    {new Intl.NumberFormat('en-US', {
-                                                        style: 'currency',
-                                                        currency: 'USD',
-                                                        minimumFractionDigits: 2,
-                                                        maximumFractionDigits: 2,
-                                                    }).format(tour.price_children)}
+                                                    {tour.price_children?.toLocaleString()}{' '}
+                                                    đ
                                                 </span>
                                             </div>
                                         }
@@ -376,66 +372,102 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
                                 </CardContent>
                             </Card>
 
+                            {/* Schedule Card */}
                             <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
+                                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                    <CardTitle className="flex items-center gap-2 text-base">
                                         <MapIcon className="h-5 w-5 text-blue-600" />
-                                        Lịch trình chi tiết
+                                        Lịch trình
                                     </CardTitle>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 gap-1 text-xs"
+                                        onClick={() => setAddScheduleOpen(true)}
+                                    >
+                                        <Plus className="h-3.5 w-3.5" /> Thêm
+                                    </Button>
                                 </CardHeader>
                                 <CardContent>
                                     {schedules.length > 0 ? (
                                         <div className="relative ml-3 space-y-8 border-l-2 border-blue-100 py-2">
-                                            {schedules.map(
-                                                (schedule, index) => (
-                                                    <div
-                                                        key={schedule.id}
-                                                        className="relative pl-8"
-                                                    >
-                                                        {/* Dấu chấm tròn trên dòng kẻ */}
-                                                        <div className="absolute top-1 -left-[9px] h-4 w-4 rounded-full border-2 border-white bg-blue-600 shadow-sm"></div>
+                                            {schedules.map((schedule) => (
+                                                <div
+                                                    key={schedule.id}
+                                                    className="group relative pl-6"
+                                                >
+                                                    {/* Dot */}
+                                                    <div className="absolute top-1 -left-[9px] h-4 w-4 rounded-full border-2 border-white bg-blue-600 shadow-sm"></div>
 
-                                                        <h4 className="mb-1 text-lg font-semibold text-gray-900">
-                                                            Ngày {schedule.date}
-                                                            : {schedule.name}
-                                                        </h4>
-                                                        <p className="leading-relaxed whitespace-pre-line text-gray-600">
-                                                            {
-                                                                schedule.description
+                                                    {/* Actions */}
+                                                    <div className="absolute top-0 right-0 hidden gap-2 rounded-md bg-white/80 p-1 backdrop-blur-sm group-hover:flex">
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="h-6 w-6"
+                                                            onClick={() =>
+                                                                setEditSchedule(
+                                                                    schedule,
+                                                                )
                                                             }
-                                                        </p>
-                                                        <div className="mt-2 flex gap-3 text-sm text-gray-500">
-                                                            <h4>Bữa ăn: </h4>
-                                                            {schedule.breakfast ? (
-                                                                <span className="flex items-center gap-1">
-                                                                    ☕ Sáng
-                                                                </span>
-                                                            ) : (
-                                                                ''
-                                                            )}
-                                                            {schedule.lunch ? (
-                                                                <span className="flex items-center gap-1">
-                                                                    🍽️ Trưa
-                                                                </span>
-                                                            ) : (
-                                                                ''
-                                                            )}
-                                                            {schedule.dinner ? (
-                                                                <span className="flex items-center gap-1">
-                                                                    🌙 Tối
-                                                                </span>
-                                                            ) : (
-                                                                ''
-                                                            )}
-                                                        </div>
+                                                        >
+                                                            <Pencil className="h-3.5 w-3.5 text-blue-600" />
+                                                        </Button>
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="h-6 w-6"
+                                                            onClick={() =>
+                                                                setDeleteSchedule(
+                                                                    schedule,
+                                                                )
+                                                            }
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5 text-red-600" />
+                                                        </Button>
                                                     </div>
-                                                ),
-                                            )}
+
+                                                    <h4 className="mb-1 text-sm font-bold text-gray-900">
+                                                        Ngày {schedule.date}:{' '}
+                                                        {schedule.name}
+                                                    </h4>
+                                                    <p className="line-clamp-3 text-sm leading-relaxed whitespace-pre-line text-gray-600">
+                                                        {schedule.description}
+                                                    </p>
+
+                                                    {/* Meals Badges */}
+                                                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-500">
+                                                        {schedule.breakfast && (
+                                                            <Badge
+                                                                variant="secondary"
+                                                                className="px-1 py-0 font-normal"
+                                                            >
+                                                                ☕ Sáng
+                                                            </Badge>
+                                                        )}
+                                                        {schedule.lunch && (
+                                                            <Badge
+                                                                variant="secondary"
+                                                                className="px-1 py-0 font-normal"
+                                                            >
+                                                                🍽️ Trưa
+                                                            </Badge>
+                                                        )}
+                                                        {schedule.dinner && (
+                                                            <Badge
+                                                                variant="secondary"
+                                                                className="px-1 py-0 font-normal"
+                                                            >
+                                                                🌙 Tối
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     ) : (
-                                        <div className="py-8 text-center text-gray-500 italic">
-                                            Chưa có lịch trình chi tiết cho tour
-                                            này.
+                                        <div className="py-8 text-center text-sm text-gray-500 italic">
+                                            Chưa có lịch trình nào.
                                         </div>
                                     )}
                                 </CardContent>
@@ -443,7 +475,9 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
                         </div>
                     </div>
 
-                    {/* Dialog Edit */}
+                    {/* --- DIALOGS AREA --- */}
+
+                    {/* 1. Edit Tour Main Info */}
                     <TourFormDialog
                         open={editDialogOpen}
                         onOpenChange={setEditDialogOpen}
@@ -452,19 +486,91 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
                         categories={categories || []}
                     />
 
+                    {/* 2. Add Images */}
                     <TourImageDialog
                         open={addImageOpen}
                         onOpenChange={setAddImageOpen}
                         tourId={tour.id}
+                        onSuccess={fetchImages}
                     />
 
+                    {/* 3. Delete Image Alert */}
                     <AlertDialog
-                        open={deleteDialogOpen}
-                        onOpenChange={setDeleteDialogOpen}
+                        open={!!deleteImageId}
+                        onOpenChange={(val) => !val && setDeleteImageId(null)}
                     >
                         <AlertDialogContent>
                             <AlertDialogHeader>
-                                <AlertDialogTitle>Xóa Tour</AlertDialogTitle>
+                                <AlertDialogTitle>Xóa ảnh?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Bạn có chắc chắn muốn xóa ảnh này khỏi thư
+                                    viện?
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                <AlertDialogAction
+                                    onClick={onConfirmDeleteImage}
+                                    className="bg-red-600 hover:bg-red-700"
+                                >
+                                    Xóa ảnh
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+
+                    {/* 4. Add Schedule */}
+                    <FormTourScheduleDialog
+                        open={addScheduleOpen}
+                        onOpenChange={setAddScheduleOpen}
+                        tourId={tour.id}
+                        onSuccess={fetchSchedules}
+                    />
+
+                    {/* 5. Edit Schedule */}
+                    <FormTourScheduleDialog
+                        open={!!editSchedule}
+                        onOpenChange={(v) => !v && setEditSchedule(null)}
+                        tourId={tour.id}
+                        schedule={editSchedule}
+                        onSuccess={fetchSchedules}
+                    />
+
+                    {/* 6. Delete Schedule Alert */}
+                    <AlertDialog
+                        open={!!deleteSchedule}
+                        onOpenChange={(v) => !v && setDeleteSchedule(null)}
+                    >
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                    Xoá lịch trình Ngày {deleteSchedule?.date}?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Bạn có chắc chắn muốn xoá "
+                                    {deleteSchedule?.name}"?
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                <AlertDialogAction
+                                    onClick={onConfirmDeleteSchedule}
+                                    className="bg-red-600 hover:bg-red-700"
+                                >
+                                    Xoá
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+
+                    {/* 7. Delete Tour Alert */}
+                    <AlertDialog
+                        open={deleteTourDialogOpen}
+                        onOpenChange={setDeleteTourDialogOpen}
+                    >
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Xóa Tour?</AlertDialogTitle>
                                 <AlertDialogDescription>
                                     Bạn có chắc chắn muốn xóa tour "{tour.title}
                                     "? Hành động này không thể hoàn tác.
@@ -473,10 +579,10 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
                             <AlertDialogFooter>
                                 <AlertDialogCancel>Hủy</AlertDialogCancel>
                                 <AlertDialogAction
-                                    onClick={confirmDelete}
+                                    onClick={onConfirmDeleteTour}
                                     className="bg-red-600 hover:bg-red-700"
                                 >
-                                    Xóa
+                                    Xóa Tour
                                 </AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
@@ -487,13 +593,14 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
     );
 }
 
+// Sub-component được làm gọn
 function InfoItem({
     icon,
     bg,
     label,
     value,
 }: {
-    icon: any;
+    icon: ReactNode;
     bg: string;
     label: string;
     value: ReactNode;
@@ -507,7 +614,7 @@ function InfoItem({
             </div>
             <div>
                 <p className="text-sm text-gray-500">{label}</p>
-                <div className="font-medium text-gray-900">{value}</div>
+                <div className="text-sm font-medium text-gray-900">{value}</div>
             </div>
         </div>
     );

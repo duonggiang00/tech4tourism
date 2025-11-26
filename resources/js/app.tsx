@@ -6,6 +6,50 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
 
+export interface Category {
+    id: number;
+    title: string;
+}
+
+export interface Tour {
+    id: number;
+    category_id: number;
+    title: string;
+    status: number;
+    day: number;
+    night: number;
+    thumbnail: string;
+    description: string;
+    short_description: string;
+    price_adult: number;
+    price_children: number;
+    highlights?: string[] | null;
+    included?: string[] | null;
+    start_date?: string;
+    end_date?: string;
+    destination?: string;
+    capacity?: number;
+}
+
+export interface TourSchedule {
+    id: number;
+    tour_id: number;
+    name: string;
+    description: string;
+    date: number;
+    breakfast: boolean;
+    lunch: boolean;
+    dinner: boolean;
+}
+
+export interface TourImage {
+    id: number;
+    tour_id: number;
+    img_url: string;
+    alt: string;
+    order: number;
+}
+
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({

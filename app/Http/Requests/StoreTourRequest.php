@@ -11,7 +11,7 @@ class StoreTourRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // Cho phép request này chạy (thường check quyền user ở đây nếu cần)
+        
         return true;
     }
 
@@ -26,18 +26,18 @@ class StoreTourRequest extends FormRequest
             'category_id' => [
                 'required',
                 'integer',
-                'exists:categories,id' // Phải tồn tại trong bảng categories
+                'exists:categories,id'
             ],
             'title' => [
                 'required',
                 'string',
                 'max:255',
-                'unique:tours,title', // Tên tour không được trùng (Store ko cần ignore ID)
+                'unique:tours,title',
             ],
             'status' => [
                 'required',
                 'integer',
-                'in:0,1,2' // 0: Hoạt động, 1: Không hoạt động, 2: Sắp có
+                'in:0,1,2' 
             ],
             'day' => [
                 'required',
