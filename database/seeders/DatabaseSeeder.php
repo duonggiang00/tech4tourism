@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             TestSeeder::class,
             TourImageSeeder::class,
             BookingSeeder::class,
+            ProvinceSeeder::class
         ]);
     }
 }

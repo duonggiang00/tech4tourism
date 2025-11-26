@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CountryController;
+use App\Http\Controllers\ProvinceController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\TourController;
 use App\Http\Controllers\TourImagesController;
@@ -64,8 +65,8 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['jwt.inertia'])->group(function () {
 
     Route::get('/', function () {
-        return Inertia::render('login'); // Trang chủ đặt tour
-    })->name('login');
+        return Inertia::render('Home'); // Trang chủ đặt tour
+    })->name('home');
 
     // Các route quản lý đặt tour ở đây...
 });
@@ -75,16 +76,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
 
-    Route::get('countries', [CountryController::class, 'index'])->name('countries.index');
-    Route::get('/countries/create', [CountryController::class, 'create'])->name('countries.create');
-    Route::post('/countries', [CountryController::class, 'store'])->name('countries.store');
-    Route::get('/countries/{country}/edit', [CountryController::class, 'edit'])->name('countries.edit');
-    Route::put('/countries/{country}/update', [CountryController::class, 'update'])->name('countries.update');
-    Route::delete('/countries/{country}', [CountryController::class, 'destroy'])->name('countries.destroy');
+    // Route::get('countries', [CountryController::class, 'index'])->name('countries.index');
+    // Route::get('/countries/create', [CountryController::class, 'create'])->name('countries.create');
+    // Route::post('/countries', [CountryController::class, 'store'])->name('countries.store');
+    // Route::get('/countries/{country}/edit', [CountryController::class, 'edit'])->name('countries.edit');
+    // Route::put('/countries/{country}/update', [CountryController::class, 'update'])->name('countries.update');
+    // Route::delete('/countries/{country}', [CountryController::class, 'destroy'])->name('countries.destroy');
     Route::resource('categories', CategoryController::class);
     Route::resource('tours', TourController::class);
     Route::resource('test', TestController::class);
     Route::resource('tour-images', TourImagesController::class);
+    Route::resource("countries", CountryController::class);
+    Route::resource("province", ProvinceController::class);
 });
 
 require __DIR__ . '/settings.php';

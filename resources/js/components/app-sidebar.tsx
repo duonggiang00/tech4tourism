@@ -11,15 +11,25 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import bookings from '@/routes/admin/bookings';
 import categories from '@/routes/categories';
 import countries from '@/routes/countries';
+import provinceUrl from '@/routes/province';
 import test from '@/routes/test';
 import tour from '@/routes/tours';
 import users from '@/routes/users';
-import bookings from '@/routes/admin/bookings';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, PlaneIcon, Users, Calendar } from 'lucide-react';
+import {
+    BookOpen,
+    Calendar,
+    ChartBarIcon,
+    Folder,
+    LayoutGrid,
+    LocateIcon,
+    PlaneIcon,
+    Users,
+} from 'lucide-react';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
@@ -31,11 +41,6 @@ export function AppSidebar() {
         {
             title: 'Dashboard',
             href: dashboard(),
-            icon: LayoutGrid,
-        },
-        {
-            title: 'Countries',
-            href: countries.index(),
             icon: LayoutGrid,
         },
         {
@@ -53,8 +58,17 @@ export function AppSidebar() {
             href: test.index(),
             icon: PlaneIcon,
         },
+        {
+            title: 'Quản lý quốc gia',
+            href: countries.index(),
+            icon: ChartBarIcon,
+        },
+        {
+            title: 'Quản lý Tỉnh thành',
+            href: provinceUrl.index(),
+            icon: LocateIcon,
+        },
 
-        
         // Chỉ hiển thị menu Users cho Admin
         ...(isAdmin
             ? [
