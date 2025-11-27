@@ -7,9 +7,8 @@ import AppLayout from '@/layouts/app-layout';
 import countries from '@/routes/countries';
 import { BreadcrumbItem } from '@/types';
 
-import { Head, Link, useForm } from '@inertiajs/react';
-import { CircleAlertIcon, Terminal } from 'lucide-react';
-
+import { Head, useForm } from '@inertiajs/react';
+import { CircleAlertIcon } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -18,8 +17,8 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
     {
         title: 'Tạo Một Quốc Gia Mới',
-        href: countries.create().url
-    }
+        href: countries.create().url,
+    },
 ];
 export default function Create() {
     const { data, setData, post, processing, errors } = useForm({
@@ -32,11 +31,10 @@ export default function Create() {
         e.preventDefault();
         console.log(data);
         post(countries.store().url);
-
-    }
+    };
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Countries" />
+            <Head title="Thêm Quốc gia" />
             <div className="m-4">
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Hiển thị lỗi */}
@@ -46,10 +44,14 @@ export default function Create() {
                             <AlertTitle>Lỗi!</AlertTitle>
                             <AlertDescription>
                                 <ul>
-                                    {Object.entries(errors).map(([key, message]) =>
-                                        <li key={key}>{message as string }</li>
+                                    {Object.entries(errors).map(
+                                        ([key, message]) => (
+                                            <li key={key}>
+                                                {message as string}
+                                            </li>
+                                        ),
                                     )}
-                              </ul>
+                                </ul>
                             </AlertDescription>
                         </Alert>
                     )}

@@ -11,32 +11,32 @@ import { Head, useForm } from '@inertiajs/react';
 import { CircleAlertIcon } from 'lucide-react';
 import { useMemo } from 'react';
 
-interface Country{
-    id: number,
-    name: string,
-    code:string,
-    description: string,
+interface Country {
+    id: number;
+    name: string;
+    code: string;
+    description: string;
 }
 
-interface Props{
-    country: Country
+interface Props {
+    country: Country;
 }
-
 
 export default function Edit({ country }: Props) {
     console.log(country);
-    const breadcrumbs: BreadcrumbItem[] = useMemo(() => [
-        
-        {
-            title: 'Quốc Gia',
-            href: countries.index().url,
-        },
-        {
-            title: `Edit Quốc Gia ${country.name} `,
-            href: countries.edit(country.id).url,
-        },
-    
-    ], [country.id, country.name]);
+    const breadcrumbs: BreadcrumbItem[] = useMemo(
+        () => [
+            {
+                title: 'Quốc Gia',
+                href: countries.index().url,
+            },
+            {
+                title: `Edit Quốc Gia ${country.name} `,
+                href: countries.edit(country.id).url,
+            },
+        ],
+        [country.id, country.name],
+    );
 
     const { data, setData, put, processing, errors } = useForm({
         name: country.name,
@@ -51,7 +51,7 @@ export default function Edit({ country }: Props) {
     };
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Countries" />
+            <Head title="Sửa Quốc gia" />
             <div className="m-4">
                 <form onSubmit={handleUpdate} className="space-y-4">
                     {/* Hiển thị lỗi */}
@@ -98,7 +98,9 @@ export default function Edit({ country }: Props) {
                             }
                         />
                     </div>
-                    <Button disabled={processing} type="submit">Sửa Quốc Gia</Button>
+                    <Button disabled={processing} type="submit">
+                        Sửa Quốc Gia
+                    </Button>
                 </form>
             </div>
         </AppLayout>

@@ -51,7 +51,7 @@ export default function Edit({ province }: Props) {
     };
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Countries" />
+            <Head title="Sửa tỉnh thành" />
             <div className="m-4">
                 <form onSubmit={handleUpdate} className="space-y-4">
                     {/* Hiển thị lỗi */}

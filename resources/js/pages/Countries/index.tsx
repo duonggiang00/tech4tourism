@@ -46,16 +46,14 @@ export default function Index() {
     };
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Countries" />
+            <Head title="Danh sách Quốc gia" />
             <div className="m-4">
                 <div>
                     {flash.message && (
                         <Alert variant="default">
                             <CircleCheck />
                             <AlertTitle>Thông báo!</AlertTitle>
-                            <AlertDescription>
-                               {flash.message}
-                            </AlertDescription>
+                            <AlertDescription>{flash.message}</AlertDescription>
                         </Alert>
                     )}
                 </div>

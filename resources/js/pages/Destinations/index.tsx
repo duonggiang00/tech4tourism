@@ -48,7 +48,7 @@ export default function Index() {
     };
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Countries" />
+            <Head title="Danh sách điểm đến" />
             <div className="m-4">
                 <div>
                     {flash.message && (

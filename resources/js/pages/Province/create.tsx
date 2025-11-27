@@ -34,7 +34,7 @@ export default function Create() {
     };
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Countries" />
+            <Head title="Thêm tỉnh thành mới" />
             <div className="m-4">
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Hiển thị lỗi */}
