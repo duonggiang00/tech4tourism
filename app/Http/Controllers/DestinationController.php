@@ -93,5 +93,7 @@ class DestinationController extends Controller
     public function destroy(Destination $destination)
     {
         //
+        $destination->delete();
+        return redirect()->route("destination.index")->with("message", "Xoá điểm đến thành công");
     }
 }
