@@ -15,7 +15,6 @@ class TourScheduleController extends Controller
      */
     public function index($tourId)
     {
-        // Sắp xếp theo 'date' tăng dần (asc)
         $schedules = TourSchedule::where('tour_id', $tourId)
             ->orderBy('date', 'asc')
             ->get();
@@ -26,17 +25,15 @@ class TourScheduleController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    // app/Http/Controllers/Api/TourScheduleController.php
-
-    public function store(StoreTourScheduleRequest $request, $tourId) // <--- Thêm $tourId vào tham số
+    public function store(StoreTourScheduleRequest $request, $tourId)
     {
-        // 1. Lấy dữ liệu đã validate (lúc này chưa có tour_id)
+        // 1. Lấy dữ liệu đã validate từ Request
         $data = $request->validated();
 
-        // 2. Gán tour_id lấy từ URL vào mảng dữ liệu
+        // 2. Gán tour_id lấy từ URL vào dữ liệu để tạo mối quan hệ
         $data['tour_id'] = $tourId;
 
-        // 3. Tạo mới
+        // 3. Tạo mới bản ghi
         $schedule = TourSchedule::create($data);
 
         return response()->json([
@@ -48,30 +45,62 @@ class TourScheduleController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(TourSchedule $tourSchedule)
+    public function show($tourId, $id)
     {
-        //
+        $schedule = TourSchedule::where('id', $id)
+            ->where('tour_id', $tourId)
+            ->first();
+
+        if (!$schedule) {
+            return response()->json(['message' => 'Không tìm thấy'], 404);
+        }
+
+        return response()->json($schedule);
     }
 
     /**
      * Update the specified resource in storage.
+     * QUAN TRỌNG: Nhận tham số $tourId và $id thay vì Model Binding để tránh lỗi
      */
-    public function update(UpdateTourScheduleRequest $request, TourSchedule $tourSchedule)
+    public function update(UpdateTourScheduleRequest $request, $tourId, $id)
     {
-        $tourSchedule->update($request->validated());
+        // 1. Tìm lịch trình khớp cả ID và Tour ID (để bảo mật)
+        $schedule = TourSchedule::where('id', $id)
+            ->where('tour_id', $tourId)
+            ->first();
+
+        // 2. Nếu không tìm thấy hoặc sai tour -> báo lỗi 404
+        if (!$schedule) {
+            return response()->json([
+                'message' => 'Không tìm thấy lịch trình hoặc lịch trình không thuộc Tour này.'
+            ], 404);
+        }
+
+        // 3. Cập nhật dữ liệu
+        $schedule->update($request->validated());
 
         return response()->json([
             'message' => 'Cập nhật lịch trình thành công!',
-            'data' => $tourSchedule,
+            'data' => $schedule,
         ]);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(TourSchedule $tourSchedule)
+    public function destroy($tourId, $id)
     {
-        $tourSchedule->delete();
+        $schedule = TourSchedule::where('id', $id)
+            ->where('tour_id', $tourId)
+            ->first();
+
+        if (!$schedule) {
+            return response()->json([
+                'message' => 'Không tìm thấy lịch trình hoặc lịch trình không thuộc Tour này.'
+            ], 404);
+        }
+
+        $schedule->delete();
 
         return response()->json([
             'message' => 'Xóa lịch trình thành công!'

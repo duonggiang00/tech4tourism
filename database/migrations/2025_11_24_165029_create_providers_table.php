@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('providers', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('id_destination')->nullable()->constrained('destinations')->nullOnDelete();
+            // $table->foreignId('id_destination')->nullable()->constrained('destinations')->nullOnDelete();
 
             $table->string('name', 200);
             $table->string('description', 200)->nullable();
@@ -29,9 +29,6 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index(['id_destination']);
-            $table->index(['name']);
-            $table->index(['status']);
         });
     }
 

@@ -14,9 +14,8 @@ return new class extends Migration
         Schema::create('services', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('id_service_type')->constrained('service_types')->cascadeOnDelete();
-            $table->foreignId('id_provider')->constrained('providers')->cascadeOnDelete();
-            // $table->foreignId('id_destination')->nullable()->constrained('destinations')->nullOnDelete();
+            $table->foreignId('service_type_id');
+            $table->foreignId('provider_id');
 
             $table->string('name', 255);
             $table->text('description')->nullable();
@@ -28,7 +27,6 @@ return new class extends Migration
 
             $table->integer('limit')->nullable();
             $table->string('unit', 50)->nullable();
-            $table->string('priceDefault')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

@@ -11,14 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('service_attributes', function (Blueprint $table) {
+        Schema::create('policies', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('service_id');
-            $table->string('name', 100);
-            $table->string('value', 200)->nullable();
-            $table->string('type', 50)->nullable();
+            $table->string('title', 200);
+            $table->text('content')->nullable();
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 
@@ -27,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('service_attributes');
+        Schema::dropIfExists('policies');
     }
 };

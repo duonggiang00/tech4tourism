@@ -11,14 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('service_attributes', function (Blueprint $table) {
+        Schema::create('tour_services', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('tour_id');
             $table->foreignId('service_id');
-            $table->string('name', 100);
-            $table->string('value', 200)->nullable();
-            $table->string('type', 50)->nullable();
+            $table->integer('quantity')->default(1);
+            $table->string('unit',50);
+            $table->decimal('price_unit', 12, 2);
+            $table->decimal('price_total', 12, 2);
+            $table->text('description');
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 
@@ -27,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('service_attributes');
+        Schema::dropIfExists('tour_services');
     }
 };

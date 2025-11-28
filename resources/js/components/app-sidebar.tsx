@@ -19,7 +19,7 @@ import users from '@/routes/users';
 import bookings from '@/routes/admin/bookings';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, PlaneIcon, Users, Calendar, ListIcon, BanIcon, User2Icon, BananaIcon } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, PlaneIcon, Users, Calendar, ListIcon, BanIcon, User2Icon, BananaIcon, PlaneTakeoff } from 'lucide-react';
 import AppLogo from './app-logo';
 import serviceTypes from '@/routes/service-types';
 import services from '@/routes/services';
@@ -85,21 +85,21 @@ export function AppSidebar() {
             href: countries.index(),
             icon: LayoutGrid,
         },
-        {
-            title: 'Categories',
-            href: categories.index(),
-            icon: LayoutGrid,
-        },
+        // {
+        //     title: 'Categories',
+        //     href: categories.index(),
+        //     icon: LayoutGrid,
+        // },
         {
             title: 'Tour',
             href: tour.index(),
-            icon: LayoutGrid,
+            icon: PlaneTakeoff,
         },
-        {
-            title: 'Test',
-            href: test.index(),
-            icon: PlaneIcon,
-        },
+        // {
+        //     title: 'Test',
+        //     href: test.index(),
+        //     icon: PlaneIcon,
+        // },
         {
             title: 'Service_Types', //quản lý loại hình dịch vụ
             href: serviceTypes.index(),

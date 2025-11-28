@@ -37,10 +37,12 @@ class DatabaseSeeder extends Seeder
             TestSeeder::class,
             TourImageSeeder::class,
             BookingSeeder::class,
-            ServiceTypesSeeder::class,
-            ProvidersSeeder::class,
-            ServicesSeeder::class,
-            ServiceAttributesSeeder::class,
+            ServiceTypeSeeder::class,
+            ProviderSeeder::class,
+            ServiceSeeder::class,
+            ServiceAttributeSeeder::class,
+            TourServiceSeeder::class,
+            PolicySeeder::class,
         ]);
     }
 }
