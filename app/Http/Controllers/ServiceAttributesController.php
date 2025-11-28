@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ServiceAttributes;
-use App\Models\Services;
+use App\Models\ServiceAttribute;
+use App\Models\Service;
 use App\Http\Requests\StoreServiceAttributesRequest;
 use App\Http\Requests\UpdateServiceAttributesRequest;
 use Inertia\Inertia;
@@ -15,8 +15,8 @@ class ServiceAttributesController extends Controller
      */
     public function index()
     {
-        $attributes = ServiceAttributes::with('service:id,name')->get();
-        $services = Services::select('id', 'name')->get();
+        $attributes = ServiceAttribute::with('service:id,name')->get();
+        $services = Service::select('id', 'name')->get();
         // dd($attributes);
 
         return Inertia::render('ServiceAttributes/index', compact('attributes', 'services'));
@@ -27,7 +27,7 @@ class ServiceAttributesController extends Controller
      */
     public function store(StoreServiceAttributesRequest $request)
     {
-        ServiceAttributes::create($request->validated());
+        ServiceAttribute::create($request->validated());
 
         return redirect()
             ->route('service-attributes.index')
@@ -37,7 +37,7 @@ class ServiceAttributesController extends Controller
     /**
      * Cập nhật thuộc tính dịch vụ.
      */
-    public function update(UpdateServiceAttributesRequest $request, ServiceAttributes $serviceAttribute)
+    public function update(UpdateServiceAttributesRequest $request, ServiceAttribute $serviceAttribute)
     {
         $serviceAttribute->update($request->validated());
 
@@ -49,7 +49,7 @@ class ServiceAttributesController extends Controller
     /**
      * Xóa thuộc tính dịch vụ.
      */
-    public function destroy(ServiceAttributes $serviceAttribute)
+    public function destroy(ServiceAttribute $serviceAttribute)
     {
         $serviceAttribute->delete();
 
@@ -61,7 +61,7 @@ class ServiceAttributesController extends Controller
     /**
      * Hiển thị chi tiết thuộc tính dịch vụ.
      */
-    public function show(ServiceAttributes $serviceAttribute)
+    public function show(ServiceAttribute $serviceAttribute)
     {
         $serviceAttribute->load('service');
 

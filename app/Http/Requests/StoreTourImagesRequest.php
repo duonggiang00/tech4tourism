@@ -11,7 +11,6 @@ class StoreTourImagesRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        
         return true;
     }
 
@@ -21,33 +20,26 @@ class StoreTourImagesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'image' => [
-                'required', 
-                'image',    
-                'mimes:jpeg,png,jpg,gif,webp', 
-                'max:5120'  
+            'images' => ['required', 'array', 'min:1'], // Phải là một mảng và có ít nhất 1 phần tử
+            'images.*' => [ // Validate từng file trong mảng
+                'image',
+                'mimes:jpeg,png,jpg,gif,svg,webp',
+                'max:5120' // Tối đa 5MB
             ],
-            'alt' => [
-                'nullable',
-                'string',
-                'max:255'
-            ],
-            'order' => [
-                'nullable',
-                'integer',
-                'min:0'
-            ]
+            // Với upload nhiều ảnh, thường ta bỏ qua alt/order chi tiết cho từng ảnh ở bước này 
+            // hoặc xử lý mảng phức tạp hơn. Ở đây ta tạm bỏ qua để giữ đơn giản theo logic controller.
         ];
     }
 
     public function messages(): array
     {
         return [
-            'image.required' => 'Vui lòng chọn một hình ảnh.',
-            'image.image' => 'File tải lên phải là hình ảnh.',
-            'image.mimes' => 'Định dạng ảnh không hợp lệ (chỉ chấp nhận jpeg, png, jpg, gif, webp).',
-            'image.max' => 'Kích thước ảnh không được vượt quá 5MB.',
-            'order.integer' => 'Thứ tự hiển thị phải là số nguyên.',
+            'images.required' => 'Vui lòng chọn ít nhất một hình ảnh.',
+            'images.array' => 'Dữ liệu gửi lên phải là danh sách hình ảnh.',
+            'images.min' => 'Vui lòng chọn ít nhất một hình ảnh.',
+            'images.*.image' => 'File tải lên phải là hình ảnh.',
+            'images.*.mimes' => 'Định dạng ảnh không hợp lệ (chỉ chấp nhận jpeg, png, jpg, gif, svg, webp).',
+            'images.*.max' => 'Kích thước ảnh không được vượt quá 5MB.',
         ];
     }
 }

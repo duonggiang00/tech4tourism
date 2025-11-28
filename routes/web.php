@@ -4,6 +4,7 @@
 
 use App\Http\Controllers\Api\TourImagesController;
 use App\Http\Controllers\Api\TourScheduleController;
+use App\Http\Controllers\Api\TourServiceController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\TestController;
@@ -17,8 +18,10 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\ProvidersController;
 use App\Http\Controllers\ServiceAttributesController;
-use App\Http\Controllers\ServicesController;
-use App\Http\Controllers\ServiceTypesController;
+use App\Http\Controllers\ServiceController;
+
+use App\Http\Controllers\ServiceTypeController;
+
 
 // Chỉ Admin mới được vào group này
 Route::middleware(['auth', 'role:1'])->group(function () {
@@ -43,13 +46,13 @@ Route::middleware(['auth', 'role:1'])->group(function () { // role:1 hoặc role
 
     // Quản lý danh sách booking
     Route::get('/admin/bookings', [BookingController::class, 'index'])->name('admin.bookings.index');
-    
+
     // Xem chi tiết booking
     Route::get('/admin/bookings/{booking}', [BookingController::class, 'show'])->name('admin.bookings.show');
-    
+
     // Cập nhật trạng thái booking
     Route::put('/admin/bookings/{booking}', [BookingController::class, 'update'])->name('admin.bookings.update');
-    
+
     // Xóa booking
     Route::delete('/admin/bookings/{booking}', [BookingController::class, 'destroy'])->name('admin.bookings.destroy');
 });
@@ -81,15 +84,19 @@ Route::middleware(['jwt.inertia'])->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
-    })->name('dashboard');  
+    })->name('dashboard');
     Route::resource('countries', CountryController::class);
-    Route::resource('categories',CategoryController::class);
+    Route::resource('categories', CategoryController::class);
     Route::resource('tours', TourController::class);
     Route::resource('test', TestController::class);
-    Route::apiResource('tours/{tour}/images', TourImagesController::class);
-    Route::apiResource('tours/{tour}/schedules', TourScheduleController::class);
-    Route::resource('service-types', ServiceTypesController::class);
-    Route::resource('services', ServicesController::class);
+    Route::prefix('tours/{tour}')->group(function () {
+        Route::apiResource('schedules', TourScheduleController::class);
+        Route::apiResource('images', TourImagesController::class);
+        Route::apiResource('tourservices', TourServiceController::class);
+    });
+
+    Route::resource('service-types', ServiceTypeController::class);
+    Route::resource('services', ServiceController::class);
     Route::resource('providers', ProvidersController::class);
     Route::resource('service-attributes', ServiceAttributesController::class);
     // Route::apiResource('tour_images', TourImagesController::class);

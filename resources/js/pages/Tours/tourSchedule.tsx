@@ -3,6 +3,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -16,8 +17,18 @@ interface Props {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     tourId: number;
-    schedule?: any; // dùng khi edit
+    schedule?: any;
     onSuccess?: () => void;
+}
+
+// Định nghĩa kiểu dữ liệu cho form để date có thể là string hoặc number
+interface ScheduleFormState {
+    name: string;
+    description: string;
+    date: number | string; // Cho phép string để xử lý trường hợp rỗng
+    breakfast: boolean;
+    lunch: boolean;
+    dinner: boolean;
 }
 
 export function FormTourScheduleDialog({
@@ -27,7 +38,7 @@ export function FormTourScheduleDialog({
     schedule,
     onSuccess,
 }: Props) {
-    const [form, setForm] = useState({
+    const [form, setForm] = useState<ScheduleFormState>({
         name: '',
         description: '',
         date: 1,
@@ -38,7 +49,6 @@ export function FormTourScheduleDialog({
 
     useEffect(() => {
         if (schedule) {
-            // EDIT MODE
             setForm({
                 name: schedule.name,
                 description: schedule.description,
@@ -48,7 +58,6 @@ export function FormTourScheduleDialog({
                 dinner: schedule.dinner,
             });
         } else {
-            // CREATE MODE
             setForm({
                 name: '',
                 description: '',
@@ -60,21 +69,19 @@ export function FormTourScheduleDialog({
         }
     }, [schedule, open]);
 
-    /**
-     * handleSubmit: tự động detect Create hoặc Update
-     */
     const handleSubmit = async () => {
+        // Validate trước khi submit nếu cần (đảm bảo date không rỗng)
+        if (form.date === '') {
+            alert('Vui lòng nhập ngày!');
+            return;
+        }
+
         try {
             if (schedule) {
-                // 🟦 UPDATE MODE
-                await axios.put(
-                    `/tours/${tourId}/schedules/${schedule.id}`,
-                    {
-                        ...form,
-                    },
-                );
+                await axios.put(`/tours/${tourId}/schedules/${schedule.id}`, {
+                    ...form,
+                });
             } else {
-                // 🟩 CREATE MODE
                 await axios.post(`/tours/${tourId}/schedules`, {
                     ...form,
                 });
@@ -97,6 +104,11 @@ export function FormTourScheduleDialog({
                             ? 'Chỉnh sửa lịch trình'
                             : 'Thêm lịch trình mới'}
                     </DialogTitle>
+                    <DialogDescription>
+                        {schedule
+                            ? 'Cập nhật thông tin chi tiết cho hoạt động trong ngày này.'
+                            : 'Điền thông tin chi tiết để tạo ra một lịch trình mới cho tour.'}
+                    </DialogDescription>
                 </DialogHeader>
 
                 <div className="mt-3 space-y-4">
@@ -121,12 +133,14 @@ export function FormTourScheduleDialog({
                             type="number"
                             min={1}
                             value={form.date}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                // Nếu value rỗng thì set là chuỗi rỗng, ngược lại ép kiểu số
                                 setForm({
                                     ...form,
-                                    date: Number(e.target.value),
-                                })
-                            }
+                                    date: value === '' ? '' : Number(value),
+                                });
+                            }}
                         />
                     </div>
 
