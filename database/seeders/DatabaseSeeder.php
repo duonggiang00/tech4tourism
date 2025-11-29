@@ -43,6 +43,11 @@ class DatabaseSeeder extends Seeder
             ServiceAttributeSeeder::class,
             TourServiceSeeder::class,
             PolicySeeder::class,
+            TourPolicySeeder::class,
+            TripAssignmentSeeder::class,
+            TripNotesSeeder::class,
+            TripCheckInSeeder::class,
+            CheckInDetailSeeder::class
         ]);
     }
 }

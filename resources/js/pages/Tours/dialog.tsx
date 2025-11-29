@@ -21,7 +21,6 @@ import { useForm } from '@inertiajs/react';
 import { UploadCloud, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-
 type TourFormData = Omit<
     Tour,
     | 'id'
@@ -56,19 +55,28 @@ export function TourFormDialog({
     title,
     categories = [],
 }: TourFormDialogProps) {
-    const { data, setData, post, processing, errors, reset, clearErrors } =
-        useForm<TourFormData>({
-            category_id: '',
-            title: '',
-            status: 0,
-            day: '',
-            night: '',
-            thumbnail: null,
-            description: '',
-            short_description: '',
-            price_adult: '',
-            price_children: '',
-        });
+    // 1. Thêm 'setError' vào destructuring để set lỗi thủ công
+    const {
+        data,
+        setData,
+        post,
+        processing,
+        errors,
+        reset,
+        clearErrors,
+        setError,
+    } = useForm<TourFormData>({
+        category_id: '',
+        title: '',
+        status: 0,
+        day: '',
+        night: '',
+        thumbnail: null,
+        description: '',
+        short_description: '',
+        price_adult: '',
+        price_children: '',
+    });
 
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -84,15 +92,12 @@ export function TourFormDialog({
                     status: initialData.status,
                     day: initialData.day,
                     night: initialData.night,
-                    // QUAN TRỌNG: Phải set null khi edit để không gửi chuỗi URL lên server
-                    // Server sẽ tự hiểu là "không update ảnh" nếu field này vắng mặt hoặc null (do ta xử lý unset ở controller)
                     thumbnail: null,
                     description: initialData.description,
                     short_description: initialData.short_description,
                     price_adult: initialData.price_adult,
                     price_children: initialData.price_children,
                 });
-                // Chỉ dùng URL ảnh cũ để hiển thị preview cho người dùng xem
                 setImagePreview(initialData.thumbnail);
             } else {
                 // Reset khi Create
@@ -128,6 +133,18 @@ export function TourFormDialog({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+
+        // 2. Kiểm tra logic ngày đêm trước khi submit
+        const days = Number(data.day);
+        const nights = Number(data.night);
+
+        if (Math.abs(days - nights) > 1) {
+            const message =
+                'Số ngày và đêm chỉ được chênh lệch tối đa 1 (VD: 3N2Đ hoặc 2N3Đ).';
+            setError('day', message);
+            setError('night', message);
+            return; // Dừng submit
+        }
 
         if (initialData) {
             // --- LOGIC UPDATE ---

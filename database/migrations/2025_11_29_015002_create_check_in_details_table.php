@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('provinces', function (Blueprint $table) {
+        Schema::create('check_in_details', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('trip_check_in_id');
+            $table->foreignId('passenger_id');
+            $table->boolean('is_present');
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }
@@ -22,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('provinces');
+        Schema::dropIfExists('check_in_details');
     }
 };

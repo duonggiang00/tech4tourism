@@ -36,6 +36,22 @@ class Tour extends Model
     {
         return $this->belongsTo(Category::class);
     }
+
+    public function images(){
+        return $this->hasMany(TourImages::class);
+    }
+
+    public function tourServices(){
+        return $this->hasMany(TourService::class);
+    }
+
+    public function schedules(){
+        return $this->hasMany(TourSchedule::class);
+    }
+
+    public function tourPolicies(){
+        return $this->hasMany(TourPolicy::class);
+    }
     protected function thumbnail(): Attribute
     {
         return Attribute::make(

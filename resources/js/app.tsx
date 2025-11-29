@@ -15,6 +15,18 @@ export interface ConfirmProps {
     loading?: boolean;
     isDestructive?: boolean;
 }
+export interface Policy {
+    id: number;
+    title: string;
+    content: string;
+}
+
+export interface TourPolicy {
+    id: number;
+    policy_id: number;
+    tour_id: number;
+    policy?: Policy;
+}
 
 export interface TourDetailProps {
     tour: Tour;
@@ -85,8 +97,7 @@ export interface TourService {
     price_unit: number;
     price_total: number;
     description: string;
-    service?: Service; 
-    tour?: Tour;
+    service?: Service;
 }
 
 export interface Tour {
@@ -107,6 +118,10 @@ export interface Tour {
     end_date?: string;
     destination?: string;
     capacity?: number;
+    images?: TourImage[];
+    tour_services?: TourService[];
+    schedules?: TourSchedule[];
+    tour_policies?:TourPolicy[];
 }
 
 export interface TourSchedule {

@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('destinations', function (Blueprint $table) {
+        Schema::create('trip_check_ins', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('trip_assignment_id');
+            $table->string('title');
+            $table->dateTime('checkin_time');
             $table->timestamps();
         });
     }
@@ -22,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('destinations');
+        Schema::dropIfExists('trip_check_ins');
     }
 };
