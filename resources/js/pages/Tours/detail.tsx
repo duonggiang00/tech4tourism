@@ -198,6 +198,16 @@ export default function TourDetail({ tour, categories }: TourDetailProps) {
                             </div>
                             <div className="flex gap-2">
                                 <Button
+                                    className="bg-blue-600 hover:bg-blue-700"
+                                    onClick={() =>
+                                        router.get(route('booking.create'), {
+                                            tour_id: tour.id,
+                                        })
+                                    }
+                                >
+                                    Đặt ngay
+                                </Button>
+                                <Button
                                     variant="outline"
                                     onClick={() => setEditDialogOpen(true)}
                                 >

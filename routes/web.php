@@ -1,61 +1,34 @@
 <?php
 
-
-
-use App\Http\Controllers\Api\TourImagesController;
-use App\Http\Controllers\Api\TourScheduleController;
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\CountryController;
-use App\Http\Controllers\TestController;
-use App\Http\Controllers\TourController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\BookingController;
-use App\Http\Controllers\ProvidersController;
-use App\Http\Controllers\ServiceAttributesController;
-use App\Http\Controllers\ServicesController;
-use App\Http\Controllers\ServiceTypesController;
 
-// Chỉ Admin mới được vào group này
-Route::middleware(['auth', 'role:1'])->group(function () {
-    Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-    Route::post('/users', [UserController::class, 'store'])->name('users.store');
-    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-});
-// --- Public Routes (Cho khách hàng) ---
-// Route nhận form POST đặt tour
-Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
+// 1. Gom nhóm Import Controller để file ngắn hơn
+use App\Http\Controllers\{
+    AuthController,
+    BookingController,
+    CategoryController,
+    CountryController,
+    ProvidersController,
+    ServiceAttributesController,
+    ServicesController,
+    ServiceTypesController,
+    TestController,
+    TourController,
+    UserController
+};
 
-// Trang thông báo thành công (Tùy chọn)
-Route::get('/booking/success/{code}', function ($code) {
-    return Inertia::render('Bookings/Success', ['code' => $code]);
-})->name('booking.success');
+use App\Http\Controllers\Api\{
+    TourImagesController,
+    TourScheduleController
+};
 
-
-// --- Admin Routes (Cần đăng nhập & quyền Admin/Sale) ---
-Route::middleware(['auth', 'role:1'])->group(function () { // role:1 hoặc role:3 (Sale)
-
-    // Quản lý danh sách booking
-    Route::get('/admin/bookings', [BookingController::class, 'index'])->name('admin.bookings.index');
-    
-    // Xem chi tiết booking
-    Route::get('/admin/bookings/{booking}', [BookingController::class, 'show'])->name('admin.bookings.show');
-    
-    // Cập nhật trạng thái booking
-    Route::put('/admin/bookings/{booking}', [BookingController::class, 'update'])->name('admin.bookings.update');
-    
-    // Xóa booking
-    Route::delete('/admin/bookings/{booking}', [BookingController::class, 'destroy'])->name('admin.bookings.destroy');
-});
-
-
-
-// Routes cho khách (chưa đăng nhập)
+/*
+|--------------------------------------------------------------------------
+| GUEST ROUTES (Chưa đăng nhập)
+|--------------------------------------------------------------------------
+*/
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
@@ -63,35 +36,63 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->name('register.store');
 });
 
-// Route logout - không cần middleware vì đang logout
+// Logout
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Routes cần bảo vệ (Yêu cầu phải có JWT Token hợp lệ)
-// Sử dụng middleware chúng ta vừa tạo
-Route::middleware(['jwt.inertia'])->group(function () {
+/*
+|--------------------------------------------------------------------------
+| PUBLIC CLIENT ROUTES
+|--------------------------------------------------------------------------
+*/
+Route::get('/booking/create', [BookingController::class, 'create'])->name('booking.create');
+Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
 
-    Route::get('/', function () {
-        return Inertia::render('Home'); // Trang chủ đặt tour
-    })->name('home');
+Route::get('/booking/success/{code}', fn ($code) => 
+    Inertia::render('Bookings/Success', ['code' => $code])
+)->name('booking.success');
 
-    // Các route quản lý đặt tour ở đây...
+Route::get('/', fn () => Inertia::render('Home'))->name('home');
+
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN ROUTES (Role: 1)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:1'])->group(function () {
+    
+    Route::resource('users', UserController::class)->except(['show', 'edit']);
+
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::resource('bookings', BookingController::class)->only(['index', 'show', 'update', 'destroy', 'create', 'store']);
+    });
 });
 
+
+/*
+|--------------------------------------------------------------------------
+| AUTHENTICATED ROUTES (Role: Admin + Sale + Guide...)
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');  
-    Route::resource('countries', CountryController::class);
-    Route::resource('categories',CategoryController::class);
-    Route::resource('tours', TourController::class);
-    Route::resource('test', TestController::class);
-    Route::apiResource('tours/{tour}/images', TourImagesController::class);
-    Route::apiResource('tours/{tour}/schedules', TourScheduleController::class);
-    Route::resource('service-types', ServiceTypesController::class);
-    Route::resource('services', ServicesController::class);
-    Route::resource('providers', ProvidersController::class);
-    Route::resource('service-attributes', ServiceAttributesController::class);
-    // Route::apiResource('tour_images', TourImagesController::class);
+    
+    Route::get('dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
+    
+    Route::resources([
+        'countries'          => CountryController::class,
+        'categories'         => CategoryController::class,
+        'tours'              => TourController::class,
+        'test'               => TestController::class,
+        'service-types'      => ServiceTypesController::class,
+        'services'           => ServicesController::class,
+        'providers'          => ProvidersController::class,
+        'service-attributes' => ServiceAttributesController::class,
+    ]);
+
+    // Nested API Resources (Tour Images & Schedules)
+    Route::apiResource('tours.images', TourImagesController::class);
+    Route::apiResource('tours.schedules', TourScheduleController::class);
 });
 
+// Import Settings Routes
 require __DIR__ . '/settings.php';
