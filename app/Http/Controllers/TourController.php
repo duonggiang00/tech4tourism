@@ -20,6 +20,12 @@ class TourController extends Controller
         return Inertia::render('Tours/index', compact('tours', 'categories'));
     }
 
+    public function create()
+    {
+        $categories = Category::all();
+        return Inertia::render('Tours/create', compact('categories'));
+    }
+
     public function store(StoreTourRequest $request)
     {
         $data = $request->validated();
