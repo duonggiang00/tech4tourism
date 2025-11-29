@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('tours', function (Blueprint $table) {
             $table->id();
             $table->foreignId('category_id');
-            $table->string('title', 255)->isNotEmpty();
+            $table->string('title', 255);
             $table->integer('status');
-            $table->integer('day')->isNotEmpty();
-            $table->integer('night')->isNotEmpty();
+            $table->integer('day');
+            $table->integer('night');
             $table->string('thumbnail', 255)->nullable();
             $table->text('description')->nullable();
             $table->string('short_description',500)->nullable();

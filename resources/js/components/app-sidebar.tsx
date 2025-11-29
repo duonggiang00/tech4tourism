@@ -73,6 +73,7 @@ export function AppSidebar() {
     const page = usePage<SharedData>();
     const currentUser = page.props.auth?.user;
     const isAdmin = currentUser?.role === 1;
+    const isHdv = currentUser?.role === 2;
 
     const mainNavItems: NavItem[] = [
         {
@@ -125,7 +126,7 @@ export function AppSidebar() {
         ...(isAdmin
             ? [
                   {
-                      title: 'Quản lý người dùng',
+                      title: 'User Management',
                       href: users.index(),
                       icon: Users,
                   },
@@ -134,13 +135,13 @@ export function AppSidebar() {
         ...(isAdmin
             ? [
                   {
-                      title: 'Quản lý Bookings',
+                      title: 'Bookings Management',
                       href: bookings.index(),
                       icon: Calendar,
                   },
               ]
             : []),
-    ];
+        ];
 
     const footerNavItems: NavItem[] = [
         {

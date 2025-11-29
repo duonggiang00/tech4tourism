@@ -13,8 +13,32 @@ use Carbon\Carbon;
 class BookingController extends Controller
 {
     // --- KHÁCH HÀNG ---
-    
+
     // 1. Xử lý đặt tour (POST)
+
+ 
+
+    public function create(Request $request)
+    {
+        // If a specific tour_id is provided (public booking flow), return that tour
+        if ($request->filled('tour_id')) {
+            $tour = Tour::findOrFail($request->tour_id);
+
+            return Inertia::render('Bookings/Create', [
+                'tour' => $tour,
+                'date_start' => $request->date_start,
+                'adults' => $request->adults,
+                'children' => $request->children ?? 0,
+            ]);
+        }
+
+        // Otherwise, admin wants to create a booking manually: provide list of tours
+        $tours = Tour::select('id', 'title', 'price_adult', 'price_children', 'day')->get();
+
+        return Inertia::render('Bookings/Create', [
+            'tours' => $tours,
+        ]);
+    }
     public function store(Request $request)
     {
         // Validate dữ liệu đầu vào
@@ -35,10 +59,10 @@ class BookingController extends Controller
 
             // Lấy thông tin tour để tính tiền
             $tour = Tour::findOrFail($request->tour_id);
-            
+
             // Tính tổng tiền
-            $totalPrice = ($tour->price_adult * $request->adults) + 
-                          ($tour->price_children * ($request->children ?? 0));
+            $totalPrice = ($tour->price_adult * $request->adults) +
+                ($tour->price_children * ($request->children ?? 0));
 
             // Tạo Booking
             $booking = Booking::create([
@@ -67,8 +91,15 @@ class BookingController extends Controller
 
             DB::commit(); // Lưu vào DB thành công
 
+            // If the request was from admin routes, redirect to admin bookings index
+            $routeName = $request->route() ? $request->route()->getName() : null;
+            if ($routeName && str_starts_with($routeName, 'admin.')) {
+                return redirect()->route('admin.bookings.index')
+                    ->with('success', 'Tạo booking mới thành công!');
+            }
+
             return redirect()->route('booking.success', $booking->code)
-                             ->with('success', 'Đặt tour thành công!');
+                ->with('success', 'Đặt tour thành công!');
 
         } catch (\Exception $e) {
             DB::rollBack(); // Nếu lỗi thì hoàn tác, không lưu gì cả
@@ -84,8 +115,8 @@ class BookingController extends Controller
         $bookings = Booking::with('tour') // Load kèm tên tour
             ->when($request->search, function ($query, $search) {
                 $query->where('code', 'like', "%{$search}%")
-                      ->orWhere('client_name', 'like', "%{$search}%")
-                      ->orWhere('client_email', 'like', "%{$search}%");
+                    ->orWhere('client_name', 'like', "%{$search}%")
+                    ->orWhere('client_email', 'like', "%{$search}%");
             })
             ->when($request->status !== null, function ($query) use ($request) {
                 $query->where('status', $request->status);
@@ -104,7 +135,7 @@ class BookingController extends Controller
     public function show(Booking $booking)
     {
         $booking->load(['tour', 'passengers', 'payments']);
-        
+
         return Inertia::render('Bookings/Show', [
             'booking' => $booking
         ]);
@@ -128,6 +159,6 @@ class BookingController extends Controller
         $booking->delete();
 
         return redirect()->route('admin.bookings.index')
-                         ->with('success', 'Xóa booking thành công.');
+            ->with('success', 'Xóa booking thành công.');
     }
 }

@@ -11,7 +11,7 @@ class Booking extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'id_tour_instance', 'code', 'date_start', 'date_end',
+        'tour_id', 'code', 'date_start', 'date_end',
         'client_name', 'client_phone', 'client_email',
         'count_adult', 'count_children',
         'final_price', 'left_payment', 'status'
@@ -34,6 +34,6 @@ class Booking extends Model
     {
         // Vì tên cột khóa ngoại là id_tour_instance (không chuẩn Laravel)
         // nên ta phải khai báo rõ tham số thứ 2
-        return $this->belongsTo(Tour::class, 'id_tour_instance'); 
+        return $this->belongsTo(Tour::class, 'tour_id'); 
     }
 }

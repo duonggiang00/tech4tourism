@@ -14,6 +14,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { CircleCheck, CircleX, Eye, Trash2 } from 'lucide-react';
 import bookings from '@/routes/admin/bookings';
 
+
+import bookingsRoutes from '@/routes/admin/bookings';
+
+
+
 interface Tour {
     id: number;
     title: string;
@@ -151,6 +156,18 @@ export default function BookingsIndex({ bookings: bookingsData, filters = {}, fl
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
+
+        <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">Danh sách Bookings</h2>
+            <div>
+                <Link href={bookingsRoutes.create().url}>
+                    <button className="inline-flex items-center rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+                        Thêm booking
+                    </button>
+                </Link>
+            </div>
+        </div>
+
             <Head title="Quản lý Bookings" />
 
             <div className="p-6 space-y-4">
