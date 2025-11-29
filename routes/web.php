@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
-// 1. Gom nhóm Import Controller để file ngắn hơn
+// Import Controllers
 use App\Http\Controllers\{
     AuthController,
     BookingController,
@@ -12,8 +12,8 @@ use App\Http\Controllers\{
     CountryController,
     ProvidersController,
     ServiceAttributesController,
-    ServicesController,
-    ServiceTypesController,
+    ServiceController,
+    ServiceTypeController,
     TestController,
     TourController,
     UserController
@@ -21,12 +21,13 @@ use App\Http\Controllers\{
 
 use App\Http\Controllers\Api\{
     TourImagesController,
-    TourScheduleController
+    TourScheduleController,
+    TourServiceController
 };
 
 /*
 |--------------------------------------------------------------------------
-| GUEST ROUTES (Chưa đăng nhập)
+| GUEST ROUTES
 |--------------------------------------------------------------------------
 */
 Route::middleware('guest')->group(function () {
@@ -60,11 +61,13 @@ Route::get('/', fn () => Inertia::render('Home'))->name('home');
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:1'])->group(function () {
-    
+
     Route::resource('users', UserController::class)->except(['show', 'edit']);
 
     Route::prefix('admin')->name('admin.')->group(function () {
-        Route::resource('bookings', BookingController::class)->only(['index', 'show', 'update', 'destroy', 'create', 'store']);
+        Route::resource('bookings', BookingController::class)->only([
+            'index', 'show', 'update', 'destroy', 'create', 'store'
+        ]);
     });
 });
 
@@ -75,23 +78,27 @@ Route::middleware(['auth', 'role:1'])->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->group(function () {
-    
+
     Route::get('dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
-    
+
+    // Basic resources
     Route::resources([
         'countries'          => CountryController::class,
         'categories'         => CategoryController::class,
         'tours'              => TourController::class,
         'test'               => TestController::class,
-        'service-types'      => ServiceTypesController::class,
-        'services'           => ServicesController::class,
+        'service-types'      => ServiceTypeController::class,
+        'services'           => ServiceController::class,
         'providers'          => ProvidersController::class,
         'service-attributes' => ServiceAttributesController::class,
     ]);
 
-    // Nested API Resources (Tour Images & Schedules)
-    Route::apiResource('tours.images', TourImagesController::class);
-    Route::apiResource('tours.schedules', TourScheduleController::class);
+    // Nested API Resources (Tour Images, Schedules, Service)
+    Route::prefix('tours/{tour}')->group(function () {
+        Route::apiResource('schedules', TourScheduleController::class);
+        Route::apiResource('images', TourImagesController::class);
+        Route::apiResource('tourservices', TourServiceController::class);
+    });
 });
 
 // Import Settings Routes

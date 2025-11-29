@@ -18,7 +18,7 @@ class CategoryController extends Controller
     public function index()
     {
         //
-        $categories = Category::get();
+        Category::latest()->get();
         return Inertia::render('Categories/index', compact('categories'));
     }
 
@@ -39,7 +39,7 @@ class CategoryController extends Controller
         //
         // dd($request);
         Category::create($request->validated());
-        return redirect()->route('categories.index')->with('message', 'Tạo danh mục thành công');
+        return redirect()->back()->with('message', 'Tạo danh mục thành công');
     }
 
     /**
@@ -66,7 +66,7 @@ class CategoryController extends Controller
     {
         //
         $category->update($request->validated());
-        return redirect()->route('categories.index')->with('message', 'Sửa danh mục thành công');
+        return redirect()->back()->with('message', 'Sửa danh mục thành công');
     }
 
     /**
@@ -76,6 +76,6 @@ class CategoryController extends Controller
     {
         //
         $category->delete();
-        return redirect()->route('categories.index')->with('message', 'Xóa Danh mục thành công');
+        return redirect()->back()->with('message', 'Xóa Danh mục thành công');
     }
 }

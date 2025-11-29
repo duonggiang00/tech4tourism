@@ -6,9 +6,87 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
 
+export interface ConfirmProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onConfirm: () => void;
+    title: string;
+    description: string;
+    loading?: boolean;
+    isDestructive?: boolean;
+}
+
+export interface TourDetailProps {
+    tour: Tour;
+    categories: Category[];
+}
+
+export interface TourHeaderProps {
+    tour: Tour;
+    categoryName?: string;
+    onEdit: () => void;
+    onDelete: () => void;
+}
+
+export interface TourInfoCardsProps {
+    tour: Tour;
+}
+
+export interface TourScheduleListProps {
+    schedules: TourSchedule[];
+    onAdd: () => void;
+    onEdit: (item: TourSchedule) => void;
+    onDelete: (item: TourSchedule) => void;
+}
+
+export interface TourGalleryProps {
+    tour: Tour;
+    images: TourImage[];
+    onAddImage: () => void;
+    onDeleteImage: (id: number) => void;
+}
+
 export interface Category {
     id: number;
     title: string;
+    description: string;
+}
+
+export interface Service {
+    id: number;
+    service_type_id: number;
+    provider_id: number;
+
+    name: string;
+    description?: string;
+
+    type_room?: number;
+    type_car?: number;
+    type_meal?: number;
+
+    limit: number;
+    unit?: string;
+    price: number;
+    service_type?: ServiceType;
+}
+
+export interface ServiceType {
+    id: number;
+    name: string;
+    description: string;
+}
+
+export interface TourService {
+    id: number;
+    tour_id: number;
+    service_id: number;
+    quantity: number;
+    unit: string;
+    price_unit: number;
+    price_total: number;
+    description: string;
+    service?: Service; 
+    tour?: Tour;
 }
 
 export interface Tour {

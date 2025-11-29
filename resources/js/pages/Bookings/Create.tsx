@@ -118,6 +118,9 @@ export default function CreateBooking({
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         
+        console.log('Submitting booking:', data);
+        
+
         // Chọn URL dựa trên quyền hạn
         const submitUrl = isAdminMode ? '/admin/bookings' : '/booking';
         
@@ -180,7 +183,7 @@ export default function CreateBooking({
                                         <div className="space-y-2">
                                             <Label>Tour muốn đặt</Label>
                                             <Select 
-                                                value={data.tour_id.toString()} 
+                                                value={data.tour_id} 
                                                 onValueChange={(val) => setData('tour_id', val)}
                                             >
                                                 <SelectTrigger className="h-11">
