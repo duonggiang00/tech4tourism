@@ -11,15 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tour_services', function (Blueprint $table) {
+        Schema::create('tour_policies', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tour_id');
-            $table->foreignId('service_id');
-            $table->integer('quantity')->default(1);
-            $table->string('unit',50);
-            $table->decimal('price_unit', 12, 2);
-            $table->decimal('price_total', 12, 2);
-            $table->text('description')->nullable();
+            $table->foreignId('policy_id');
             $table->timestamps();
         });
     }
@@ -29,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tour_services');
+        Schema::dropIfExists('tour_policies');
     }
 };

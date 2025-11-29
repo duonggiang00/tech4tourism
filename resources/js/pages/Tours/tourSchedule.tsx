@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface Props {
     open: boolean;
@@ -21,15 +22,17 @@ interface Props {
     onSuccess?: () => void;
 }
 
-// Định nghĩa kiểu dữ liệu cho form để date có thể là string hoặc number
 interface ScheduleFormState {
     name: string;
     description: string;
-    date: number | string; // Cho phép string để xử lý trường hợp rỗng
+    date: number | string;
     breakfast: boolean;
     lunch: boolean;
     dinner: boolean;
 }
+
+// Định nghĩa kiểu cho object chứa lỗi
+type FormErrors = Partial<Record<keyof ScheduleFormState, string>>;
 
 export function FormTourScheduleDialog({
     open,
@@ -38,6 +41,8 @@ export function FormTourScheduleDialog({
     schedule,
     onSuccess,
 }: Props) {
+    const [loading, setLoading] = useState(false);
+
     const [form, setForm] = useState<ScheduleFormState>({
         name: '',
         description: '',
@@ -47,51 +52,99 @@ export function FormTourScheduleDialog({
         dinner: true,
     });
 
+    // State lưu lỗi validation
+    const [errors, setErrors] = useState<FormErrors>({});
+
     useEffect(() => {
-        if (schedule) {
-            setForm({
-                name: schedule.name,
-                description: schedule.description,
-                date: schedule.date,
-                breakfast: schedule.breakfast,
-                lunch: schedule.lunch,
-                dinner: schedule.dinner,
-            });
-        } else {
-            setForm({
-                name: '',
-                description: '',
-                date: 1,
-                breakfast: false,
-                lunch: true,
-                dinner: true,
-            });
+        if (open) {
+            // Reset lỗi khi mở dialog
+            setErrors({});
+
+            if (schedule) {
+                setForm({
+                    name: schedule.name,
+                    description: schedule.description || '',
+                    date: schedule.date,
+                    breakfast: Boolean(schedule.breakfast),
+                    lunch: Boolean(schedule.lunch),
+                    dinner: Boolean(schedule.dinner),
+                });
+            } else {
+                setForm({
+                    name: '',
+                    description: '',
+                    date: 1,
+                    breakfast: false,
+                    lunch: true,
+                    dinner: true,
+                });
+            }
         }
     }, [schedule, open]);
 
+    // Hàm validate dữ liệu
+    const validate = (): boolean => {
+        const newErrors: FormErrors = {};
+        let isValid = true;
+
+        if (!form.name.trim()) {
+            newErrors.name = 'Tên lịch trình không được để trống.';
+            isValid = false;
+        } else if (form.name.length > 200) {
+            newErrors.name = 'Tên lịch trình không quá 200 ký tự.';
+            isValid = false;
+        }
+
+        if (form.date === '' || Number(form.date) < 1) {
+            newErrors.date = 'Ngày phải là số nguyên lớn hơn 0.';
+            isValid = false;
+        }
+
+        // Validate mô tả nếu cần (ví dụ không quá dài)
+        // if (form.description.length > 1000) { ... }
+
+        setErrors(newErrors);
+        return isValid;
+    };
+
+    // Hàm helper để xóa lỗi khi người dùng nhập lại
+    const clearError = (field: keyof ScheduleFormState) => {
+        if (errors[field]) {
+            setErrors((prev) => ({ ...prev, [field]: undefined }));
+        }
+    };
+
     const handleSubmit = async () => {
-        // Validate trước khi submit nếu cần (đảm bảo date không rỗng)
-        if (form.date === '') {
-            alert('Vui lòng nhập ngày!');
+        // 1. Gọi hàm validate trước khi xử lý
+        if (!validate()) {
+            toast.error('Vui lòng kiểm tra lại thông tin nhập vào.');
             return;
         }
 
+        setLoading(true);
         try {
             if (schedule) {
-                await axios.put(`/tours/${tourId}/schedules/${schedule.id}`, {
-                    ...form,
-                });
+                await axios.put(
+                    `/tours/${tourId}/schedules/${schedule.id}`,
+                    form,
+                );
+                toast.success('Cập nhật lịch trình thành công!');
             } else {
-                await axios.post(`/tours/${tourId}/schedules`, {
-                    ...form,
-                });
+                await axios.post(`/tours/${tourId}/schedules`, form);
+                toast.success('Thêm lịch trình mới thành công!');
             }
 
-            onSuccess && onSuccess();
+            onSuccess?.();
             onOpenChange(false);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to save schedule', err);
-            alert('Không thể lưu lịch trình!');
+            // Hiển thị lỗi từ server nếu có
+            const serverMsg =
+                err.response?.data?.message ||
+                'Không thể lưu lịch trình! Vui lòng thử lại.';
+            toast.error(serverMsg);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -112,22 +165,36 @@ export function FormTourScheduleDialog({
                 </DialogHeader>
 
                 <div className="mt-3 space-y-4">
-                    <div>
+                    {/* TÊN LỊCH TRÌNH */}
+                    <div className="space-y-1">
                         <label className="text-sm font-medium">
-                            Tên lịch trình
+                            Tên lịch trình{' '}
+                            <span className="text-red-500">*</span>
                         </label>
                         <Input
                             value={form.name}
-                            onChange={(e) =>
-                                setForm({ ...form, name: e.target.value })
-                            }
+                            onChange={(e) => {
+                                setForm({ ...form, name: e.target.value });
+                                clearError('name');
+                            }}
                             placeholder="Ví dụ: Khởi hành - Tham quan Đà Lạt"
+                            className={
+                                errors.name
+                                    ? 'border-red-500 focus-visible:ring-red-500'
+                                    : ''
+                            }
                         />
+                        {errors.name && (
+                            <span className="text-xs text-red-500">
+                                {errors.name}
+                            </span>
+                        )}
                     </div>
 
-                    <div>
+                    {/* NGÀY THỨ MẤY */}
+                    <div className="space-y-1">
                         <label className="text-sm font-medium">
-                            Ngày thứ mấy
+                            Ngày thứ mấy <span className="text-red-500">*</span>
                         </label>
                         <Input
                             type="number"
@@ -135,16 +202,27 @@ export function FormTourScheduleDialog({
                             value={form.date}
                             onChange={(e) => {
                                 const value = e.target.value;
-                                // Nếu value rỗng thì set là chuỗi rỗng, ngược lại ép kiểu số
                                 setForm({
                                     ...form,
                                     date: value === '' ? '' : Number(value),
                                 });
+                                clearError('date');
                             }}
+                            className={
+                                errors.date
+                                    ? 'border-red-500 focus-visible:ring-red-500'
+                                    : ''
+                            }
                         />
+                        {errors.date && (
+                            <span className="text-xs text-red-500">
+                                {errors.date}
+                            </span>
+                        )}
                     </div>
 
-                    <div>
+                    {/* MÔ TẢ */}
+                    <div className="space-y-1">
                         <label className="text-sm font-medium">Mô tả</label>
                         <Textarea
                             rows={4}
@@ -159,38 +237,58 @@ export function FormTourScheduleDialog({
                         />
                     </div>
 
+                    {/* BỮA ĂN */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Bữa ăn</label>
-
-                        <div className="flex gap-4">
+                        <label className="text-sm font-medium">
+                            Bữa ăn bao gồm
+                        </label>
+                        <div className="flex gap-6">
                             <div className="flex items-center gap-2">
                                 <Checkbox
+                                    id="chk-breakfast"
                                     checked={form.breakfast}
                                     onCheckedChange={(v) =>
                                         setForm({ ...form, breakfast: !!v })
                                     }
                                 />
-                                <span>Bữa sáng</span>
+                                <label
+                                    htmlFor="chk-breakfast"
+                                    className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                    Sáng
+                                </label>
                             </div>
 
                             <div className="flex items-center gap-2">
                                 <Checkbox
+                                    id="chk-lunch"
                                     checked={form.lunch}
                                     onCheckedChange={(v) =>
                                         setForm({ ...form, lunch: !!v })
                                     }
                                 />
-                                <span>Bữa trưa</span>
+                                <label
+                                    htmlFor="chk-lunch"
+                                    className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                    Trưa
+                                </label>
                             </div>
 
                             <div className="flex items-center gap-2">
                                 <Checkbox
+                                    id="chk-dinner"
                                     checked={form.dinner}
                                     onCheckedChange={(v) =>
                                         setForm({ ...form, dinner: !!v })
                                     }
                                 />
-                                <span>Bữa tối</span>
+                                <label
+                                    htmlFor="chk-dinner"
+                                    className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                    Tối
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -200,11 +298,16 @@ export function FormTourScheduleDialog({
                     <Button
                         variant="outline"
                         onClick={() => onOpenChange(false)}
+                        disabled={loading}
                     >
                         Hủy
                     </Button>
-                    <Button onClick={handleSubmit}>
-                        {schedule ? 'Lưu thay đổi' : 'Thêm lịch trình'}
+                    <Button onClick={handleSubmit} disabled={loading}>
+                        {loading
+                            ? 'Đang lưu...'
+                            : schedule
+                              ? 'Lưu thay đổi'
+                              : 'Thêm lịch trình'}
                     </Button>
                 </DialogFooter>
             </DialogContent>

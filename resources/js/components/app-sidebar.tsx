@@ -19,12 +19,13 @@ import users from '@/routes/users';
 import bookings from '@/routes/admin/bookings';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, PlaneIcon, Users, Calendar, ListIcon, BanIcon, User2Icon, BananaIcon, PlaneTakeoff } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, PlaneIcon, Users, Calendar, ListIcon, BanIcon, User2Icon, BananaIcon, PlaneTakeoff, ScrollText } from 'lucide-react';
 import AppLogo from './app-logo';
 import serviceTypes from '@/routes/service-types';
 import services from '@/routes/services';
 import providers from '@/routes/providers';
 import serviceAttributes from '@/routes/service-attributes';
+import policies from '@/routes/policies';
 
 
 const mainNavItems: NavItem[] = [
@@ -119,6 +120,11 @@ export function AppSidebar() {
             title: 'Service_attributes',
             href: serviceAttributes.index(),
             icon: BananaIcon,
+        },
+        {
+            title: 'Chính sách',
+            href: policies.index(),
+            icon: ScrollText,
         },
 
         // Chỉ hiển thị menu Users cho Admin

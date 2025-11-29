@@ -3,6 +3,7 @@
 
 
 use App\Http\Controllers\Api\TourImagesController;
+use App\Http\Controllers\Api\TourPolicyController;
 use App\Http\Controllers\Api\TourScheduleController;
 use App\Http\Controllers\Api\TourServiceController;
 use App\Http\Controllers\CategoryController;
@@ -15,10 +16,10 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\PolicyController;
 use App\Http\Controllers\ProvidersController;
 use App\Http\Controllers\ServiceAttributesController;
 use App\Http\Controllers\ServiceController;
-
 use App\Http\Controllers\ServiceTypeController;
 
 
@@ -92,12 +93,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::apiResource('schedules', TourScheduleController::class);
         Route::apiResource('images', TourImagesController::class);
         Route::apiResource('tourservices', TourServiceController::class);
+        Route::apiResource('tourpolicies', TourPolicyController::class);
     });
 
     Route::resource('service-types', ServiceTypeController::class);
     Route::resource('services', ServiceController::class);
     Route::resource('providers', ProvidersController::class);
     Route::resource('service-attributes', ServiceAttributesController::class);
+    Route::resource('policies', PolicyController::class);
     // Route::apiResource('tour_images', TourImagesController::class);
 });
 

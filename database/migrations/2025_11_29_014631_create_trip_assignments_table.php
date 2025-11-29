@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('countries', function (Blueprint $table) {
+        Schema::create('trip_assignments', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('booking_id');
+            $table->foreignId('user_id')->nullable();
+            $table->integer('total_passengers');
+            $table->enum('status', ['0', '1', '2', '3']);
             $table->timestamps();
         });
     }
@@ -22,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('countries');
+        Schema::dropIfExists('trip_assignments');
     }
 };

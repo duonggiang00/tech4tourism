@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Tour;
 use App\Http\Requests\StoreTourRequest;
 use App\Http\Requests\UpdateTourRequest;
+use App\Models\Policy;
 use App\Models\Service;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -35,9 +36,16 @@ class TourController extends Controller
 
     public function show(Tour $tour)
     {
+        $availablePolicies = Policy::all();
         $categories = Category::all();
         $availableServices = Service::all();
-        return Inertia::render('Tours/detail', compact('tour', 'categories','availableServices'));
+        $tour->load([
+            'images',
+            'schedules',
+            'tourServices.service.serviceType',
+            'tourPolicies.policy'
+        ]);
+        return Inertia::render('Tours/detail', compact('tour', 'categories','availableServices','availablePolicies'));
     }
 
     public function update(UpdateTourRequest $request, Tour $tour)
