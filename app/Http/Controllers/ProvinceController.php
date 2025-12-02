@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Province;
+use App\Models\Country;
 use App\Http\Requests\StoreProvinceRequest;
 use App\Http\Requests\UpdateProvinceRequest;
 use Inertia\Inertia;
@@ -14,9 +15,19 @@ class ProvinceController extends Controller
      */
     public function index()
     {
-        //
-        $provinces = Province::all();
-        return Inertia::render("Province/index", compact("provinces"));
+        $provinces = Province::with('country')->get();
+
+        return Inertia::render('Province/index', [
+            'provinces' => $provinces->map(fn($province) => [
+                'id' => $province->id,
+                'name' => $province->name,
+                'description' => $province->description,
+                'country_id' => $province->country ? [
+                    'id' => $province->country->id,
+                    'name' => $province->country->name,
+                ] : null,
+            ]),
+        ]);
     }
 
     /**
@@ -25,7 +36,10 @@ class ProvinceController extends Controller
     public function create()
     {
         //
-        return Inertia::render("Province/create");
+        $countries = Country::all();
+        return Inertia::render("Province/create", [
+            "countries" => $countries
+        ]);
     }
 
     /**
@@ -36,10 +50,9 @@ class ProvinceController extends Controller
         //
         $request->validate([
             "name" => "required|string|max:255",
-            "country_id"=> "required|string",
+            "country_id"=> "required|integer",
             "description" => "required|string",
         ]);
-
         Province::create($request->all());
         return redirect()->route("province.index")->with("message", "Thêm tỉnh thành mới thành công");
     }
@@ -58,8 +71,11 @@ class ProvinceController extends Controller
      */
     public function edit(Province $province)
     {
-        //
-        return Inertia::render("Province/edit", compact('province'));
+        $countries = Country::all();
+        return Inertia::render("Province/edit", [
+            "province" => $province,
+            "countries" => $countries
+        ]);
     }
 
     /**
@@ -70,7 +86,7 @@ class ProvinceController extends Controller
         //
         $request->validate([
             "name" => "required|string|max:255",
-            "country_id"=> "required|string",
+            "country_id"=> "required|integer",
             "description" => "required|string",
         ]);
 

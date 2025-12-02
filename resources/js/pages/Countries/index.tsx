@@ -22,7 +22,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-interface Country {
+export interface Country {
     id: number;
     name: string;
     code: string;
@@ -47,66 +47,123 @@ export default function Index() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Danh sách Quốc gia" />
-            <div className="m-4">
-                <div>
-                    {flash.message && (
-                        <Alert variant="default">
-                            <CircleCheck />
-                            <AlertTitle>Thông báo!</AlertTitle>
+
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+                {/* Alert */}
+                {flash.message && (
+                    <div className="mb-6">
+                        <Alert
+                            className="rounded-xl border border-green-300 bg-green-50 text-green-700 shadow-md"
+                            variant="default"
+                        >
+                            <CircleCheck className="mr-2" />
+                            <AlertTitle className="font-bold">
+                                Thông báo!
+                            </AlertTitle>
                             <AlertDescription>{flash.message}</AlertDescription>
                         </Alert>
-                    )}
+                    </div>
+                )}
+
+                {/* Create Button */}
+                <div className="mb-6">
+                    <Link href={countriesUrl.create()}>
+                        <Button className="rounded-xl bg-blue-600 px-5 py-2 text-white shadow-lg transition-all duration-200 hover:bg-blue-700">
+                            ➕ Tạo một quốc gia mới
+                        </Button>
+                    </Link>
                 </div>
-            </div>
-            <div className="m-4">
-                <Link href={countriesUrl.create()}>
-                    <Button>Tạo một quốc gia mới</Button>
-                </Link>
-            </div>
-            {countries.length > 0 && (
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>STT</TableHead>
-                            <TableHead>Tên Nước</TableHead>
-                            <TableHead>Mã</TableHead>
-                            <TableHead>Mô tả</TableHead>
-                            <TableHead>Hành Động</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {countries.map((country) => (
-                            <TableRow>
-                                <TableCell>{country.id}</TableCell>
-                                <TableCell>{country.name}</TableCell>
-                                <TableCell>{country.code}</TableCell>
-                                <TableCell>{country.description}</TableCell>
-                                <TableCell className="space-x-7 text-center">
-                                    <Link
-                                        href={countriesUrl.edit(country.id).url}
+
+                {/* Table */}
+                {countries.length > 0 && (
+                    <div className="overflow-hidden rounded-2xl border bg-white shadow-xl">
+                        <Table className="w-full">
+                            <TableHeader>
+                                <TableRow className="border-b bg-gradient-to-r from-gray-100 to-gray-200">
+                                    <TableHead className="px-5 py-4 text-sm font-bold text-gray-700 uppercase">
+                                        STT
+                                    </TableHead>
+                                    <TableHead className="px-5 py-4 text-sm font-bold text-gray-700 uppercase">
+                                        Tên Nước
+                                    </TableHead>
+                                    <TableHead className="px-5 py-4 text-sm font-bold text-gray-700 uppercase">
+                                        Mã
+                                    </TableHead>
+                                    <TableHead className="px-5 py-4 text-sm font-bold text-gray-700 uppercase">
+                                        Mô tả
+                                    </TableHead>
+                                    <TableHead className="px-5 py-4 text-center text-sm font-bold text-gray-700 uppercase">
+                                        Hành Động
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+
+                            <TableBody>
+                                {countries.map((country) => (
+                                    <TableRow
+                                        key={country.id}
+                                        className="border-b transition-all duration-150 hover:bg-gray-50"
                                     >
-                                        <Button className="bg-amber-500 hover:bg-amber-700">
-                                            Edit
-                                        </Button>
-                                    </Link>
-                                    <Button
-                                        disabled={processing}
-                                        onClick={() =>
-                                            handleDelete(
-                                                country.id,
-                                                country.name,
-                                            )
-                                        }
-                                        className="bg-red-500 hover:bg-red-700"
-                                    >
-                                        Delete
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            )}
+                                        <TableCell className="px-5 py-4 text-gray-800">
+                                            {country.id}
+                                        </TableCell>
+
+                                        <TableCell className="px-5 py-4 font-medium text-gray-900">
+                                            {country.name}
+                                        </TableCell>
+
+                                        <TableCell className="px-5 py-4 text-gray-700">
+                                            {country.code}
+                                        </TableCell>
+
+                                        <TableCell className="px-5 py-4 text-gray-700">
+                                            {country.description}
+                                        </TableCell>
+
+                                        <TableCell className="space-x-3 px-5 py-4 text-center">
+                                            <Link
+                                                href={
+                                                    countriesUrl.show(
+                                                        country.id,
+                                                    ).url
+                                                }
+                                            >
+                                                <Button className="bg-white text-blue-500 hover:bg-blue-500">
+                                                    👁️
+                                                </Button>
+                                            </Link>
+                                            <Link
+                                                href={
+                                                    countriesUrl.edit(
+                                                        country.id,
+                                                    ).url
+                                                }
+                                            >
+                                                <Button className="bg-white text-yellow-500 hover:bg-yellow-500">
+                                                    ✏️
+                                                </Button>
+                                            </Link>
+
+                                            <Button
+                                                disabled={processing}
+                                                onClick={() =>
+                                                    handleDelete(
+                                                        country.id,
+                                                        country.name,
+                                                    )
+                                                }
+                                                className="hover bg-white text-red-300 hover:bg-red-500"
+                                            >
+                                                🗑️
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                )}
+            </div>
         </AppLayout>
     );
 }

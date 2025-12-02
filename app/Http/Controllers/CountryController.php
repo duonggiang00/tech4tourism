@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Country;
+use App\Models\Province;
 use App\Http\Requests\StoreCountryRequest;
 use App\Http\Requests\UpdateCountryRequest;
 use Inertia\Inertia;
@@ -17,7 +18,8 @@ class CountryController extends Controller
     {
         //
         $countries = Country::all();
-        return Inertia::render('Countries/index',compact('countries'));
+        $provinces = Province::all();
+        return Inertia::render('Countries/index',compact('countries', "provinces"));
     }
 
     /**
@@ -36,6 +38,7 @@ class CountryController extends Controller
     {
         //
         // dd($request);
+
         Country::create($request->validated());
         return redirect()->route('countries.index')->with('message','Tạo quốc gia thành công');
        
@@ -47,6 +50,11 @@ class CountryController extends Controller
     public function show(Country $country)
     {
         //
+        $province = Province::all();
+        return Inertia::render("Countries/countryDetail", [
+            "country" => $country,
+            "province" => $province
+        ]);
     }
 
     /**
@@ -66,7 +74,6 @@ class CountryController extends Controller
         //
         $country->update($request->validated());
         return redirect()->route('countries.index')->with('message', 'Sửa quốc gia thành công');
-
     }
 
     /**

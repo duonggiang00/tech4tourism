@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Destination;
+use App\Models\Province;
+use App\Models\Country;
 use App\Http\Requests\StoreDestinationRequest;
 use App\Http\Requests\UpdateDestinationRequest;
 use Inertia\Inertia;
@@ -14,7 +16,10 @@ class DestinationController extends Controller
      */
     public function index()
     {
-        $destinations = Destination::all();
+        // Sử dụng Eager Loading để lấy quan hệ province và country của province đó
+        // Cú pháp 'province.country' nghĩa là: lấy province, sau đó lấy country thuộc province đó
+        $destinations = Destination::with(['province.country'])->get();
+
         return Inertia::render("Destinations/index", compact("destinations"));
     }
 
@@ -23,8 +28,13 @@ class DestinationController extends Controller
      */
     public function create()
     {
-        //
-        return Inertia::render("Destinations/create",[]);
+        $countries = Country::all();
+        $provinces = Province::all();
+
+        return Inertia::render("Destinations/create", [
+            "countries" => $countries,
+            "provinces" => $provinces, 
+        ]);
     }
 
     /**
@@ -32,16 +42,16 @@ class DestinationController extends Controller
      */
     public function store(StoreDestinationRequest $request)
     {
-        //
         $request->validate([
             "name" => "required|string|max:255",
-            "province_id" => "required",
+            "province_id" => "required|exists:provinces,id", // Nên validate id có tồn tại không
             "address" => "required|string",
             "status" => "required",
-            "description" => "string",
+            "description" => "nullable|string", // Description có thể null
         ]);
 
         Destination::create($request->all());
+        
         return redirect()->route("destination.index")->with("message", "Thêm mới thành công!");
     }
 
@@ -50,7 +60,9 @@ class DestinationController extends Controller
      */
     public function show(Destination $destination)
     {
-        //
+        // Load relationship nếu muốn xem chi tiết
+        $destination->load(['province.country']);
+        return Inertia::render("Destinations/show", compact("destination"));
     }
 
     /**
@@ -58,8 +70,18 @@ class DestinationController extends Controller
      */
     public function edit(Destination $destination)
     {
-        //
-        return Inertia::render("Destinations/edit", compact("destination"));
+        // Cần lấy danh sách quốc gia và tỉnh để hiển thị trong select box khi edit
+        $countries = Country::all();
+        $provinces = Province::all();
+        
+        // Load sẵn quan hệ để frontend có thể hiển thị dữ liệu hiện tại (nếu cần)
+        $destination->load(['province.country']);
+
+        return Inertia::render("Destinations/edit", [
+            "destination" => $destination,
+            "countries" => $countries,
+            "provinces" => $provinces
+        ]);
     }
 
     /**
@@ -67,21 +89,20 @@ class DestinationController extends Controller
      */
     public function update(UpdateDestinationRequest $request, Destination $destination)
     {
-        //
-              $request->validate([
+        $request->validate([
             "name" => "required|string|max:255",
-            "province_id" => "required",
+            "province_id" => "required|exists:provinces,id",
             "address" => "required|string",
             "status" => "required",
-            "description" => "string",
+            "description" => "nullable|string",
         ]);
 
         $destination->update([
             "name" => $request->input("name"),
-            "province_id" =>  $request->input("province_id"),
-            "address" =>  $request->input("address"),
+            "province_id" => $request->input("province_id"),
+            "address" => $request->input("address"),
             "status" => $request->input("status"),
-            "description" =>  $request->input("description"),
+            "description" => $request->input("description"),
         ]);
 
         return redirect()->route("destination.index")->with("message", "Sửa điểm đến thành công!");
@@ -92,7 +113,6 @@ class DestinationController extends Controller
      */
     public function destroy(Destination $destination)
     {
-        //
         $destination->delete();
         return redirect()->route("destination.index")->with("message", "Xoá điểm đến thành công");
     }
