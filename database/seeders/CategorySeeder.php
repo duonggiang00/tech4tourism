@@ -13,7 +13,30 @@ class CategorySeeder extends Seeder
      */
     public function run(): void
     {
-        //
-        Category::factory()->count(10)->create();
+        
+        $categories = [
+            [
+                'title' => 'Du lịch Quốc tế',
+                'description' => 'Các tour du lịch nước ngoài hấp dẫn.',
+            ],
+            [
+                'title' => 'Du lịch Nội địa',
+                'description' => 'Khám phá vẻ đẹp Việt Nam.',
+            ],
+            [
+                'title' => 'Tour tùy chọn',
+                'description' => 'Thiết kế tour theo yêu cầu riêng.',
+            ],
+        ];
+
+        foreach ($categories as $data) {
+         
+            Category::firstOrCreate(
+                ['title' => $data['title']],
+                [
+                    'description' => $data['description'],
+                ]
+            );
+        }
     }
 }

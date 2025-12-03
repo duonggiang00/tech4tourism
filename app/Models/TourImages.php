@@ -15,4 +15,8 @@ class TourImages extends Model
         'alt',
         'order',
     ];
+
+    public function tour(){
+        return $this->belongsTo(Tour::class);
+    }
 }

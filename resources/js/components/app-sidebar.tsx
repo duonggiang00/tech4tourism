@@ -14,11 +14,11 @@ import { dashboard } from '@/routes';
 import bookings from '@/routes/admin/bookings';
 import categories from '@/routes/categories';
 import countries from '@/routes/countries';
+import policies from '@/routes/policies';
 import providers from '@/routes/providers';
 import serviceAttributes from '@/routes/service-attributes';
 import serviceTypes from '@/routes/service-types';
 import services from '@/routes/services';
-import test from '@/routes/test';
 import tour from '@/routes/tours';
 import users from '@/routes/users';
 import { type NavItem, type SharedData } from '@/types';
@@ -31,7 +31,8 @@ import {
     Folder,
     LayoutGrid,
     ListIcon,
-    PlaneIcon,
+    PlaneTakeoff,
+    ScrollText,
     User2Icon,
     Users,
 } from 'lucide-react';
@@ -58,11 +59,6 @@ const mainNavItems: NavItem[] = [
         href: tour.index(),
         icon: LayoutGrid,
     },
-    {
-        title: 'Test',
-        href: test.index(),
-        icon: PlaneIcon,
-    },
 ];
 
 const footerNavItems: NavItem[] = [
@@ -82,6 +78,7 @@ export function AppSidebar() {
     const page = usePage<SharedData>();
     const currentUser = page.props.auth?.user;
     const isAdmin = currentUser?.role === 1;
+    const isHdv = currentUser?.role === 2;
 
     const mainNavItems: NavItem[] = [
         {
@@ -94,21 +91,13 @@ export function AppSidebar() {
             href: countries.index(),
             icon: LayoutGrid,
         },
-        {
-            title: 'Categories',
-            href: categories.index(),
-            icon: LayoutGrid,
-        },
+
         {
             title: 'Tour',
             href: tour.index(),
-            icon: LayoutGrid,
+            icon: PlaneTakeoff,
         },
-        {
-            title: 'Test',
-            href: test.index(),
-            icon: PlaneIcon,
-        },
+
         {
             title: 'Service_Types', //quản lý loại hình dịch vụ
             href: serviceTypes.index(),
@@ -129,12 +118,17 @@ export function AppSidebar() {
             href: serviceAttributes.index(),
             icon: BananaIcon,
         },
+        {
+            title: 'Chính sách',
+            href: policies.index(),
+            icon: ScrollText,
+        },
 
         // Chỉ hiển thị menu Users cho Admin
         ...(isAdmin
             ? [
                   {
-                      title: 'Quản lý người dùng',
+                      title: 'User Management',
                       href: users.index(),
                       icon: Users,
                   },
@@ -143,7 +137,7 @@ export function AppSidebar() {
         ...(isAdmin
             ? [
                   {
-                      title: 'Quản lý Bookings',
+                      title: 'Bookings Management',
                       href: bookings.index(),
                       icon: Calendar,
                   },

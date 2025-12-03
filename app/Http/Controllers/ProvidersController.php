@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Providers;
+use App\Models\Provider;
 use App\Http\Requests\StoreProvidersRequest;
 use App\Http\Requests\UpdateProvidersRequest;
 use Inertia\Inertia;
@@ -14,7 +14,7 @@ class ProvidersController extends Controller
      */
     public function index()
     {
-        $providers = Providers::all();
+        $providers = Provider::all();
         // dd($providers);
         return Inertia::render('Providers/index', compact('providers'));
     }
@@ -24,7 +24,7 @@ class ProvidersController extends Controller
      */
     public function store(StoreProvidersRequest $request)
     {
-        Providers::create($request->validated());
+        Provider::create($request->validated());
 
         return redirect()
             ->route('providers.index')
@@ -34,7 +34,7 @@ class ProvidersController extends Controller
     /**
      * Hiển thị chi tiết nhà cung cấp.
      */
-    public function show(Providers $provider)
+    public function show(Provider $provider)
     {
         return Inertia::render('Providers/show', [
             'provider' => $provider,
@@ -44,7 +44,7 @@ class ProvidersController extends Controller
     /**
      * Cập nhật thông tin nhà cung cấp.
      */
-    public function update(UpdateProvidersRequest $request, Providers $provider)
+    public function update(UpdateProvidersRequest $request, Provider $provider)
     {
         $provider->update($request->validated());
 
@@ -56,7 +56,7 @@ class ProvidersController extends Controller
     /**
      * Xóa nhà cung cấp.
      */
-    public function destroy(Providers $provider)
+    public function destroy(Provider $provider)
     {
         $provider->delete();
 

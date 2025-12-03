@@ -29,18 +29,25 @@ class DatabaseSeeder extends Seeder
         // );
         $this->call([
             UserSeeder::class,
-            CountrySeeder::class,
-            ProvinceSeeder::class,
-            DestinationSeeder::class,
+            // CountrySeeder::class,
+            // ProvinceSeeder::class,
+            // DestinationSeeder::class,
+            LocationSeeder::class,
+            ServiceSeeder::class,
             CategorySeeder::class,
+            PolicySeeder::class,
             TourSeeder::class,
-            TestSeeder::class,
-            TourImageSeeder::class,
+            // TourImageSeeder::class,
             BookingSeeder::class,
-            ServiceTypesSeeder::class,
-            ProvidersSeeder::class,
-            ServicesSeeder::class,
-            ServiceAttributesSeeder::class,
+            // ServiceTypeSeeder::class,
+            // ProviderSeeder::class,
+            // ServiceAttributeSeeder::class,
+            // TourServiceSeeder::class,
+            // TourPolicySeeder::class,
+            // TripAssignmentSeeder::class,
+            // TripNotesSeeder::class,
+            // TripCheckInSeeder::class,
+            // CheckInDetailSeeder::class
         ]);
     }
 }

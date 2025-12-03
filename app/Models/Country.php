@@ -12,4 +12,10 @@ class Country extends Model
         'code',
         'description',
     ];
+    
+    public function provinces(){
+        return $this->hasMany(Province::class);
+    }
+
+
 }

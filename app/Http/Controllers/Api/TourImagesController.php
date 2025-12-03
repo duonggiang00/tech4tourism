@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTourImagesRequest;
 use App\Models\Tour;
 use App\Models\TourImages;
-use Illuminate\Http\Request;
+use Illuminate\Http\Request; // Vẫn giữ Request cho update/destroy nếu cần, nhưng store dùng StoreTourImagesRequest
 use Illuminate\Support\Facades\Storage;
 
 class TourImagesController extends Controller
@@ -16,7 +16,6 @@ class TourImagesController extends Controller
      */
     public function index($tourId)
     {
-        // Sắp xếp theo order để hiển thị đúng thứ tự
         $images = TourImages::where('tour_id', $tourId)
             ->orderBy('order', 'asc')
             ->get();
@@ -29,42 +28,30 @@ class TourImagesController extends Controller
      */
     public function store(StoreTourImagesRequest $request, $tourId)
     {
-        // 1. Lấy dữ liệu đã validate
-        $data = $request->validated();
+        // Dữ liệu đã được validate tự động bởi StoreTourImagesRequest
+        // Không cần gọi $request->validate() ở đây nữa.
 
-        // 2. Xử lý upload file
-        if ($request->hasFile('image')) {
-            // Lưu vào thư mục 'public/tour_gallery'
-            $path = $request->file('image')->store('tour_gallery', 'public');
+        $uploadedImages = [];
 
-            // Gán đường dẫn vào key 'img_url' để khớp với Database
-            $data['img_url'] = $path;
+        if ($request->hasFile('images')) {
+            $files = $request->file('images');
+
+            foreach ($files as $file) {
+                // 1. Lưu file vào storage
+                $path = $file->store('tour_gallery', 'public');
+
+                // 2. Tạo bản ghi cho từng ảnh
+                $uploadedImages[] = TourImages::create([
+                    'tour_id' => $tourId,
+                    'img_url' => $path,
+                    // Lấy tên file gốc làm alt text mặc định
+                    'alt' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+                    'order' => 0,
+                ]);
+            }
         }
 
-        // 3. Gán tour_id lấy từ URL
-        $data['tour_id'] = $tourId;
-
-        // 4. Tạo bản ghi trong DB
-        $tourImage = TourImages::create($data);
-
-
-        return redirect()->back()->with('message', 'Thêm hình ảnh tour thành công!');
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(TourImages $tourImages)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, TourImages $tourImages)
-    {
-        //
+        return redirect()->back()->with('message', 'Đã thêm ' . count($uploadedImages) . ' hình ảnh thành công!');
     }
 
     /**
@@ -72,19 +59,18 @@ class TourImagesController extends Controller
      */
     public function destroy(Tour $tour, TourImages $image)
     {
-        // 1. (Tuỳ chọn) Kiểm tra xem ảnh này có thuộc về Tour đó không để bảo mật
+        // 1. Kiểm tra sở hữu
         if ($image->tour_id !== $tour->id) {
             return response()->json(['message' => 'Ảnh không thuộc về tour này.'], 403);
         }
 
         try {
-            // 2. Xóa file ảnh vật lý trong thư mục storage (nếu tồn tại)
-            // Giả sử bạn lưu trong disk 'public' và đường dẫn trong DB là 'tours/filename.jpg'
+            // 2. Xóa file vật lý
             if ($image->img_url && Storage::disk('public')->exists($image->img_url)) {
                 Storage::disk('public')->delete($image->img_url);
             }
 
-            // 3. Xóa bản ghi trong database
+            // 3. Xóa DB record
             $image->delete();
 
             return response()->json([
