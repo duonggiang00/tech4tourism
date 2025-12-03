@@ -15,7 +15,8 @@ class TourScheduleController extends Controller
      */
     public function index($tourId)
     {
-        $schedules = TourSchedule::where('tour_id', $tourId)
+        $schedules = TourSchedule::with('destination')
+        ->where('tour_id', $tourId)
             ->orderBy('date', 'asc')
             ->get();
 

@@ -26,11 +26,15 @@ class Service extends Model
     ];
     public function serviceType()
     {
-        return $this->belongsTo(ServiceType::class, 'service_type_id');
+        return $this->belongsTo(ServiceType::class);
     }
 
     public function provider()
     {
-        return $this->belongsTo(Provider::class, 'id_provider');
+        return $this->belongsTo(Provider::class);
+    }
+
+    public function tourService(){
+        return $this->hasMany(TourService::class);
     }
 }

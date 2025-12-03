@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('unit',50);
             $table->decimal('price_unit', 12, 2);
             $table->decimal('price_total', 12, 2);
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

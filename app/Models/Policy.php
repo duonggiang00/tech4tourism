@@ -9,4 +9,12 @@ class Policy extends Model
 {
     /** @use HasFactory<\Database\Factories\PolicyFactory> */
     use HasFactory;
+    protected $fillable = [
+        'title',
+        'content'
+    ];
+
+    public function tourPolicy(){
+        return $this->hasMany(TourPolicy::class);
+    }
 }

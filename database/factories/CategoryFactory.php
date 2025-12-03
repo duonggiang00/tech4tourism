@@ -1,28 +1,46 @@
 <?php
 
-namespace Database\Factories;
+namespace Database\Seeders;
 
 use App\Models\Category;
-use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Category>
- */
-class CategoryFactory extends Factory
+class CategorySeeder extends Seeder
 {
     /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
+     * Run the database seeds.
      */
-
-    protected $model = Category::class;
-    public function definition(): array
+    public function run(): void
     {
-        return [
-            //
-            'title' => fake()->unique()->words(4,true),
-            'description'=>fake()->sentence(2,true)
+        // Danh sách danh mục cần tạo
+        $categories = [
+            [
+                'title' => 'Du lịch Quốc tế',
+                'description' => 'Các tour du lịch nước ngoài hấp dẫn.',
+                'status' => '1' // 1: Hoạt động
+            ],
+            [
+                'title' => 'Du lịch Nội địa',
+                'description' => 'Khám phá vẻ đẹp Việt Nam.',
+                'status' => '1'
+            ],
+            [
+                'title' => 'Tour tùy chọn',
+                'description' => 'Thiết kế tour theo yêu cầu riêng.',
+                'status' => '1'
+            ],
         ];
+
+        foreach ($categories as $data) {
+            // Kiểm tra theo 'title', nếu chưa có thì tạo mới
+            Category::firstOrCreate(
+                ['title' => $data['title']], // Điều kiện tìm kiếm
+                [
+                    'description' => $data['description'],
+                    'status' => $data['status']
+                ]
+            );
+        }
     }
 }

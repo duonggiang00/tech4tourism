@@ -1,39 +1,56 @@
-import { Service, TourDetailProps, TourSchedule, TourService } from "@/app";
-import { useTourData } from "@/hooks/useTourData";
-import AppLayout from "@/layouts/app-layout";
-import tourUrl from "@/routes/tours";
-import { BreadcrumbItem } from "@/types";
-import { Head } from "@inertiajs/react";
-import { useMemo, useState } from "react";
-import  TourHeader  from "./Partials/TourHeader";
-import  TourGallery  from "./Partials/TourGallery";
-import  TourInfoCards  from "./Partials/TourInfoCards";
-import  TourScheduleList  from "./Partials/TourScheduleList";
-import { TourFormDialog } from "./dialog";
-import { TourImageDialog } from "./tourImage";
-import { FormTourScheduleDialog } from "./tourSchedule";
-import { ConfirmDeleteDialog } from "@/components/common/ConfirmDeleteDialog";
-import { TourServiceDialog } from "./tourService";
-import TourServiceList from "./Partials/TourServiceList";
 
+import { ConfirmDeleteDialog } from '@/components/common/ConfirmDeleteDialog';
+import { useTourData } from '@/hooks/useTourData';
+import AppLayout from '@/layouts/app-layout';
+import tourUrl from '@/routes/tours';
+import { BreadcrumbItem, Destination, Policy, Service, TourDetailProps, TourPolicy, TourSchedule, TourService, User } from '@/types';
+import { Head } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
+import TourGallery from './Partials/TourGallery';
+import GuideList from './Partials/TourGuideList';
+import TourHeader from './Partials/TourHeader';
+import TourInfoCards from './Partials/TourInfoCards';
+import TourPolicyList from './Partials/TourPolicyList';
+import TourScheduleList from './Partials/TourScheduleList';
+import TourServiceList from './Partials/TourServiceList';
+import { TourFormDialog } from './dialog';
+import { TourImageDialog } from './tourImage';
+import { TourPolicyDialog } from './tourPolicy';
+import { FormTourScheduleDialog } from './tourSchedule';
+import { TourServiceDialog } from './tourService';
+import { GuideAssignmentDialog } from './tripAssignment';
 
 interface ExtendedProps extends TourDetailProps {
-    availableServices: Service[]; // <--- Đây là Master Data (danh sách để chọn)
+    availableServices: Service[];
+    availablePolicies: Policy[];
+    destinations: Destination[];
+    guides: User[];
 }
-export default function TourDetail({ tour, categories, availableServices }: ExtendedProps) {
-    // --- A. SỬ DỤNG CUSTOM HOOK ---
-    // Lấy toàn bộ dữ liệu và hàm xử lý từ hook
+export default function TourDetail({
+    tour,
+    categories,
+    availableServices,
+    availablePolicies,
+    destinations,
+    guides
+}: ExtendedProps) {
+    // --- A. SỬ DỤNG CUSTOM HOOK (SỬA LẠI) ---
+    // Truyền cả object tour vào hook để làm dữ liệu khởi tạo
     const {
         galleryImages,
         schedules,
-        loading,
+        assignments,
         tourServices,
-        refreshData,
+        tourPolicies,
+        loading,
+        refreshData, // Hàm này giờ gọi router.reload()
         deleteService,
         deleteImage,
         deleteSchedule,
         deleteTour,
-    } = useTourData(tour.id);
+        deletePolicy,
+        deleteAssignment,
+    } = useTourData(tour);
 
     // --- B. UI STATE (Chỉ giữ lại state điều khiển Dialog) ---
     const [dialogs, setDialogs] = useState({
@@ -41,7 +58,17 @@ export default function TourDetail({ tour, categories, availableServices }: Exte
         deleteTour: false,
         addImage: false,
         addSchedule: false,
+        addPolicy: false,
+        addGuide: false,
     });
+
+    console.log(tour);
+
+    // State item đang chọn để sửa/xóa
+    const [selectedPolicy, setSelectedPolicy] = useState<{
+        data: TourPolicy | null;
+        mode: 'edit' | 'delete';
+    } | null>(null);
 
     // State xác định đối tượng đang được chọn để sửa/xóa
     const [selectedSchedule, setSelectedSchedule] = useState<{
@@ -49,6 +76,9 @@ export default function TourDetail({ tour, categories, availableServices }: Exte
         mode: 'edit' | 'delete';
     } | null>(null);
 
+    const [deletingAssignmentId, setDeletingAssignmentId] = useState<
+        number | null
+    >(null);
     // State quản lý Dialog Service
     const [showServiceDialog, setShowServiceDialog] = useState(false);
     const [editingService, setEditingService] = useState<TourService | null>(
@@ -130,6 +160,18 @@ export default function TourDetail({ tour, categories, availableServices }: Exte
                                 }
                                 onDeleteImage={setDeleteImageId}
                             />
+                            <TourServiceList
+                                tourServices={tourServices}
+                                onAdd={() => {
+                                    setEditingService(null);
+                                    setShowServiceDialog(true);
+                                }}
+                                onEdit={(item) => {
+                                    setEditingService(item);
+                                    setShowServiceDialog(true);
+                                }}
+                                onDelete={(item) => setDeletingService(item)}
+                            />
                         </div>
 
                         {/* Right Column */}
@@ -152,20 +194,22 @@ export default function TourDetail({ tour, categories, availableServices }: Exte
                                     })
                                 }
                             />
-                        </div>
 
-                        <div className="space-y-6 lg:col-span-2">
-                            <TourServiceList
-                                tourServices={tourServices}
-                                onAdd={() => {
-                                    setEditingService(null);
-                                    setShowServiceDialog(true);
-                                }}
-                                onEdit={(item) => {
-                                    setEditingService(item);
-                                    setShowServiceDialog(true);
-                                }}
-                                onDelete={(item) => setDeletingService(item)}
+                            <GuideList
+                                assignments={assignments}
+                                onAdd={() => toggleDialog('addGuide', true)}
+                                onDelete={(id) => setDeletingAssignmentId(id)}
+                            />
+
+                            <TourPolicyList
+                                tourPolicies={tourPolicies}
+                                onAdd={() => toggleDialog('addPolicy', true)}
+                                onDelete={(item) =>
+                                    setSelectedPolicy({
+                                        data: item,
+                                        mode: 'delete',
+                                    })
+                                }
                             />
                         </div>
                     </div>
@@ -180,7 +224,7 @@ export default function TourDetail({ tour, categories, availableServices }: Exte
                     initialData={tour}
                     title="Chỉnh sửa Tour"
                     categories={categories}
-                    // Không cần onSuccess ở đây vì sửa main info thường reload trang hoặc Inertia tự update props
+                    destinations={destinations}
                 />
 
                 {/* Add Images */}
@@ -188,7 +232,7 @@ export default function TourDetail({ tour, categories, availableServices }: Exte
                     open={dialogs.addImage}
                     onOpenChange={(v) => toggleDialog('addImage', v)}
                     tourId={tour.id}
-                    onSuccess={refreshData} // Gọi hàm refresh từ hook sau khi upload xong
+                    onSuccess={refreshData}
                 />
 
                 {/* Add/Edit Schedule */}
@@ -200,8 +244,30 @@ export default function TourDetail({ tour, categories, availableServices }: Exte
                         if (!val) setEditingService(null);
                     }}
                     tourId={tour.id}
-                    availableServices={availableServices} // Truyền danh sách gốc vào đây
-                    editingTourService={editingService} // Truyền item đang sửa vào đây
+                    availableServices={availableServices}
+                    editingTourService={editingService}
+                    onSuccess={refreshData}
+                />
+
+                <TourPolicyDialog
+                    open={
+                        dialogs.addPolicy ||
+                        (!!selectedPolicy?.data &&
+                            selectedPolicy.mode === 'edit')
+                    }
+                    onOpenChange={(v) => {
+                        if (!v) {
+                            toggleDialog('addPolicy', false);
+                            setSelectedPolicy(null);
+                        }
+                    }}
+                    tourId={tour.id}
+                    availablePolicies={availablePolicies}
+                    editingTourPolicy={
+                        selectedPolicy?.mode === 'edit'
+                            ? selectedPolicy.data
+                            : null
+                    }
                     onSuccess={refreshData}
                 />
 
@@ -224,9 +290,52 @@ export default function TourDetail({ tour, categories, availableServices }: Exte
                             : undefined
                     }
                     onSuccess={refreshData} // Refresh lại list sau khi thêm/sửa
+                    existingSchedules={schedules}
+                    tour={tour}
+                    allDestinations={destinations}
+                />
+                {/* Dialog thêm Guide */}
+                <GuideAssignmentDialog
+                    open={dialogs.addGuide}
+                    onOpenChange={(v) => toggleDialog('addGuide', v)}
+                    tourId={tour.id}
+                    allUsers={guides} // Truyền danh sách user vào
+                    currentAssignments={assignments}
+                    onSuccess={refreshData}
                 />
 
                 {/* --- CONFIRM DIALOGS --- */}
+
+                <ConfirmDeleteDialog
+                    open={!!deletingAssignmentId}
+                    onOpenChange={(v) => !v && setDeletingAssignmentId(null)}
+                    onConfirm={() => {
+                        if (deletingAssignmentId) {
+                            deleteAssignment(deletingAssignmentId, () =>
+                                setDeletingAssignmentId(null),
+                            );
+                        }
+                    }}
+                    title="Xóa hướng dẫn viên?"
+                    description="Bạn có chắc chắn muốn gỡ hướng dẫn viên này khỏi tour?"
+                    loading={loading}
+                />
+
+                {/* Confirm Delete Policy */}
+                <ConfirmDeleteDialog
+                    open={!!(selectedPolicy?.mode === 'delete')}
+                    onOpenChange={(v) => !v && setSelectedPolicy(null)}
+                    onConfirm={() => {
+                        if (selectedPolicy?.data) {
+                            deletePolicy(selectedPolicy.data.id, () =>
+                                setSelectedPolicy(null),
+                            );
+                        }
+                    }}
+                    title="Xóa chính sách?"
+                    description="Bạn có chắc chắn muốn xóa chính sách này khỏi tour?"
+                    loading={loading}
+                />
 
                 {/* 1. Delete Image */}
                 <ConfirmDeleteDialog

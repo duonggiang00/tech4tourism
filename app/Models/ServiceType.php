@@ -17,4 +17,7 @@ class ServiceType extends Model
         'description',
         'order',
     ];
+    public function service(){
+        return $this->hasMany(Service::class);
+    }
 }

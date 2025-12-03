@@ -38,15 +38,15 @@ class BookingFactory extends Factory
         return [
             'code' => 'BK-' . strtoupper(Str::random(6)),
             'tour_id' => $tour->id,
-            'date_start' => $dateStart,
-            'date_end' => $dateEnd,
+            // 'date_start' => $dateStart,
+            // 'date_end' => $dateEnd,
             'client_name' => fake()->name(),
             'client_phone' => fake()->phoneNumber(),
             'client_email' => fake()->safeEmail(),
             'count_adult' => $countAdult,
             'count_children' => $countChildren,
             'final_price' => $finalPrice,
-            'left_payment' => $leftPayment,
+            // 'left_payment' => $leftPayment,
             'status' => fake()->numberBetween(0, 3), // 0: Pending, 1: Confirmed, 2: Cancelled, 3: Completed
         ];
     }

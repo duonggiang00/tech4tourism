@@ -13,4 +13,7 @@ class Category extends Model
         'title',
         'description'
     ];
+    public function tour(){
+        return $this->hasMany(Tour::class);
+    }
 }

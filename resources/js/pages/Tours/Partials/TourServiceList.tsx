@@ -11,7 +11,6 @@ import {
     Package,
     Plus,
     StickyNote,
-    Tag,
     Trash2,
 } from 'lucide-react';
 
@@ -73,73 +72,41 @@ export default function TourServiceList({
 
                                 <Separator />
 
-                                {/* Nội dung chi tiết */}
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                    {/* Cột trái: Thông tin mô tả */}
-                                    <div className="space-y-3 text-sm">
-                                        {/* Nội dung gốc từ Service */}
-                                        <div className="flex gap-2">
-                                            <FileText className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
-                                            <div>
-                                                <span className="font-medium text-gray-600">
-                                                    Mô tả dịch vụ:
-                                                </span>
-                                                <p className="mt-1 line-clamp-2 text-gray-500">
-                                                    {item.service
-                                                        ?.description ||
-                                                        'Không có mô tả gốc.'}
-                                                </p>
-                                            </div>
-                                        </div>
+                                {/* Nội dung chi tiết - Xếp dọc 1 cột */}
+                                <div className="space-y-3 text-sm">
+                                    {/* 1. Số lượng */}
+                                    <div className="flex items-center gap-2 text-gray-700">
+                                        <Box className="h-4 w-4 text-gray-500" />
+                                        <span className="font-medium">
+                                            Số lượng: {item.quantity}{' '}
+                                            {item.unit}
+                                        </span>
+                                    </div>
 
-                                        {/* Ghi chú từ TourService */}
-                                        <div className="flex gap-2">
-                                            <StickyNote className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                                            <div className="w-full rounded-md bg-amber-50 p-2">
-                                                <span className="block text-xs font-semibold text-amber-700">
-                                                    Ghi chú cho tour:
-                                                </span>
-                                                <p className="text-gray-700">
-                                                    {item.description ||
-                                                        'Không có ghi chú.'}
-                                                </p>
-                                            </div>
+                                    {/* 2. Mô tả */}
+                                    <div className="flex gap-2">
+                                        <FileText className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+                                        <div>
+                                            <span className="mr-2 font-medium text-gray-600">
+                                                Mô tả:
+                                            </span>
+                                            <span className="text-gray-500">
+                                                {item.service?.description ||
+                                                    'Không có mô tả.'}
+                                            </span>
                                         </div>
                                     </div>
 
-                                    {/* Cột phải: Số liệu tài chính */}
-                                    <div className="flex flex-col justify-center space-y-2 rounded-md bg-gray-50 p-3 text-sm">
-                                        <div className="flex justify-between">
-                                            <span className="flex items-center gap-1 text-gray-500">
-                                                <Box className="h-3.5 w-3.5" />{' '}
-                                                Số lượng:
+                                    {/* 3. Ghi chú (nếu có) */}
+                                    <div className="flex gap-2">
+                                        <StickyNote className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                                        <div className="w-full">
+                                            <span className="mr-2 font-medium text-gray-600">
+                                                Ghi chú:
                                             </span>
-                                            <span className="font-medium">
-                                                {item.quantity} {item.unit}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="flex items-center gap-1 text-gray-500">
-                                                <Tag className="h-3.5 w-3.5" />{' '}
-                                                Đơn giá:
-                                            </span>
-                                            <span className="font-medium">
-                                                {new Intl.NumberFormat(
-                                                    'en-US',
-                                                ).format(item.price_unit)}{' '}
-                                                $
-                                            </span>
-                                        </div>
-                                        <Separator className="my-1" />
-                                        <div className="flex justify-between text-base">
-                                            <span className="font-semibold text-gray-700">
-                                                Thành tiền:
-                                            </span>
-                                            <span className="font-bold text-green-600">
-                                                {new Intl.NumberFormat(
-                                                    'en-US',
-                                                ).format(item.price_total)}{' '}
-                                                $
+                                            <span className="text-gray-700 italic">
+                                                {item.description ||
+                                                    'Không có ghi chú.'}
                                             </span>
                                         </div>
                                     </div>
