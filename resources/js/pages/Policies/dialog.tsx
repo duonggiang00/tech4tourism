@@ -46,7 +46,7 @@ export function PolicyFormDialog({ open, onOpenChange, policy }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-
+        console.log(data);
         if (policy) {
             // --- UPDATE ---
             put(policyUrl.update(policy.id).url, {

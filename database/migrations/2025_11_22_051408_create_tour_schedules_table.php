@@ -14,12 +14,10 @@ return new class extends Migration
         Schema::create('tour_schedules', function (Blueprint $table) {
             $table->id();
             $table->foreignId('tour_id');
+            $table->foreignId('destination_id');
             $table->string('name');
             $table->text('description');
             $table->integer('date');
-            $table->boolean('breakfast');
-            $table->boolean('lunch');
-            $table->boolean('dinner');
             $table->timestamps();
         });
     }

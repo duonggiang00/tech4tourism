@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Destinations;
 use App\Models\Tour;
 use App\Models\TourSchedule;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -23,6 +24,7 @@ class TourScheduleFactory extends Factory
         return [
             //
             'tour_id' => $tourId,
+            'destination_id'=> Destinations::inRandomOrder()->first()->id,
             'name'=>fake()->sentence(2),
             'description'=>fake()->paragraph(2),
             'date'=>fake()->numberBetween(1,5),

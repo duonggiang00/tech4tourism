@@ -18,7 +18,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { PolicyFormDialog } from './dialog';
 
-
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Quản lý Chính sách',
@@ -93,9 +92,7 @@ export default function Index({ policies }: Props) {
                                     <TableHead className="min-w-[200px]">
                                         Tiêu đề
                                     </TableHead>
-                                    <TableHead className="hidden md:table-cell">
-                                        Nội dung tóm tắt
-                                    </TableHead>
+
                                     <TableHead className="w-[150px] text-center">
                                         Hành động
                                     </TableHead>
@@ -131,15 +128,6 @@ export default function Index({ policies }: Props) {
                                                         {policy.title}
                                                     </Link>
                                                 </div>
-                                            </TableCell>
-
-                                            <TableCell className="hidden max-w-[400px] text-gray-600 md:table-cell">
-                                                <p
-                                                    className="truncate"
-                                                    title={policy.content}
-                                                >
-                                                    {policy.content}
-                                                </p>
                                             </TableCell>
 
                                             <TableCell>

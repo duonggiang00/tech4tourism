@@ -2,32 +2,45 @@
 
 namespace Database\Seeders;
 
-use App\Models\Booking;
+use App\Models\Tour;
+use App\Models\User;
 use App\Models\TripAssignment;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class TripAssignmentSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Lấy tất cả các booking đang có trong DB
-        $bookings = Booking::all();
+        // 1. Lấy tất cả Tour hiện có
+        $tours = Tour::all();
 
-        foreach ($bookings as $booking) {
-            // Tạo TripAssignment gắn liền với booking đó
-            TripAssignment::factory()->create([
-                'booking_id' => $booking->id,
+        // 2. Lấy danh sách User (giả định tất cả user đều có thể làm Guide)
+        // Nếu bạn có phân quyền, hãy thêm ->where('role', 'guide')
+        $users = User::all();
 
-                // Tự động tính tổng hành khách dựa trên dữ liệu booking
-                'total_passengers' => $booking->count_adult + $booking->count_children,
+        // Kiểm tra data đầu vào để tránh lỗi
+        if ($tours->isEmpty() || $users->isEmpty()) {
+            $this->command->warn('Cần có Tours và Users trước khi chạy TripAssignmentSeeder!');
+            return;
+        }
 
-                // Ép kiểu sang string vì cột status là enum('0','1'...)
-                'status' => (string) fake()->numberBetween(0, 3),
-            ]);
+        // 3. Duyệt qua từng Tour và gán hướng dẫn viên
+        foreach ($tours as $tour) {
+
+            // Kiểm tra xem tour này đã được gán chưa (tránh trùng lặp nếu chạy seeder nhiều lần)
+            $isAssigned = TripAssignment::where('tour_id', $tour->id)->exists();
+
+            if (!$isAssigned) {
+                TripAssignment::factory()->create([
+                    'tour_id' => $tour->id,
+
+                    // Chọn ngẫu nhiên 1 người từ danh sách guides
+                    'user_id' => $users->random()->id,
+
+                    // Bạn có thể random status, hoặc mặc định là '0' (Mới phân công)
+                    'status' => fake()->randomElement(['0', '1', '2']),
+                ]);
+            }
         }
     }
 }

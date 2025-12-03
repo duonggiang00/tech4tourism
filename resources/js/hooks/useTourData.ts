@@ -1,4 +1,4 @@
-import { Tour, TourImage, TourPolicy, TourSchedule, TourService } from '@/app';
+import { Tour, TourImage, TourPolicy, TourSchedule, TourService, TripAssignment } from '@/app';
 import tourUrl from '@/routes/tours';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
@@ -23,6 +23,12 @@ export const useTourData = (initialTourData: Tour) => {
         // @ts-ignore: Laravel trả về snake_case
         initialTourData.tour_services || initialTourData.tourServices || [],
     );
+    const [assignments, setAssignments] = useState<TripAssignment[]>(
+        // @ts-ignore: Laravel trả về snake_case
+        initialTourData.trip_assignments ||
+            initialTourData.tripAssignments ||
+            [],
+    );
 
     const [tourPolicies, setTourPolicies] = useState<TourPolicy[]>(
         // @ts-ignore: Laravel trả về snake_case
@@ -44,6 +50,12 @@ export const useTourData = (initialTourData: Tour) => {
         setTourPolicies(
             initialTourData.tour_policies ||
                 initialTourData.tour_policies ||
+                [],
+        );
+        // @ts-ignore
+        setAssignments(
+            initialTourData.trip_assignments ||
+                initialTourData.tripAssignments ||
                 [],
         );
     }, [initialTourData]);
@@ -157,11 +169,32 @@ export const useTourData = (initialTourData: Tour) => {
         });
     };
 
+    const deleteAssignment = async (id: number, onSuccess?: () => void) => {
+        setLoading(true);
+        try {
+            await axios.delete(
+                `/tours/${initialTourData.id}/assignments/${id}`,
+            );
+
+            // Optimistic Update
+            setAssignments((prev) => prev.filter((a) => a.id !== id));
+
+            toast.success('Đã xóa hướng dẫn viên khỏi tour');
+            if (onSuccess) onSuccess();
+        } catch (error) {
+            console.error(error);
+            toast.error('Lỗi khi xóa hướng dẫn viên');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return {
         galleryImages,
         schedules,
         tourServices,
         tourPolicies,
+        assignments,
         loading,
         refreshData, // Trả về hàm reload của Inertia
         deleteImage,
@@ -169,5 +202,6 @@ export const useTourData = (initialTourData: Tour) => {
         deleteService,
         deleteTour,
         deletePolicy,
+        deleteAssignment,
     };
 };

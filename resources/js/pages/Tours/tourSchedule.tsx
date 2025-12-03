@@ -1,3 +1,4 @@
+import { Destination, Tour } from '@/app'; // Đảm bảo import đúng Types
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -9,9 +10,16 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 interface Props {
@@ -20,18 +28,23 @@ interface Props {
     tourId: number;
     schedule?: any;
     onSuccess?: () => void;
+    existingSchedules?: any[];
+
+    // Props nhận dữ liệu từ cha
+    tour: Tour;
+    allDestinations: Destination[];
 }
 
 interface ScheduleFormState {
     name: string;
     description: string;
+    destination_id: string; // Lưu ID địa điểm (dạng string để tương thích Select)
     date: number | string;
     breakfast: boolean;
     lunch: boolean;
     dinner: boolean;
 }
 
-// Định nghĩa kiểu cho object chứa lỗi
 type FormErrors = Partial<Record<keyof ScheduleFormState, string>>;
 
 export function FormTourScheduleDialog({
@@ -40,82 +53,128 @@ export function FormTourScheduleDialog({
     tourId,
     schedule,
     onSuccess,
+    existingSchedules = [],
+    tour,
+    allDestinations = [],
 }: Props) {
     const [loading, setLoading] = useState(false);
 
+    // --- 1. LOGIC LỌC ĐỊA ĐIỂM CÙNG TỈNH ---
+    const availableLocations = useMemo(() => {
+        // Tìm địa điểm chính (gốc) của Tour để biết nó thuộc tỉnh nào
+        // Lưu ý: tour.destination_id là ID địa điểm chính
+        const mainDestination = allDestinations.find(
+            (d) => d.id === tour.destination_id,
+        );
+
+        // Nếu không tìm thấy địa điểm gốc, trả về rỗng (hoặc trả về tất cả nếu muốn)
+        if (!mainDestination) return [];
+
+        // Lọc các địa điểm có cùng id_provinces với địa điểm chính
+        return allDestinations.filter(
+            (d) => d.id_provinces === mainDestination.id_provinces,
+        );
+    }, [tour.destination_id, allDestinations]);
+
+    // --- 2. STATE FORM ---
     const [form, setForm] = useState<ScheduleFormState>({
         name: '',
         description: '',
+        destination_id: '', // Mặc định rỗng
         date: 1,
         breakfast: false,
         lunch: true,
         dinner: true,
     });
 
-    // State lưu lỗi validation
     const [errors, setErrors] = useState<FormErrors>({});
 
+    // --- 3. INIT DATA KHI MỞ DIALOG ---
     useEffect(() => {
         if (open) {
-            // Reset lỗi khi mở dialog
-            setErrors({});
+            setErrors({}); // Reset lỗi
 
             if (schedule) {
+                // Mode: EDIT
                 setForm({
                     name: schedule.name,
                     description: schedule.description || '',
+                    // Chuyển ID sang string cho Select
+                    destination_id: schedule.destination_id
+                        ? String(schedule.destination_id)
+                        : '',
                     date: schedule.date,
                     breakfast: Boolean(schedule.breakfast),
                     lunch: Boolean(schedule.lunch),
                     dinner: Boolean(schedule.dinner),
                 });
             } else {
+                // Mode: CREATE
+                // Tự động tính ngày tiếp theo
+                const maxDate =
+                    existingSchedules.length > 0
+                        ? Math.max(...existingSchedules.map((s) => s.date))
+                        : 0;
+
                 setForm({
                     name: '',
                     description: '',
-                    date: 1,
+                    destination_id: '',
+                    date: maxDate + 1,
                     breakfast: false,
                     lunch: true,
                     dinner: true,
                 });
             }
         }
-    }, [schedule, open]);
+    }, [schedule, open, existingSchedules]);
 
-    // Hàm validate dữ liệu
+    // --- 4. VALIDATION ---
     const validate = (): boolean => {
         const newErrors: FormErrors = {};
         let isValid = true;
 
         if (!form.name.trim()) {
-            newErrors.name = 'Tên lịch trình không được để trống.';
-            isValid = false;
-        } else if (form.name.length > 200) {
-            newErrors.name = 'Tên lịch trình không quá 200 ký tự.';
+            newErrors.name = 'Tên hoạt động không được để trống.';
             isValid = false;
         }
 
-        if (form.date === '' || Number(form.date) < 1) {
+        // Validate Destination ID (Bắt buộc)
+        if (!form.destination_id) {
+            newErrors.destination_id = 'Vui lòng chọn địa điểm.';
+            isValid = false;
+        }
+
+        const inputDate = Number(form.date);
+        if (form.date === '' || inputDate < 1) {
             newErrors.date = 'Ngày phải là số nguyên lớn hơn 0.';
             isValid = false;
-        }
+        } else {
+            // Check trùng ngày
+            const isDuplicate = existingSchedules.some((item) => {
+                // Nếu đang edit chính nó thì bỏ qua
+                if (schedule && item.id === schedule.id) return false;
+                return item.date === inputDate;
+            });
 
-        // Validate mô tả nếu cần (ví dụ không quá dài)
-        // if (form.description.length > 1000) { ... }
+            if (isDuplicate) {
+                newErrors.date = `Ngày thứ ${inputDate} đã tồn tại trong lịch trình.`;
+                isValid = false;
+            }
+        }
 
         setErrors(newErrors);
         return isValid;
     };
 
-    // Hàm helper để xóa lỗi khi người dùng nhập lại
     const clearError = (field: keyof ScheduleFormState) => {
         if (errors[field]) {
             setErrors((prev) => ({ ...prev, [field]: undefined }));
         }
     };
 
+    // --- 5. SUBMIT ---
     const handleSubmit = async () => {
-        // 1. Gọi hàm validate trước khi xử lý
         if (!validate()) {
             toast.error('Vui lòng kiểm tra lại thông tin nhập vào.');
             return;
@@ -138,7 +197,6 @@ export function FormTourScheduleDialog({
             onOpenChange(false);
         } catch (err: any) {
             console.error('Failed to save schedule', err);
-            // Hiển thị lỗi từ server nếu có
             const serverMsg =
                 err.response?.data?.message ||
                 'Không thể lưu lịch trình! Vui lòng thử lại.';
@@ -165,32 +223,6 @@ export function FormTourScheduleDialog({
                 </DialogHeader>
 
                 <div className="mt-3 space-y-4">
-                    {/* TÊN LỊCH TRÌNH */}
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium">
-                            Tên lịch trình{' '}
-                            <span className="text-red-500">*</span>
-                        </label>
-                        <Input
-                            value={form.name}
-                            onChange={(e) => {
-                                setForm({ ...form, name: e.target.value });
-                                clearError('name');
-                            }}
-                            placeholder="Ví dụ: Khởi hành - Tham quan Đà Lạt"
-                            className={
-                                errors.name
-                                    ? 'border-red-500 focus-visible:ring-red-500'
-                                    : ''
-                            }
-                        />
-                        {errors.name && (
-                            <span className="text-xs text-red-500">
-                                {errors.name}
-                            </span>
-                        )}
-                    </div>
-
                     {/* NGÀY THỨ MẤY */}
                     <div className="space-y-1">
                         <label className="text-sm font-medium">
@@ -221,9 +253,83 @@ export function FormTourScheduleDialog({
                         )}
                     </div>
 
+                    {/* TÊN HOẠT ĐỘNG */}
+                    <div className="space-y-1">
+                        <label className="text-sm font-medium">
+                            Tên hoạt động{' '}
+                            <span className="text-red-500">*</span>
+                        </label>
+                        <Input
+                            value={form.name}
+                            onChange={(e) => {
+                                setForm({ ...form, name: e.target.value });
+                                clearError('name');
+                            }}
+                            placeholder="Ví dụ: Tham quan chợ Đà Lạt"
+                            className={
+                                errors.name
+                                    ? 'border-red-500 focus-visible:ring-red-500'
+                                    : ''
+                            }
+                        />
+                        {errors.name && (
+                            <span className="text-xs text-red-500">
+                                {errors.name}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* --- SELECT ĐỊA ĐIỂM (CÙNG TỈNH) --- */}
+                    <div className="space-y-1">
+                        <label className="text-sm font-medium">
+                            Địa điểm (Cùng tỉnh){' '}
+                            <span className="text-red-500">*</span>
+                        </label>
+                        <Select
+                            value={form.destination_id}
+                            onValueChange={(value) => {
+                                setForm({ ...form, destination_id: value });
+                                clearError('destination_id');
+                            }}
+                        >
+                            <SelectTrigger
+                                className={
+                                    errors.destination_id
+                                        ? 'border-red-500'
+                                        : ''
+                                }
+                            >
+                                <SelectValue placeholder="Chọn địa điểm..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {availableLocations.length > 0 ? (
+                                    availableLocations.map((dest) => (
+                                        <SelectItem
+                                            key={dest.id}
+                                            value={String(dest.id)}
+                                        >
+                                            {dest.name}
+                                        </SelectItem>
+                                    ))
+                                ) : (
+                                    <div className="p-2 text-center text-sm text-gray-500">
+                                        Không tìm thấy địa điểm khác cùng tỉnh.
+                                    </div>
+                                )}
+                            </SelectContent>
+                        </Select>
+                        {errors.destination_id && (
+                            <span className="text-xs text-red-500">
+                                {errors.destination_id}
+                            </span>
+                        )}
+                    </div>
+
                     {/* MÔ TẢ */}
                     <div className="space-y-1">
-                        <label className="text-sm font-medium">Mô tả</label>
+                        <label className="text-sm font-medium">
+                            Mô tả chi tiết
+                        </label>
                         <Textarea
                             rows={4}
                             value={form.description}
@@ -233,7 +339,7 @@ export function FormTourScheduleDialog({
                                     description: e.target.value,
                                 })
                             }
-                            placeholder="Mô tả chi tiết hành trình..."
+                            placeholder="Mô tả các hoạt động cụ thể..."
                         />
                     </div>
 

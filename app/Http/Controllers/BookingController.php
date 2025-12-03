@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
@@ -41,68 +42,86 @@ class BookingController extends Controller
     }
     public function store(Request $request)
     {
-        // Validate dữ liệu đầu vào
+        // 1. Validate dữ liệu đầu vào
+        // Quan trọng: 'tour_id' phải có trong rules để được phép đi qua validated()
         $validated = $request->validate([
             'tour_id' => 'required|exists:tours,id',
-            'date_start' => 'required|date',
+            // 'date_start' => 'required|date|after_or_equal:today',
             'adults' => 'required|integer|min:1',
             'children' => 'nullable|integer|min:0',
-            'client_name' => 'required|string',
-            'client_phone' => 'required|string',
-            'client_email' => 'required|email',
-            'passengers' => 'required|array|min:1', // Mảng danh sách khách
-            'passengers.*.fullname' => 'required|string',
+            'client_name' => 'required|string|max:255',
+            'client_phone' => 'required|string|max:20',
+            'client_email' => 'required|email|max:255',
+            'passengers' => 'required|array|min:1', // Phải có ít nhất 1 hành khách
+            'passengers.*.fullname' => 'required|string|max:255',
+            'passengers.*.gender' => 'required|in:0,1',
+            'passengers.*.type' => 'required|in:0,1,2', // 0: Adult, 1: Child, 2: Infant
+        ], [
+            'tour_id.required' => 'Vui lòng chọn tour du lịch.',
+            'passengers.required' => 'Danh sách hành khách không được để trống.',
         ]);
 
         try {
-            DB::beginTransaction(); // Bắt đầu Transaction (An toàn dữ liệu)
+            DB::beginTransaction(); // Bắt đầu Transaction để đảm bảo toàn vẹn dữ liệu
 
-            // Lấy thông tin tour để tính tiền
-            $tour = Tour::findOrFail($request->tour_id);
+            // Lấy thông tin tour để tính toán
+            $tour = Tour::findOrFail($validated['tour_id']);
 
             // Tính tổng tiền
-            $totalPrice = ($tour->price_adult * $request->adults) +
-                ($tour->price_children * ($request->children ?? 0));
+            $totalPrice = ($tour->price_adult * $validated['adults']) +
+                ($tour->price_children * ($validated['children'] ?? 0));
+
+            // // Tính ngày kết thúc = ngày bắt đầu + số ngày tour - 1
+            // $dateEnd = Carbon::parse($validated['date_start'])
+            //     ->addDays($tour->day > 0 ? $tour->day - 1 : 0);
 
             // Tạo Booking
+            // Lưu ý: Sử dụng mảng $validated để an toàn, nhưng gán đè các giá trị tính toán
             $booking = Booking::create([
-                'code' => 'BK-' . strtoupper(Str::random(6)), // Tạo mã ngẫu nhiên
-                'id_tour_instance' => $tour->id,
-                'date_start' => $request->date_start,
-                'date_end' => Carbon::parse($request->date_start)->addDays($tour->day),
-                'client_name' => $request->client_name,
-                'client_phone' => $request->client_phone,
-                'client_email' => $request->client_email,
-                'count_adult' => $request->adults,
-                'count_children' => $request->children ?? 0,
+                'code' => 'BK-' . strtoupper(Str::random(8)), // Mã booking ngẫu nhiên
+                'tour_id' => $tour->id, // FIX LỖI: Dùng đúng tên cột trong DB
+
+                'date_start' => $validated['date_start'],
+                // 'date_end' => $dateEnd,
+
+                'client_name' => $validated['client_name'],
+                'client_phone' => $validated['client_phone'],
+                'client_email' => $validated['client_email'],
+
+                'count_adult' => $validated['adults'],
+                'count_children' => $validated['children'] ?? 0,
+
                 'final_price' => $totalPrice,
-                'left_payment' => $totalPrice, // Mới đặt thì còn nợ 100%
-                'status' => 0, // Pending
+                // 'left_payment' => $totalPrice, // Mới đặt chưa thanh toán -> Nợ 100%
+                'status' => 0, // 0: Pending
             ]);
 
             // Lưu danh sách hành khách
-            foreach ($request->passengers as $pax) {
-                $booking->passengers()->create([
-                    'fullname' => $pax['fullname'],
-                    'type' => $pax['type'] ?? 0, // 0: Adult
-                    'gender' => $pax['gender'] ?? 0,
-                ]);
-            }
+            // Sử dụng createMany để insert nhanh hơn nếu quan hệ là hasMany
+            $booking->passengers()->createMany($validated['passengers']);
 
-            DB::commit(); // Lưu vào DB thành công
+            DB::commit(); // Lưu tất cả vào DB
 
-            // If the request was from admin routes, redirect to admin bookings index
+            // --- Điều hướng sau khi thành công ---
+
+            // Kiểm tra nếu request đến từ route admin
             $routeName = $request->route() ? $request->route()->getName() : null;
+
             if ($routeName && str_starts_with($routeName, 'admin.')) {
                 return redirect()->route('admin.bookings.index')
                     ->with('success', 'Tạo booking mới thành công!');
             }
 
+            // Nếu là khách hàng đặt public
             return redirect()->route('booking.success', $booking->code)
-                ->with('success', 'Đặt tour thành công!');
+                ->with('success', 'Đặt tour thành công! Vui lòng kiểm tra email.');
 
         } catch (\Exception $e) {
-            DB::rollBack(); // Nếu lỗi thì hoàn tác, không lưu gì cả
+            DB::rollBack(); // Hoàn tác nếu có lỗi
+
+            // Log lỗi để debug (khuyên dùng)
+            // \Log::error('Booking Error: ' . $e->getMessage());
+
             return back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
         }
     }

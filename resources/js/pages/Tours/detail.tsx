@@ -1,19 +1,13 @@
-import {
-    Policy,
-    Service,
-    TourDetailProps,
-    TourPolicy,
-    TourSchedule,
-    TourService,
-} from '@/app';
+
 import { ConfirmDeleteDialog } from '@/components/common/ConfirmDeleteDialog';
 import { useTourData } from '@/hooks/useTourData';
 import AppLayout from '@/layouts/app-layout';
 import tourUrl from '@/routes/tours';
-import { BreadcrumbItem } from '@/types';
+import { BreadcrumbItem, Destination, Policy, Service, TourDetailProps, TourPolicy, TourSchedule, TourService, User } from '@/types';
 import { Head } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import TourGallery from './Partials/TourGallery';
+import GuideList from './Partials/TourGuideList';
 import TourHeader from './Partials/TourHeader';
 import TourInfoCards from './Partials/TourInfoCards';
 import TourPolicyList from './Partials/TourPolicyList';
@@ -24,22 +18,28 @@ import { TourImageDialog } from './tourImage';
 import { TourPolicyDialog } from './tourPolicy';
 import { FormTourScheduleDialog } from './tourSchedule';
 import { TourServiceDialog } from './tourService';
+import { GuideAssignmentDialog } from './tripAssignment';
 
 interface ExtendedProps extends TourDetailProps {
     availableServices: Service[];
     availablePolicies: Policy[];
+    destinations: Destination[];
+    guides: User[];
 }
 export default function TourDetail({
-    tour, 
+    tour,
     categories,
     availableServices,
     availablePolicies,
+    destinations,
+    guides
 }: ExtendedProps) {
     // --- A. SỬ DỤNG CUSTOM HOOK (SỬA LẠI) ---
     // Truyền cả object tour vào hook để làm dữ liệu khởi tạo
     const {
         galleryImages,
         schedules,
+        assignments,
         tourServices,
         tourPolicies,
         loading,
@@ -49,6 +49,7 @@ export default function TourDetail({
         deleteSchedule,
         deleteTour,
         deletePolicy,
+        deleteAssignment,
     } = useTourData(tour);
 
     // --- B. UI STATE (Chỉ giữ lại state điều khiển Dialog) ---
@@ -58,6 +59,7 @@ export default function TourDetail({
         addImage: false,
         addSchedule: false,
         addPolicy: false,
+        addGuide: false,
     });
 
     console.log(tour);
@@ -74,6 +76,9 @@ export default function TourDetail({
         mode: 'edit' | 'delete';
     } | null>(null);
 
+    const [deletingAssignmentId, setDeletingAssignmentId] = useState<
+        number | null
+    >(null);
     // State quản lý Dialog Service
     const [showServiceDialog, setShowServiceDialog] = useState(false);
     const [editingService, setEditingService] = useState<TourService | null>(
@@ -190,6 +195,12 @@ export default function TourDetail({
                                 }
                             />
 
+                            <GuideList
+                                assignments={assignments}
+                                onAdd={() => toggleDialog('addGuide', true)}
+                                onDelete={(id) => setDeletingAssignmentId(id)}
+                            />
+
                             <TourPolicyList
                                 tourPolicies={tourPolicies}
                                 onAdd={() => toggleDialog('addPolicy', true)}
@@ -213,6 +224,7 @@ export default function TourDetail({
                     initialData={tour}
                     title="Chỉnh sửa Tour"
                     categories={categories}
+                    destinations={destinations}
                 />
 
                 {/* Add Images */}
@@ -278,9 +290,36 @@ export default function TourDetail({
                             : undefined
                     }
                     onSuccess={refreshData} // Refresh lại list sau khi thêm/sửa
+                    existingSchedules={schedules}
+                    tour={tour}
+                    allDestinations={destinations}
+                />
+                {/* Dialog thêm Guide */}
+                <GuideAssignmentDialog
+                    open={dialogs.addGuide}
+                    onOpenChange={(v) => toggleDialog('addGuide', v)}
+                    tourId={tour.id}
+                    allUsers={guides} // Truyền danh sách user vào
+                    currentAssignments={assignments}
+                    onSuccess={refreshData}
                 />
 
                 {/* --- CONFIRM DIALOGS --- */}
+
+                <ConfirmDeleteDialog
+                    open={!!deletingAssignmentId}
+                    onOpenChange={(v) => !v && setDeletingAssignmentId(null)}
+                    onConfirm={() => {
+                        if (deletingAssignmentId) {
+                            deleteAssignment(deletingAssignmentId, () =>
+                                setDeletingAssignmentId(null),
+                            );
+                        }
+                    }}
+                    title="Xóa hướng dẫn viên?"
+                    description="Bạn có chắc chắn muốn gỡ hướng dẫn viên này khỏi tour?"
+                    loading={loading}
+                />
 
                 {/* Confirm Delete Policy */}
                 <ConfirmDeleteDialog

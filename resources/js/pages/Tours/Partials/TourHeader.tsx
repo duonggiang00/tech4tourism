@@ -1,11 +1,17 @@
-import { TourHeaderProps } from "@/app";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import tours from "@/routes/tours";
-import { router } from "@inertiajs/react";
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 
-export default function TourHeader({ tour, categoryName, onEdit, onDelete }: TourHeaderProps) {
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import tourUrl from '@/routes/tours';
+import { TourHeaderProps } from '@/types';
+import { Link, router } from '@inertiajs/react';
+import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
+
+export default function TourHeader({
+    tour,
+    categoryName,
+    onEdit,
+    onDelete,
+}: TourHeaderProps) {
     const getStatusInfo = (status: number) => {
         switch (status) {
             case 0:
@@ -30,7 +36,7 @@ export default function TourHeader({ tour, categoryName, onEdit, onDelete }: Tou
         <div className="mb-6">
             <Button
                 variant="ghost"
-                onClick={() => router.visit(tours.index().url)}
+                onClick={() => router.visit(tourUrl.index().url)}
                 className="mb-4 pl-0 hover:text-blue-600"
             >
                 <ArrowLeft className="mr-2 h-4 w-4" /> Quay lại danh sách
@@ -48,9 +54,12 @@ export default function TourHeader({ tour, categoryName, onEdit, onDelete }: Tou
                     </h4>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={onEdit}>
-                        <Pencil className="mr-2 h-4 w-4" /> Sửa
-                    </Button>
+                    <Link href={tourUrl.edit(tour.id).url}>
+                        <Button variant="outline">
+                            <Pencil className="mr-2 h-4 w-4" /> Sửa
+                        </Button>
+                    </Link>
+
                     <Button variant="destructive" onClick={onDelete}>
                         <Trash2 className="mr-2 h-4 w-4" /> Xóa
                     </Button>

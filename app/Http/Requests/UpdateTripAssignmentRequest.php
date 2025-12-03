@@ -6,23 +6,24 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateTripAssignmentRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            //
+            // Khi update, thường ta chỉ đổi status, user_id và tour_id giữ nguyên
+            'status' => 'required|in:0,1,2,3',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'status.required' => 'Vui lòng chọn trạng thái.',
+            'status.in' => 'Trạng thái không hợp lệ.',
         ];
     }
 }

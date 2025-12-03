@@ -9,4 +9,7 @@ class TripNotes extends Model
 {
     /** @use HasFactory<\Database\Factories\TripNotesFactory> */
     use HasFactory;
+    public function tripAssignment(){
+        return $this->belongsTo(TripAssignment::class);
+    }
 }

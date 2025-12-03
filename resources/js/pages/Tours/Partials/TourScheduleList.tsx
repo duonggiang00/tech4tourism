@@ -11,6 +11,7 @@ export default function TourScheduleList({
     onEdit,
     onDelete,
 }: TourScheduleListProps) {
+    console.log(schedules);
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -57,34 +58,13 @@ export default function TourScheduleList({
                                     Ngày {schedule.date}: {schedule.name}
                                 </h4>
                                 <p className="line-clamp-3 text-sm leading-relaxed whitespace-pre-line text-gray-600">
+                                    {schedule.destination?.name ||
+                                        'Chưa cập nhật địa điểm'}
+                                </p>
+                                <p className="line-clamp-3 text-sm leading-relaxed whitespace-pre-line text-gray-600">
                                     {schedule.description}
                                 </p>
-                                <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-500">
-                                    {schedule.breakfast && (
-                                        <Badge
-                                            variant="secondary"
-                                            className="px-1 py-0 font-normal"
-                                        >
-                                            ☕ Sáng
-                                        </Badge>
-                                    )}
-                                    {schedule.lunch && (
-                                        <Badge
-                                            variant="secondary"
-                                            className="px-1 py-0 font-normal"
-                                        >
-                                            🍽️ Trưa
-                                        </Badge>
-                                    )}
-                                    {schedule.dinner && (
-                                        <Badge
-                                            variant="secondary"
-                                            className="px-1 py-0 font-normal"
-                                        >
-                                            🌙 Tối
-                                        </Badge>
-                                    )}
-                                </div>
+                            
                             </div>
                         ))}
                     </div>

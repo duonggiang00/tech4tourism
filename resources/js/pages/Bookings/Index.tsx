@@ -1,23 +1,46 @@
-import React, { useState } from 'react';
-import { Head, useForm, router, Link } from '@inertiajs/react';
-import { BreadcrumbItem } from '@/types';
-import AppLayout from '@/layouts/app-layout';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { CircleCheck, CircleX, Eye, Trash2 } from 'lucide-react';
-import bookings from '@/routes/admin/bookings';
-
-
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import AppLayout from '@/layouts/app-layout';
 import bookingsRoutes from '@/routes/admin/bookings';
-
-
+import { BreadcrumbItem } from '@/types';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { CircleCheck, CircleX, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
 
 interface Tour {
     id: number;
@@ -80,11 +103,19 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function BookingsIndex({ bookings: bookingsData, filters = {}, flash }: Props) {
+export default function BookingsIndex({
+    bookings: bookingsData,
+    filters = {},
+    flash,
+}: Props) {
     const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
-    const [deletingBooking, setDeletingBooking] = useState<Booking | null>(null);
+    const [deletingBooking, setDeletingBooking] = useState<Booking | null>(
+        null,
+    );
     const [search, setSearch] = useState(filters.search || '');
-    const [statusFilter, setStatusFilter] = useState<number | null>(filters.status ?? null);
+    const [statusFilter, setStatusFilter] = useState<number | null>(
+        filters.status ?? null,
+    );
 
     // Form xử lý update
     const { data, setData, put, processing, reset, errors } = useForm({
@@ -107,7 +138,7 @@ export default function BookingsIndex({ bookings: bookingsData, filters = {}, fl
         e.preventDefault();
         if (!editingBooking) return;
 
-        put(bookings.update(editingBooking.id).url, {
+        put(bookingsRoutes.update(editingBooking.id).url, {
             onSuccess: () => {
                 setEditingBooking(null);
                 reset();
@@ -118,19 +149,23 @@ export default function BookingsIndex({ bookings: bookingsData, filters = {}, fl
     // Xử lý search và filter
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get(bookings.index().url, { 
-            search, 
-            status: statusFilter 
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.get(
+            bookingsRoutes.index().url,
+            {
+                search,
+                status: statusFilter,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
     };
 
     // Xử lý xóa booking
     const handleDelete = () => {
         if (!deletingBooking) return;
-        destroy(bookings.destroy(deletingBooking.id).url, {
+        destroy(bookingsRoutes.destroy(deletingBooking.id).url, {
             onSuccess: () => {
                 setDeletingBooking(null);
             },
@@ -156,27 +191,33 @@ export default function BookingsIndex({ bookings: bookingsData, filters = {}, fl
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-
-        <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold">Danh sách Bookings</h2>
-            <div>
-                <Link href={bookingsRoutes.create().url}>
-                    <button className="inline-flex items-center rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-                        Thêm booking
-                    </button>
-                </Link>
+            <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Danh sách Bookings</h2>
+                <div>
+                    <Link href={bookingsRoutes.create().url}>
+                        <Button className="bg-blue-600 hover:bg-blue-700">
+                            <Plus className="mr-2 h-4 w-4" /> Thêm booking
+                        </Button>
+                    </Link>
+                </div>
             </div>
-        </div>
 
             <Head title="Quản lý Bookings" />
 
-            <div className="p-6 space-y-4">
+            <div className="space-y-4 p-6">
                 {/* Flash Messages */}
                 {flash?.success && (
-                    <Alert variant="default" className="bg-green-50 border-green-200">
+                    <Alert
+                        variant="default"
+                        className="border-green-200 bg-green-50"
+                    >
                         <CircleCheck className="h-4 w-4 text-green-600" />
-                        <AlertTitle className="text-green-800">Thành công!</AlertTitle>
-                        <AlertDescription className="text-green-700">{flash.success}</AlertDescription>
+                        <AlertTitle className="text-green-800">
+                            Thành công!
+                        </AlertTitle>
+                        <AlertDescription className="text-green-700">
+                            {flash.success}
+                        </AlertDescription>
                     </Alert>
                 )}
                 {flash?.error && (
@@ -187,9 +228,11 @@ export default function BookingsIndex({ bookings: bookingsData, filters = {}, fl
                     </Alert>
                 )}
 
-                <div className="bg-white shadow rounded-lg p-6">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-2xl font-bold">Danh sách Bookings</h2>
+                <div className="rounded-lg bg-white p-6 shadow">
+                    <div className="mb-4 flex items-center justify-between">
+                        <h2 className="text-2xl font-bold">
+                            Danh sách Bookings
+                        </h2>
                     </div>
 
                     {/* Search Form */}
@@ -202,19 +245,33 @@ export default function BookingsIndex({ bookings: bookingsData, filters = {}, fl
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="max-w-md"
                             />
-                            <Select 
-                                value={statusFilter !== null ? String(statusFilter) : 'all'}
-                                onValueChange={(val) => setStatusFilter(val === 'all' ? null : parseInt(val))}
+                            <Select
+                                value={
+                                    statusFilter !== null
+                                        ? String(statusFilter)
+                                        : 'all'
+                                }
+                                onValueChange={(val) =>
+                                    setStatusFilter(
+                                        val === 'all' ? null : parseInt(val),
+                                    )
+                                }
                             >
                                 <SelectTrigger className="w-[180px]">
                                     <SelectValue placeholder="Tất cả trạng thái" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                                    <SelectItem value="all">
+                                        Tất cả trạng thái
+                                    </SelectItem>
                                     <SelectItem value="0">Chờ xử lý</SelectItem>
-                                    <SelectItem value="1">Đã xác nhận</SelectItem>
+                                    <SelectItem value="1">
+                                        Đã xác nhận
+                                    </SelectItem>
                                     <SelectItem value="2">Đã hủy</SelectItem>
-                                    <SelectItem value="3">Hoàn thành</SelectItem>
+                                    <SelectItem value="3">
+                                        Hoàn thành
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                             <Button type="submit">Tìm kiếm</Button>
@@ -225,7 +282,7 @@ export default function BookingsIndex({ bookings: bookingsData, filters = {}, fl
                                     onClick={() => {
                                         setSearch('');
                                         setStatusFilter(null);
-                                        router.get(bookings.index().url);
+                                        router.get(bookingsRoutes.index().url);
                                     }}
                                 >
                                     Xóa
@@ -248,53 +305,106 @@ export default function BookingsIndex({ bookings: bookingsData, filters = {}, fl
                                         <TableHead>Tổng tiền</TableHead>
                                         <TableHead>Còn nợ</TableHead>
                                         <TableHead>Trạng thái</TableHead>
-                                        <TableHead className="text-right">Hành động</TableHead>
+                                        <TableHead className="text-right">
+                                            Hành động
+                                        </TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {bookingsData.data.map((booking) => (
                                         <TableRow key={booking.id}>
-                                            <TableCell className="font-medium">{booking.code}</TableCell>
-                                            <TableCell>{booking.tour?.title || 'N/A'}</TableCell>
+                                            <TableCell className="font-medium">
+                                                {booking.code}
+                                            </TableCell>
+                                            <TableCell>
+                                                {booking.tour?.title || 'N/A'}
+                                            </TableCell>
                                             <TableCell>
                                                 <div>
-                                                    <div className="font-medium">{booking.client_name}</div>
-                                                    <div className="text-sm text-gray-500">{booking.client_email}</div>
+                                                    <div className="font-medium">
+                                                        {booking.client_name}
+                                                    </div>
+                                                    <div className="text-sm text-gray-500">
+                                                        {booking.client_email}
+                                                    </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell>{formatDate(booking.date_start)}</TableCell>
+                                            <TableCell>
+                                                {formatDate(booking.date_start)}
+                                            </TableCell>
                                             <TableCell>
                                                 {booking.count_adult} người lớn
-                                                {booking.count_children > 0 && `, ${booking.count_children} trẻ em`}
+                                                {booking.count_children > 0 &&
+                                                    `, ${booking.count_children} trẻ em`}
                                             </TableCell>
-                                            <TableCell className="font-medium">{formatPrice(booking.final_price)}</TableCell>
-                                            <TableCell className={booking.left_payment > 0 ? 'text-red-600 font-medium' : 'text-green-600'}>
-                                                {formatPrice(booking.left_payment)}
+                                            <TableCell className="font-medium">
+                                                {formatPrice(
+                                                    booking.final_price,
+                                                )}
+                                            </TableCell>
+                                            <TableCell
+                                                className={
+                                                    booking.left_payment > 0
+                                                        ? 'font-medium text-red-600'
+                                                        : 'text-green-600'
+                                                }
+                                            >
+                                                {formatPrice(
+                                                    booking.left_payment,
+                                                )}
                                             </TableCell>
                                             <TableCell>
-                                                <Badge className={STATUS_OPTIONS[booking.status as keyof typeof STATUS_OPTIONS]?.color || 'bg-gray-500'}>
-                                                    {STATUS_OPTIONS[booking.status as keyof typeof STATUS_OPTIONS]?.label || 'Unknown'}
+                                                <Badge
+                                                    className={
+                                                        STATUS_OPTIONS[
+                                                            booking.status as keyof typeof STATUS_OPTIONS
+                                                        ]?.color ||
+                                                        'bg-gray-500'
+                                                    }
+                                                >
+                                                    {STATUS_OPTIONS[
+                                                        booking.status as keyof typeof STATUS_OPTIONS
+                                                    ]?.label || 'Unknown'}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex justify-end gap-2">
-                                                    <Link href={bookings.show(booking.id).url}>
-                                                        <Button variant="outline" size="sm">
-                                                            <Eye className="h-4 w-4 mr-1" />
-                                                            Xem
+                                                    <Link
+                                                        href={
+                                                            bookingsRoutes.show(
+                                                                booking.id,
+                                                            ).url
+                                                        }
+                                                    >
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            title="Xem chi tiết"
+                                                        >
+                                                            <Eye className="h-4 w-4" />
                                                         </Button>
                                                     </Link>
                                                     <Button
                                                         variant="outline"
-                                                        size="sm"
-                                                        onClick={() => openEditModal(booking)}
+                                                        size="icon"
+                                                        onClick={() =>
+                                                            openEditModal(
+                                                                booking,
+                                                            )
+                                                        }
+                                                        title="Cập nhật trạng thái"
                                                     >
-                                                        Cập nhật
+                                                        <Pencil className="h-4 w-4" />
                                                     </Button>
                                                     <Button
                                                         variant="destructive"
-                                                        size="sm"
-                                                        onClick={() => setDeletingBooking(booking)}
+                                                        size="icon"
+                                                        onClick={() =>
+                                                            setDeletingBooking(
+                                                                booking,
+                                                            )
+                                                        }
+                                                        title="Xóa booking"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
@@ -306,32 +416,40 @@ export default function BookingsIndex({ bookings: bookingsData, filters = {}, fl
                             </Table>
 
                             {/* Pagination */}
-                            {bookingsData.links && bookingsData.links.length > 3 && (
-                                <div className="flex items-center justify-between mt-4">
-                                    <div className="text-sm text-gray-700">
-                                        Hiển thị {bookingsData.from || 0} đến {bookingsData.to || 0} trong tổng số {bookingsData.total || 0} bookings
+                            {bookingsData.links &&
+                                bookingsData.links.length > 3 && (
+                                    <div className="mt-4 flex items-center justify-between">
+                                        <div className="text-sm text-gray-700">
+                                            Hiển thị {bookingsData.from || 0}{' '}
+                                            đến {bookingsData.to || 0} trong
+                                            tổng số {bookingsData.total || 0}{' '}
+                                            bookings
+                                        </div>
+                                        <div className="flex gap-2">
+                                            {bookingsData.links.map(
+                                                (link, index) => (
+                                                    <Link
+                                                        key={index}
+                                                        href={link.url || '#'}
+                                                        className={`rounded-md px-3 py-2 text-sm font-medium ${
+                                                            link.active
+                                                                ? 'bg-blue-600 text-white'
+                                                                : link.url
+                                                                  ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                                                                  : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                                        }`}
+                                                        dangerouslySetInnerHTML={{
+                                                            __html: link.label,
+                                                        }}
+                                                    />
+                                                ),
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="flex gap-2">
-                                        {bookingsData.links.map((link, index) => (
-                                            <Link
-                                                key={index}
-                                                href={link.url || '#'}
-                                                className={`px-3 py-2 rounded-md text-sm font-medium ${
-                                                    link.active
-                                                        ? 'bg-blue-600 text-white'
-                                                        : link.url
-                                                        ? 'bg-white text-gray-700 hover:bg-gray-50 border'
-                                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                }`}
-                                                dangerouslySetInnerHTML={{ __html: link.label }}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                                )}
                         </>
                     ) : (
-                        <div className="text-center py-8 text-gray-500">
+                        <div className="py-8 text-center text-gray-500">
                             Không tìm thấy booking nào.
                         </div>
                     )}
@@ -339,34 +457,53 @@ export default function BookingsIndex({ bookings: bookingsData, filters = {}, fl
             </div>
 
             {/* Dialog Edit Booking Status */}
-            <Dialog open={!!editingBooking} onOpenChange={(open) => !open && setEditingBooking(null)}>
+            <Dialog
+                open={!!editingBooking}
+                onOpenChange={(open) => !open && setEditingBooking(null)}
+            >
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Cập nhật trạng thái: {editingBooking?.code}</DialogTitle>
+                        <DialogTitle>
+                            Cập nhật trạng thái: {editingBooking?.code}
+                        </DialogTitle>
                     </DialogHeader>
-                    
+
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
                             <Label>Trạng thái</Label>
-                            <Select 
-                                value={String(data.status)} 
-                                onValueChange={(val) => setData('status', parseInt(val))}
+                            <Select
+                                value={String(data.status)}
+                                onValueChange={(val) =>
+                                    setData('status', parseInt(val))
+                                }
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Chọn trạng thái" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="0">Chờ xử lý</SelectItem>
-                                    <SelectItem value="1">Đã xác nhận</SelectItem>
+                                    <SelectItem value="1">
+                                        Đã xác nhận
+                                    </SelectItem>
                                     <SelectItem value="2">Đã hủy</SelectItem>
-                                    <SelectItem value="3">Hoàn thành</SelectItem>
+                                    <SelectItem value="3">
+                                        Hoàn thành
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
-                            {errors.status && <div className="text-red-500 text-sm">{errors.status}</div>}
+                            {errors.status && (
+                                <div className="text-sm text-red-500">
+                                    {errors.status}
+                                </div>
+                            )}
                         </div>
 
                         <DialogFooter>
-                            <Button type="button" variant="ghost" onClick={() => setEditingBooking(null)}>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setEditingBooking(null)}
+                            >
                                 Hủy
                             </Button>
                             <Button type="submit" disabled={processing}>
@@ -378,13 +515,19 @@ export default function BookingsIndex({ bookings: bookingsData, filters = {}, fl
             </Dialog>
 
             {/* Alert Dialog Xác nhận xóa */}
-            <AlertDialog open={!!deletingBooking} onOpenChange={(open) => !open && setDeletingBooking(null)}>
+            <AlertDialog
+                open={!!deletingBooking}
+                onOpenChange={(open) => !open && setDeletingBooking(null)}
+            >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Xác nhận xóa booking</AlertDialogTitle>
+                        <AlertDialogTitle>
+                            Xác nhận xóa booking
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
-                            Bạn có chắc chắn muốn xóa booking <strong>{deletingBooking?.code}</strong>?
-                            Hành động này không thể hoàn tác.
+                            Bạn có chắc chắn muốn xóa booking{' '}
+                            <strong>{deletingBooking?.code}</strong>? Hành động
+                            này không thể hoàn tác.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -402,4 +545,3 @@ export default function BookingsIndex({ bookings: bookingsData, filters = {}, fl
         </AppLayout>
     );
 }
-

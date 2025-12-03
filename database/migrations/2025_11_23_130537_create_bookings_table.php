@@ -18,9 +18,6 @@ return new class extends Migration {
 
             $table->string('code')->unique(); // Mã Booking (VD: BK-2024-001)
 
-            $table->date('date_start');
-            $table->date('date_end');
-
             // Thông tin người đặt (Contact info)
             $table->string('client_name');
             $table->string('client_phone');
@@ -30,7 +27,7 @@ return new class extends Migration {
             $table->integer('count_children')->default(0);
 
             $table->decimal('final_price', 12, 2); // Tổng tiền
-            $table->decimal('left_payment', 12, 2); // Số tiền còn thiếu
+            // $table->decimal('left_payment', 12, 2); // Số tiền còn thiếu
 
             // 0: Mới đặt, 1: Đã xác nhận/Cọc, 2: Hoàn thành, 3: Hủy
             $table->tinyInteger('status')->default(0)->comment('0:Pending, 1:Confirmed, 2:Completed, 3:Cancelled');

@@ -13,13 +13,13 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import tourUrl from '@/routes/tours';
-import { Category, Country, Destination, Policy, User } from '@/types';
+import { Category, Country, Destination, Policy, Tour, User } from '@/types';
 import { Head, useForm } from '@inertiajs/react';
 import {
-    ArrowRight,
     Check,
     MapPin,
     Plus,
+    Save,
     Search,
     Trash2,
     UploadCloud,
@@ -28,8 +28,9 @@ import {
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-// Props nhận từ Controller
-interface CreateProps {
+// Props nhận từ Controller (Hàm edit)
+interface EditProps {
+    tour: Tour; // Dữ liệu Tour cần sửa
     categories: Category[];
     policies: Policy[];
     guides: User[];
@@ -42,9 +43,7 @@ interface TempSchedule {
     description: string;
     destination_id: string;
     date: number;
-    breakfast: boolean;
-    lunch: boolean;
-    dinner: boolean;
+    // Đã bỏ bữa ăn theo yêu cầu cũ
 }
 
 // Kiểu dữ liệu cho Tour Service (Frontend Only)
@@ -58,50 +57,80 @@ interface TempTourService {
     description: string;
 }
 
-export default function Create({
+export default function Edit({
+    tour,
     categories,
     policies,
     guides,
     countries,
-}: CreateProps) {
-    // --- 1. SETUP FORM ---
+}: EditProps) {
+    // --- 1. SETUP FORM (LOAD DỮ LIỆU CŨ) ---
     const { data, setData, post, processing, errors } = useForm({
-        category_id: '',
-        province_id: '',
-        title: '',
-        status: 1,
-        day: 1,
-        night: 0,
-        date_start: '',
-        limit: 20,
-        thumbnail: null as File | null,
-        description: '',
-        short_description: '',
-        price_adult: '',
-        price_children: '',
+        _method: 'PUT', // Quan trọng để Laravel hiểu đây là Update khi có File Upload
+        category_id: String(tour.category_id),
+        province_id: String(tour.province_id || ''), // Load tỉnh cũ
+        title: tour.title,
+        status: tour.status,
+        day: tour.day,
+        night: tour.night,
+        date_start: tour.date_start,
+        limit: tour.limit,
 
+        // Ảnh: Thumbnail là File mới (nếu upload) hoặc null (nếu giữ nguyên)
+        thumbnail: null as File | null,
+
+        description: tour.description || '',
+        short_description: tour.short_description || '',
+        price_adult: tour.price_adult,
+        price_children: tour.price_children,
+
+        // Gallery: Chỉ chứa ảnh MỚI upload thêm
         gallery_images: [] as File[],
-        schedules: [] as TempSchedule[],
-        tour_services: [] as TempTourService[],
-        policy_ids: [] as number[],
-        guide_ids: [] as number[],
+
+        // Map dữ liệu quan hệ cũ sang cấu trúc form
+        schedules: (tour.schedules || []).map((s) => ({
+            name: s.name,
+            description: s.description || '',
+            destination_id: String(s.destination_id),
+            date: s.date,
+        })) as TempSchedule[],
+
+        tour_services: (tour.tour_services || []).map((s) => ({
+            service_id: String(s.service_id),
+            service_name: s.service?.name, // Optional: để hiển thị nếu cần
+            quantity: s.quantity,
+            unit: s.unit,
+            price_unit: s.price_unit,
+            price_total: s.price_total,
+            description: s.description || '',
+        })) as TempTourService[],
+
+        policy_ids: (tour.tour_policies || []).map((p) => p.policy_id),
+        guide_ids: (tour.trip_assignments || []).map((t) => t.user_id),
     });
 
-    // --- STATE CHO LOCATION PANEL (LOCAL UI STATE) ---
-    const [selectedCountryId, setSelectedCountryId] = useState<string>('');
+    // --- TỰ ĐỘNG TÌM QUỐC GIA CỦA TỈNH HIỆN TẠI ---
+    const initialCountryId = useMemo(() => {
+        if (!tour.province_id) return '';
+        const country = countries.find((c) =>
+            c.provinces?.some((p) => String(p.id) === String(tour.province_id)),
+        );
+        return country ? String(country.id) : '';
+    }, [tour.province_id, countries]);
+
+    // --- STATE CHO LOCATION PANEL ---
+    const [selectedCountryId, setSelectedCountryId] =
+        useState<string>(initialCountryId);
     const [searchCountry, setSearchCountry] = useState('');
     const [searchProvince, setSearchProvince] = useState('');
 
     // --- 2. LOGIC LỌC DỮ LIỆU ---
-
-    // Lọc danh sách Quốc gia theo ô tìm kiếm
     const filteredCountries = useMemo(() => {
         return countries.filter((c) =>
             c.name.toLowerCase().includes(searchCountry.toLowerCase()),
         );
     }, [countries, searchCountry]);
 
-    // Lấy danh sách Tỉnh theo Quốc gia đã chọn
     const filteredProvinces = useMemo(() => {
         const country = countries.find(
             (c) => String(c.id) === selectedCountryId,
@@ -112,7 +141,6 @@ export default function Create({
         );
     }, [countries, selectedCountryId, searchProvince]);
 
-    // Tìm Tỉnh hiện tại đang chọn (để lấy providers, services, destinations)
     const selectedProvince = useMemo(() => {
         for (const country of countries) {
             const found = country.provinces?.find(
@@ -123,12 +151,10 @@ export default function Create({
         return null;
     }, [data.province_id, countries]);
 
-    // Lấy danh sách Địa điểm (QUAN TRỌNG: Dùng biến này cho cả Panel và List Lịch trình)
     const availableDestinations = useMemo(() => {
         return selectedProvince?.destinations || [];
     }, [selectedProvince]);
 
-    // Lấy danh sách Dịch vụ
     const availableServices = useMemo(() => {
         if (!selectedProvince?.providers) return [];
         return selectedProvince.providers.flatMap((provider) =>
@@ -140,9 +166,9 @@ export default function Create({
     }, [selectedProvince]);
 
     // --- HANDLER CHO LOCATION PANEL ---
-
     const handleSelectCountry = (id: string) => {
         setSelectedCountryId(id);
+        // Khi đổi quốc gia ở màn Edit, ta cũng reset tỉnh như màn Create
         setData((prevData) => ({
             ...prevData,
             province_id: '',
@@ -164,15 +190,11 @@ export default function Create({
 
     const handleToggleDestination = (dest: Destination, checked: boolean) => {
         if (checked) {
-            // Tự động thêm vào lịch trình (Không kiểm tra số ngày nữa)
             const newSchedule: TempSchedule = {
                 name: `Tham quan ${dest.name}`,
                 description: dest.description || `Khám phá ${dest.name}`,
                 destination_id: String(dest.id),
                 date: data.schedules.length + 1,
-                breakfast: true,
-                lunch: true,
-                dinner: true,
             };
             setData('schedules', [...data.schedules, newSchedule]);
         } else {
@@ -184,8 +206,15 @@ export default function Create({
     };
 
     // --- 3. HANDLERS (ẢNH) ---
+    // Khởi tạo preview với ảnh cũ từ server (giả sử tour.thumbnail là URL đầy đủ hoặc path)
+    // Lưu ý: Bạn cần xử lý URL ảnh cho đúng (ví dụ thêm /storage/...) nếu backend trả về path relative
+    const initialThumbnailUrl =
+        tour.thumbnail && !tour.thumbnail.startsWith('http')
+            ? `/storage/${tour.thumbnail}`
+            : tour.thumbnail;
+
     const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(
-        null,
+        initialThumbnailUrl || null,
     );
     const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -197,12 +226,14 @@ export default function Create({
             setData('thumbnail', file);
         }
     };
+
     const handleRemoveThumbnail = (e: React.MouseEvent) => {
         e.stopPropagation();
         setThumbnailPreview(null);
-        setData('thumbnail', null);
+        setData('thumbnail', null); // Gửi null lên server để biết là xóa (hoặc giữ nguyên tùy logic BE)
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
+
     const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length > 0) {
@@ -211,22 +242,23 @@ export default function Create({
             setData('gallery_images', [...data.gallery_images, ...files]);
         }
     };
+
     const removeGalleryImage = (index: number) => {
         const newPreviews = [...galleryPreviews];
         newPreviews.splice(index, 1);
         setGalleryPreviews(newPreviews);
+
         const newImages = [...data.gallery_images];
         newImages.splice(index, 1);
         setData('gallery_images', newImages);
     };
 
-    // --- 4. HANDLERS (LỊCH TRÌNH) ---
+    // --- 4. HANDLERS (LỊCH TRÌNH & DỊCH VỤ - GIỮ NGUYÊN NHƯ CREATE) ---
     const addSchedule = () => {
         if (!data.province_id) {
             toast.error('Vui lòng chọn Tỉnh/Thành phố ở phần trên trước.');
             return;
         }
-        // Đã bỏ logic kiểm tra số ngày tại đây
         setData('schedules', [
             ...data.schedules,
             {
@@ -234,9 +266,6 @@ export default function Create({
                 description: '',
                 destination_id: '',
                 date: data.schedules.length + 1,
-                breakfast: false,
-                lunch: true,
-                dinner: true,
             },
         ]);
     };
@@ -255,7 +284,6 @@ export default function Create({
         setData('schedules', newSchedules);
     };
 
-    // --- 5. HANDLERS (SERVICES) ---
     const addTourService = () => {
         if (!data.province_id) {
             toast.error('Vui lòng chọn Tỉnh/Thành phố trước khi thêm dịch vụ.');
@@ -324,18 +352,30 @@ export default function Create({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(tourUrl.store().url, { forceFormData: true });
+        // Sử dụng post nhưng trỏ vào route update (đã có _method: PUT trong data)
+        post(tourUrl.update(tour.id).url, {
+            forceFormData: true,
+            onError: (err) => {
+                console.error('Validation Errors:', err);
+                toast.error('Có lỗi xảy ra. Vui lòng kiểm tra lại dữ liệu.');
+                const firstErrorKey = Object.keys(err)[0];
+                if (firstErrorKey) toast.error(err[firstErrorKey]);
+            },
+            onSuccess: () => {
+                toast.success('Cập nhật tour thành công!');
+            },
+        });
     };
 
     return (
-        <AppLayout breadcrumbs={[{ title: 'Tạo Tour Mới', href: '#' }]}>
-            <Head title="Tạo Tour Mới" />
+        <AppLayout breadcrumbs={[{ title: 'Chỉnh sửa Tour', href: '#' }]}>
+            <Head title={`Chỉnh sửa: ${tour.title}`} />
             <div className="min-h-screen bg-gray-50 p-8 pb-24">
                 <form
                     onSubmit={handleSubmit}
                     className="mx-auto max-w-7xl space-y-8"
                 >
-                    {/* CARD 1: THÔNG TIN CƠ BẢN (Đã chuyển lên đầu) */}
+                    {/* CARD 1: THÔNG TIN CƠ BẢN */}
                     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                         <h2 className="mb-6 border-b pb-4 text-xl font-semibold text-gray-800">
                             1. Thông tin cơ bản
@@ -468,10 +508,7 @@ export default function Create({
                         </div>
                         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
                             <div>
-                                <Label>
-                                    Ngày khởi hành{' '}
-                                    <span className="text-red-500">*</span>
-                                </Label>
+                                <Label>Ngày khởi hành</Label>
                                 <Input
                                     type="date"
                                     value={data.date_start}
@@ -484,11 +521,6 @@ export default function Create({
                                             : ''
                                     }
                                 />
-                                {errors.date_start && (
-                                    <p className="mt-1 text-xs text-red-500">
-                                        {errors.date_start}
-                                    </p>
-                                )}
                             </div>
                             <div>
                                 <Label>Số ngày</Label>
@@ -520,14 +552,12 @@ export default function Create({
                         <h2 className="mb-6 border-b pb-4 text-xl font-semibold text-gray-800">
                             2. Địa điểm & Lịch trình
                         </h2>
-
-                        {/* PANEL 3 CỘT */}
                         <div className="mb-8">
                             <Label className="mb-2 block text-base font-semibold text-blue-700">
-                                Chọn Địa điểm để tạo lịch trình tự động
+                                Chỉnh sửa Địa điểm (Lưu ý: Chọn lại tỉnh sẽ
+                                reset lịch trình)
                             </Label>
                             <div className="grid h-[450px] grid-cols-1 overflow-hidden rounded-lg border bg-white shadow-sm md:grid-cols-3">
-                                {/* CỘT 1: QUỐC GIA */}
                                 <div className="flex flex-col border-r">
                                     <div className="flex items-center gap-2 border-b bg-gray-50 p-3 font-semibold text-gray-700">
                                         <MapPin className="h-4 w-4" /> Quốc gia
@@ -568,8 +598,6 @@ export default function Create({
                                         ))}
                                     </div>
                                 </div>
-
-                                {/* CỘT 2: TỈNH THÀNH */}
                                 <div className="flex flex-col border-r">
                                     <div className="border-b bg-gray-50 p-3 font-semibold text-gray-700">
                                         Tỉnh / Thành phố
@@ -616,8 +644,6 @@ export default function Create({
                                         ))}
                                     </div>
                                 </div>
-
-                                {/* CỘT 3: ĐỊA ĐIỂM */}
                                 <div className="flex flex-col bg-gray-50/50">
                                     <div className="border-b bg-gray-50 p-3 font-semibold text-gray-700">
                                         Địa điểm du lịch
@@ -663,7 +689,7 @@ export default function Create({
                                                     <div className="grid gap-1.5 leading-none">
                                                         <label
                                                             htmlFor={`dest-${dest.id}`}
-                                                            className="cursor-pointer text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                            className="cursor-pointer text-sm leading-none font-medium"
                                                         >
                                                             {dest.name}
                                                         </label>
@@ -686,7 +712,6 @@ export default function Create({
                             )}
                         </div>
 
-                        {/* LIST LỊCH TRÌNH */}
                         <div>
                             <div className="mb-4 flex items-center justify-between border-b pb-2">
                                 <Label className="text-base font-semibold text-blue-700">
@@ -821,7 +846,6 @@ export default function Create({
                                                     }
                                                 />
                                             </div>
-                                            {/* Bữa ăn đã bị xóa */}
                                         </div>
                                     </div>
                                 ))}
@@ -829,7 +853,7 @@ export default function Create({
                         </div>
                     </div>
 
-                    {/* CARD 3: MÔ TẢ (Giữ nguyên) */}
+                    {/* CARD 3: MÔ TẢ */}
                     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                         <h2 className="mb-6 border-b pb-4 text-xl font-semibold text-gray-800">
                             3. Nội dung mô tả
@@ -837,7 +861,7 @@ export default function Create({
                         <div className="space-y-6">
                             <div>
                                 <Label className="mb-2 block font-medium">
-                                    Mô tả ngắn (Tóm tắt)
+                                    Mô tả ngắn
                                 </Label>
                                 <Textarea
                                     rows={3}
@@ -848,24 +872,14 @@ export default function Create({
                                             e.target.value,
                                         )
                                     }
-                                    className={
-                                        errors.short_description
-                                            ? 'border-red-500'
-                                            : ''
-                                    }
                                 />
-                                {errors.short_description && (
-                                    <p className="mt-1 text-xs text-red-500">
-                                        {errors.short_description}
-                                    </p>
-                                )}
                             </div>
                             <div>
                                 <Label className="mb-2 block font-medium">
                                     Mô tả chi tiết
                                 </Label>
                                 <div
-                                    className={`rounded-md border ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
+                                    className={`rounded-md border border-gray-300`}
                                 >
                                     <RichTextEditor
                                         value={data.description}
@@ -875,16 +889,11 @@ export default function Create({
                                         height={400}
                                     />
                                 </div>
-                                {errors.description && (
-                                    <p className="mt-1 text-xs text-red-500">
-                                        {errors.description}
-                                    </p>
-                                )}
                             </div>
                         </div>
                     </div>
 
-                    {/* CARD 4: HÌNH ẢNH (Giữ nguyên) */}
+                    {/* CARD 4: HÌNH ẢNH */}
                     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                         <h2 className="mb-6 border-b pb-4 text-xl font-semibold text-gray-800">
                             4. Thư viện hình ảnh
@@ -892,8 +901,7 @@ export default function Create({
                         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
                             <div className="md:col-span-1">
                                 <Label className="mb-3 block font-medium">
-                                    Ảnh đại diện{' '}
-                                    <span className="text-red-500">*</span>
+                                    Ảnh đại diện
                                 </Label>
                                 <div
                                     className={`relative flex h-48 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed bg-gray-50 hover:bg-gray-100 ${errors.thumbnail ? 'border-red-500' : 'border-gray-300'}`}
@@ -939,7 +947,7 @@ export default function Create({
                             </div>
                             <div className="md:col-span-2">
                                 <Label className="mb-3 block font-medium">
-                                    Bộ sưu tập ảnh
+                                    Thêm ảnh mới vào Gallery
                                 </Label>
                                 <div className="rounded-lg border border-gray-200 p-4">
                                     <div className="mb-4 flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 py-8 hover:bg-gray-100">
@@ -984,6 +992,33 @@ export default function Create({
                                         </div>
                                     )}
                                 </div>
+                                {tour.images && tour.images.length > 0 && (
+                                    <div className="mt-4">
+                                        <Label className="mb-2 block text-sm font-medium text-gray-700">
+                                            Ảnh hiện tại (Chỉ xem)
+                                        </Label>
+                                        <div className="grid grid-cols-6 gap-2">
+                                            {tour.images.map((img) => (
+                                                <div
+                                                    key={img.id}
+                                                    className="relative aspect-square overflow-hidden rounded border"
+                                                >
+                                                    <img
+                                                        src={
+                                                            img.img_url.startsWith(
+                                                                'http',
+                                                            )
+                                                                ? img.img_url
+                                                                : `/storage/${img.img_url}`
+                                                        }
+                                                        className="h-full w-full object-cover"
+                                                        alt={img.alt}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -1218,8 +1253,7 @@ export default function Create({
                                 'Đang xử lý...'
                             ) : (
                                 <span className="flex items-center gap-2">
-                                    Tạo Tour Hoàn Tất{' '}
-                                    <ArrowRight className="h-5 w-5" />
+                                    <Save className="h-4 w-4" /> Cập Nhật Tour
                                 </span>
                             )}
                         </Button>

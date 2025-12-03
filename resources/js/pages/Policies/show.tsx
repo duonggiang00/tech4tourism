@@ -85,10 +85,11 @@ export default function Show({ policy }: Props) {
 
                         <CardContent className="bg-white p-6 sm:p-8">
                             <div className="prose max-w-none text-gray-700">
-                                {/* Sử dụng whitespace-pre-wrap để giữ định dạng xuống dòng của Textarea */}
-                                <div className="leading-relaxed whitespace-pre-wrap">
-                                    {policy.content}
-                                </div>
+                                <div
+                                    dangerouslySetInnerHTML={{
+                                        __html: policy.content,
+                                    }}
+                                ></div>
                             </div>
                         </CardContent>
                     </Card>

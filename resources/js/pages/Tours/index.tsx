@@ -1,4 +1,3 @@
-import { Category, Tour } from '@/app';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,11 +11,10 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import categoriesUrl from '@/routes/categories';
 import tourUrl from '@/routes/tours';
-import { BreadcrumbItem } from '@/types';
+import { BreadcrumbItem, Category, Destination, Tour } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ChevronDown, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { useState } from 'react';
 import { CategoryFormDialog } from './category';
 import { TourFormDialog } from './dialog';
 
@@ -33,11 +31,13 @@ interface PageProps {
         message?: string;
     };
     tours: Tour[];
+    destinations: Destination[];
     categories: Category[];
 }
 
 export default function Index() {
-    const { tours, flash, categories } = usePage<PageProps>().props;
+    const { tours, flash, categories, destinations } =
+        usePage<PageProps>().props;
 
     // --- STATE QUẢN LÝ DIALOG TOUR ---
     const [isTourDialogOpen, setIsTourDialogOpen] = useState(false);
@@ -127,6 +127,10 @@ export default function Index() {
                     >
                         <Plus className="mr-2 h-4 w-4" /> Thêm Danh Mục
                     </Button>
+                    <Link href={tourUrl.create()}>
+                        <Button>Tạo một Tour mới</Button>
+                    </Link>
+
                     <CategoryFormDialog
                         open={isCategoryDialogOpen}
                         onOpenChange={setIsCategoryDialogOpen}
@@ -153,6 +157,7 @@ export default function Index() {
                                 ? `Edit Tour: ${currentTour.title}`
                                 : 'Create New Tour'
                         }
+                        destinations={destinations}
                     />
                 </div>
             </div>
@@ -401,21 +406,22 @@ export default function Index() {
                                                                                                         <Eye className="h-4 w-4" />
                                                                                                     </Button>
                                                                                                 </Link>
-                                                                                                <Button
-                                                                                                    variant="ghost"
-                                                                                                    size="icon"
-                                                                                                    className="h-8 w-8 hover:text-amber-600"
-                                                                                                    onClick={(
-                                                                                                        e,
-                                                                                                    ) => {
-                                                                                                        e.stopPropagation();
-                                                                                                        openEditTourDialog(
-                                                                                                            tour,
-                                                                                                        );
-                                                                                                    }}
+                                                                                                <Link
+                                                                                                    href={
+                                                                                                        tourUrl.edit(
+                                                                                                            tour.id,
+                                                                                                        )
+                                                                                                            .url
+                                                                                                    }
                                                                                                 >
-                                                                                                    <Pencil className="h-4 w-4" />
-                                                                                                </Button>
+                                                                                                    <Button
+                                                                                                        variant="ghost"
+                                                                                                        size="icon"
+                                                                                                        className="h-8 w-8 hover:text-amber-600"
+                                                                                                    >
+                                                                                                        <Pencil className="h-4 w-4" />
+                                                                                                    </Button>
+                                                                                                </Link>
                                                                                                 <Button
                                                                                                     variant="ghost"
                                                                                                     size="icon"

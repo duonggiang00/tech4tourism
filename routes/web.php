@@ -11,12 +11,14 @@ use App\Http\Controllers\{
     BookingController,
     CategoryController,
     CountryController,
+    ImageUploadController,
+    PolicyController,
     ProvidersController,
     ServiceAttributesController,
     ServiceController,
     ServiceTypeController,
-    TestController,
     TourController,
+    TripAssignmentController,
     UserController
 };
 
@@ -87,11 +89,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'countries'          => CountryController::class,
         'categories'         => CategoryController::class,
         'tours'              => TourController::class,
-        'test'               => TestController::class,
         'service-types'      => ServiceTypeController::class,
         'services'           => ServiceController::class,
         'providers'          => ProvidersController::class,
         'service-attributes' => ServiceAttributesController::class,
+        'policies'           => PolicyController::class,
     ]);
 
     // Nested API Resources (Tour Images, Schedules, Service)
@@ -100,7 +102,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::apiResource('images', TourImagesController::class);
         Route::apiResource('tourservices', TourServiceController::class);
         Route::apiResource('tourpolicies', TourPolicyController::class);
+    
     });
+    Route::post('/upload-image', [ImageUploadController::class, 'upload'])->name('image.upload');
 });
 
 // Import Settings Routes

@@ -1,7 +1,8 @@
-import { TourGalleryProps } from "@/app";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Plus, X } from "lucide-react";
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { TourGalleryProps } from '@/types';
+import { Plus, X } from 'lucide-react';
 
 export default function TourGallery({
     tour,
@@ -80,9 +81,10 @@ export default function TourGallery({
                     <h3 className="mb-3 text-xl font-semibold text-gray-900">
                         Mô tả chi tiết
                     </h3>
-                    <p className="leading-relaxed whitespace-pre-line text-gray-600">
-                        {tour.description}
-                    </p>
+                    <div
+                        className="prose max-w-none text-gray-600" // Thêm class 'prose' nếu đã cài tailwind typography
+                        dangerouslySetInnerHTML={{ __html: tour.description }}
+                    />
                 </div>
             </CardContent>
         </Card>

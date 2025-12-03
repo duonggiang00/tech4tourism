@@ -13,4 +13,8 @@ class Policy extends Model
         'title',
         'content'
     ];
+
+    public function tourPolicy(){
+        return $this->hasMany(TourPolicy::class);
+    }
 }

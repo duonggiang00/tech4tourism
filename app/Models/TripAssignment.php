@@ -11,18 +11,17 @@ class TripAssignment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'booking_id',
+        'tour_id',
         'user_id',
-        'total_passengers',
         'status'
     ];
 
     /**
      * Định nghĩa quan hệ: Chuyến đi thuộc về một Booking
      */
-    public function booking()
+    public function tour()
     {
-        return $this->belongsTo(Booking::class);
+        return $this->belongsTo(Tour::class);
     }
 
     /**

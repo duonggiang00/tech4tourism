@@ -12,7 +12,7 @@ class Provider extends Model
     use HasFactory, SoftDeletes;
     protected $table = "providers";
     protected $fillable = [
-        'id_destination',
+        'province_id',
         'name',
         'description',
         'email',
@@ -23,8 +23,13 @@ class Provider extends Model
         'notes',
     ];
 
-    // public function destination()
-    // {
-    //     return $this->belongsTo(Destinations::class, 'id_destination');
-    // }
+    public function province()
+    {
+        return $this->belongsTo(Province::class, );
+    }
+
+    public function services()
+    {
+        return $this->hasMany(Service::class);
+    }
 }

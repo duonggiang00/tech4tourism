@@ -13,9 +13,8 @@ return new class extends Migration
     {
         Schema::create('trip_assignments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('booking_id');
-            $table->foreignId('user_id')->nullable();
-            $table->integer('total_passengers');
+            $table->foreignId('tour_id');
+            $table->foreignId('user_id');
             $table->enum('status', ['0', '1', '2', '3']);
             $table->timestamps();
         });

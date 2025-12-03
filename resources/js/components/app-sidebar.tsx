@@ -13,7 +13,6 @@ import {
 import { dashboard } from '@/routes';
 import categories from '@/routes/categories';
 import countries from '@/routes/countries';
-import test from '@/routes/test';
 import tour from '@/routes/tours';
 import users from '@/routes/users';
 import bookings from '@/routes/admin/bookings';
@@ -26,6 +25,7 @@ import services from '@/routes/services';
 import providers from '@/routes/providers';
 import serviceAttributes from '@/routes/service-attributes';
 import policies from '@/routes/policies';
+
 
 
 const mainNavItems: NavItem[] = [
@@ -49,11 +49,7 @@ const mainNavItems: NavItem[] = [
         href: tour.index(),
         icon: LayoutGrid,
     },
-    {
-        title: 'Test',
-        href: test.index(),
-        icon: PlaneIcon,
-    },
+
    
 ];
 
@@ -87,21 +83,13 @@ export function AppSidebar() {
             href: countries.index(),
             icon: LayoutGrid,
         },
-        // {
-        //     title: 'Categories',
-        //     href: categories.index(),
-        //     icon: LayoutGrid,
-        // },
+
         {
             title: 'Tour',
             href: tour.index(),
             icon: PlaneTakeoff,
         },
-        // {
-        //     title: 'Test',
-        //     href: test.index(),
-        //     icon: PlaneIcon,
-        // },
+      
         {
             title: 'Service_Types', //quản lý loại hình dịch vụ
             href: serviceTypes.index(),
