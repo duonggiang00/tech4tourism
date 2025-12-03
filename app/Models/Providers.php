@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Providers extends Model
 {
-    /** @use HasFactory<\Database\Factories\ProvidersFactory> */
     use HasFactory, SoftDeletes;
-    protected $table = "providers";
+
+    protected $table = 'providers';
+
     protected $fillable = [
-        'id_destination',
         'name',
         'description',
         'email',
@@ -23,8 +23,8 @@ class Providers extends Model
         'notes',
     ];
 
-    // public function destination()
-    // {
-    //     return $this->belongsTo(Destinations::class, 'id_destination');
-    // }
+    public function services()
+    {
+        return $this->hasMany(Services::class, 'id_provider');
+    }
 }

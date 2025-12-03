@@ -8,13 +8,19 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ServiceTypes extends Model
 {
-    /** @use HasFactory<\Database\Factories\ServiceTypesFactory> */
     use HasFactory, SoftDeletes;
+
     protected $table = 'service_types';
+
     protected $fillable = [
         'name',
         'icon',
         'description',
         'order',
     ];
+
+    public function services()
+    {
+        return $this->hasMany(Services::class, 'id_service_type');
+    }
 }

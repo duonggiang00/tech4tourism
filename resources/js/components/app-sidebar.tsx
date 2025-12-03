@@ -11,21 +11,31 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import bookings from '@/routes/admin/bookings';
 import categories from '@/routes/categories';
 import countries from '@/routes/countries';
+import providers from '@/routes/providers';
+import serviceAttributes from '@/routes/service-attributes';
+import serviceTypes from '@/routes/service-types';
+import services from '@/routes/services';
 import test from '@/routes/test';
 import tour from '@/routes/tours';
 import users from '@/routes/users';
-import bookings from '@/routes/admin/bookings';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, PlaneIcon, Users, Calendar, ListIcon, BanIcon, User2Icon, BananaIcon } from 'lucide-react';
+import {
+    BananaIcon,
+    BanIcon,
+    BookOpen,
+    Calendar,
+    Folder,
+    LayoutGrid,
+    ListIcon,
+    PlaneIcon,
+    User2Icon,
+    Users,
+} from 'lucide-react';
 import AppLogo from './app-logo';
-import serviceTypes from '@/routes/service-types';
-import services from '@/routes/services';
-import providers from '@/routes/providers';
-import serviceAttributes from '@/routes/service-attributes';
-
 
 const mainNavItems: NavItem[] = [
     {
@@ -53,7 +63,6 @@ const mainNavItems: NavItem[] = [
         href: test.index(),
         icon: PlaneIcon,
     },
-   
 ];
 
 const footerNavItems: NavItem[] = [

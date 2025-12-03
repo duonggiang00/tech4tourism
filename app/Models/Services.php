@@ -8,9 +8,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Services extends Model
 {
-    /** @use HasFactory<\Database\Factories\ServicesFactory> */
     use HasFactory, SoftDeletes;
-    protected $table = "services";
+
+    protected $table = 'services';
+
     protected $fillable = [
         'id_service_type',
         'id_provider',
@@ -24,6 +25,7 @@ class Services extends Model
         'unit',
         'priceDefault',
     ];
+
     public function serviceType()
     {
         return $this->belongsTo(ServiceTypes::class, 'id_service_type');
@@ -32,5 +34,10 @@ class Services extends Model
     public function provider()
     {
         return $this->belongsTo(Providers::class, 'id_provider');
+    }
+
+    public function attributes()
+    {
+        return $this->hasMany(ServiceAttributes::class, 'id_service');
     }
 }
