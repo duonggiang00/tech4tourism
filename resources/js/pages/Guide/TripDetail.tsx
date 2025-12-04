@@ -9,11 +9,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, MapPin, Users, Plus, Eye, Trash2, Clock, CheckCircle2, FileText, Check } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, MapPin, Users, Plus, Eye, Trash2, Clock, CheckCircle2, FileText, Check, XCircle, ChevronDown, ChevronRight, Save } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
 import guide from '@/routes/guide';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Schedule {
     id: number;
@@ -105,10 +108,15 @@ const passengerTypeLabels: Record<number, string> = {
 export default function TripDetail({ assignment, passengers }: Props) {
     const [showCheckInDialog, setShowCheckInDialog] = useState(false);
     const [showNoteDialog, setShowNoteDialog] = useState(false);
+    const [modalPassengers, setModalPassengers] = useState<Passenger[]>([]);
+    const [loadingPassengers, setLoadingPassengers] = useState(false);
+    const [attendance, setAttendance] = useState<Record<number, { is_present: boolean; notes: string }>>({});
+    const [expandedBookings, setExpandedBookings] = useState<Set<string>>(new Set());
 
     const checkInForm = useForm({
         title: '',
         checkin_time: new Date().toISOString().slice(0, 16),
+        passengers: [] as Array<{ passenger_id: number; is_present: boolean; notes: string }>,
     });
 
     const noteForm = useForm({
@@ -116,12 +124,111 @@ export default function TripDetail({ assignment, passengers }: Props) {
         content: '',
     });
 
+    // Nhóm passengers theo booking code
+    const passengersByBooking = useMemo(() => {
+        const grouped: Record<string, Passenger[]> = {};
+        modalPassengers.forEach((passenger) => {
+            const bookingCode = passenger.booking?.code || 'Không có booking';
+            if (!grouped[bookingCode]) {
+                grouped[bookingCode] = [];
+            }
+            grouped[bookingCode].push(passenger);
+        });
+        return grouped;
+    }, [modalPassengers]);
+
+    // Mở tất cả booking mặc định
+    useEffect(() => {
+        const allCodes = Object.keys(passengersByBooking);
+        setExpandedBookings(new Set(allCodes));
+    }, [passengersByBooking]);
+
+    // Initialize attendance khi có passengers
+    useEffect(() => {
+        const initial: Record<number, { is_present: boolean; notes: string }> = {};
+        modalPassengers.forEach((p) => {
+            initial[p.id] = {
+                is_present: false,
+                notes: '',
+            };
+        });
+        setAttendance(initial);
+    }, [modalPassengers]);
+
+    // Fetch passengers khi chọn checkin_time
+    const handleCheckInTimeChange = async (checkinTime: string) => {
+        checkInForm.setData('checkin_time', checkinTime);
+        
+        if (!checkinTime) {
+            setModalPassengers([]);
+            return;
+        }
+
+        setLoadingPassengers(true);
+        try {
+            const response = await axios.get(`/guide/trip/${assignment.id}/passengers`, {
+                params: { checkin_time: checkinTime },
+            });
+            setModalPassengers(response.data);
+        } catch (error: any) {
+            toast.error('Không thể tải danh sách khách hàng');
+            console.error(error);
+        } finally {
+            setLoadingPassengers(false);
+        }
+    };
+
+    const toggleAttendance = (passengerId: number) => {
+        setAttendance((prev) => ({
+            ...prev,
+            [passengerId]: {
+                ...prev[passengerId],
+                is_present: !prev[passengerId]?.is_present,
+            },
+        }));
+    };
+
+    const updateNote = (passengerId: number, notes: string) => {
+        setAttendance((prev) => ({
+            ...prev,
+            [passengerId]: {
+                ...prev[passengerId],
+                notes,
+            },
+        }));
+    };
+
+    const toggleBooking = (bookingCode: string) => {
+        setExpandedBookings((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(bookingCode)) {
+                newSet.delete(bookingCode);
+            } else {
+                newSet.add(bookingCode);
+            }
+            return newSet;
+        });
+    };
+
     const handleCreateCheckIn = (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Chuyển attendance thành array
+        const passengersData = Object.entries(attendance).map(([id, data]) => ({
+            passenger_id: parseInt(id),
+            is_present: data.is_present,
+            notes: data.notes,
+        }));
+
+        checkInForm.setData('passengers', passengersData);
+        
         checkInForm.post(`/guide/trip/${assignment.id}/checkin`, {
             onSuccess: () => {
                 setShowCheckInDialog(false);
                 checkInForm.reset();
+                setModalPassengers([]);
+                setAttendance({});
+                router.reload();
             },
         });
     };
@@ -309,48 +416,223 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                         Điểm danh khách hàng tại mỗi điểm đến
                                     </CardDescription>
                                 </div>
-                                <Dialog open={showCheckInDialog} onOpenChange={setShowCheckInDialog}>
+                                <Dialog open={showCheckInDialog} onOpenChange={(open) => {
+                                    setShowCheckInDialog(open);
+                                    if (!open) {
+                                        setModalPassengers([]);
+                                        setAttendance({});
+                                        checkInForm.reset();
+                                    }
+                                }}>
                                     <DialogTrigger asChild>
                                         <Button className="gap-2">
                                             <Plus className="h-4 w-4" />
                                             Tạo đợt check-in
                                         </Button>
                                     </DialogTrigger>
-                                    <DialogContent>
+                                    <DialogContent className="max-w-4xl max-h-[90vh]">
                                         <DialogHeader>
                                             <DialogTitle>Tạo đợt check-in mới</DialogTitle>
                                             <DialogDescription>
-                                                Nhập tên điểm đến và thời gian check-in
+                                                Nhập tên điểm đến, thời gian check-in và điểm danh khách hàng
                                             </DialogDescription>
                                         </DialogHeader>
                                         <form onSubmit={handleCreateCheckIn}>
-                                            <div className="space-y-4 py-4">
-                                                <div className="space-y-2">
-                                                    <Label>Tên điểm đến *</Label>
-                                                    <Input
-                                                        placeholder="VD: Bãi biển Mỹ Khê"
-                                                        value={checkInForm.data.title}
-                                                        onChange={(e) => checkInForm.setData('title', e.target.value)}
-                                                    />
-                                                    {checkInForm.errors.title && (
-                                                        <p className="text-sm text-red-500">{checkInForm.errors.title}</p>
-                                                    )}
+                                            <ScrollArea className="max-h-[70vh] pr-4">
+                                                <div className="space-y-4 py-4">
+                                                    {/* Form thông tin check-in */}
+                                                    <div className="space-y-4 border-b pb-4">
+                                                        <div className="space-y-2">
+                                                            <Label>Tên điểm đến *</Label>
+                                                            <Input
+                                                                placeholder="VD: Bãi biển Mỹ Khê"
+                                                                value={checkInForm.data.title}
+                                                                onChange={(e) => checkInForm.setData('title', e.target.value)}
+                                                            />
+                                                            {checkInForm.errors.title && (
+                                                                <p className="text-sm text-red-500">{checkInForm.errors.title}</p>
+                                                            )}
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label>Thời gian check-in *</Label>
+                                                            <Input
+                                                                type="datetime-local"
+                                                                value={checkInForm.data.checkin_time}
+                                                                onChange={(e) => handleCheckInTimeChange(e.target.value)}
+                                                            />
+                                                            {checkInForm.errors.checkin_time && (
+                                                                <p className="text-sm text-red-500">{checkInForm.errors.checkin_time}</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Form điểm danh */}
+                                                    {loadingPassengers ? (
+                                                        <div className="text-center py-8">
+                                                            <p className="text-muted-foreground">Đang tải danh sách khách hàng...</p>
+                                                        </div>
+                                                    ) : modalPassengers.length > 0 ? (
+                                                        <div className="space-y-4">
+                                                            <div className="flex items-center justify-between">
+                                                                <Label className="text-base font-semibold">Điểm danh khách hàng</Label>
+                                                                <div className="flex gap-2">
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        onClick={() => {
+                                                                            const all: Record<number, { is_present: boolean; notes: string }> = {};
+                                                                            modalPassengers.forEach((p) => {
+                                                                                all[p.id] = { is_present: true, notes: attendance[p.id]?.notes || '' };
+                                                                            });
+                                                                            setAttendance(all);
+                                                                        }}
+                                                                    >
+                                                                        <CheckCircle2 className="h-4 w-4 mr-1" />
+                                                                        Tất cả có mặt
+                                                                    </Button>
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="outline"
+                                                                        size="sm"
+                                                                        onClick={() => {
+                                                                            const all: Record<number, { is_present: boolean; notes: string }> = {};
+                                                                            modalPassengers.forEach((p) => {
+                                                                                all[p.id] = { is_present: false, notes: attendance[p.id]?.notes || '' };
+                                                                            });
+                                                                            setAttendance(all);
+                                                                        }}
+                                                                    >
+                                                                        <XCircle className="h-4 w-4 mr-1" />
+                                                                        Bỏ chọn tất cả
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                {Object.entries(passengersByBooking).map(([bookingCode, bookingPassengers]) => {
+                                                                    const booking = bookingPassengers[0]?.booking;
+                                                                    const isExpanded = expandedBookings.has(bookingCode);
+                                                                    const bookingPresentCount = bookingPassengers.filter(
+                                                                        (p) => attendance[p.id]?.is_present
+                                                                    ).length;
+                                                                    
+                                                                    return (
+                                                                        <Collapsible
+                                                                            key={bookingCode}
+                                                                            open={isExpanded}
+                                                                            onOpenChange={() => toggleBooking(bookingCode)}
+                                                                        >
+                                                                            <div className="border rounded-lg">
+                                                                                <CollapsibleTrigger className="w-full">
+                                                                                    <div className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors">
+                                                                                        <div className="flex items-center gap-3">
+                                                                                            {isExpanded ? (
+                                                                                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                                                                            ) : (
+                                                                                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                                                                            )}
+                                                                                            <Badge variant="secondary" className="font-medium">
+                                                                                                {bookingCode}
+                                                                                            </Badge>
+                                                                                            {booking?.status === 0 && (
+                                                                                                <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                                                                                                    Chờ xác nhận
+                                                                                                </Badge>
+                                                                                            )}
+                                                                                            <span className="text-sm text-muted-foreground">
+                                                                                                ({bookingPassengers.length} khách)
+                                                                                            </span>
+                                                                                            {isExpanded && (
+                                                                                                <span className="text-xs text-muted-foreground">
+                                                                                                    • {bookingPresentCount}/{bookingPassengers.length} có mặt
+                                                                                                </span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </CollapsibleTrigger>
+                                                                                <CollapsibleContent>
+                                                                                    <div className="border-t">
+                                                                                        <Table>
+                                                                                            <TableHeader>
+                                                                                                <TableRow>
+                                                                                                    <TableHead className="w-[60px]">Có mặt</TableHead>
+                                                                                                    <TableHead>#</TableHead>
+                                                                                                    <TableHead>Họ tên</TableHead>
+                                                                                                    <TableHead>CCCD</TableHead>
+                                                                                                    <TableHead>Loại</TableHead>
+                                                                                                    <TableHead>Ghi chú</TableHead>
+                                                                                                </TableRow>
+                                                                                            </TableHeader>
+                                                                                            <TableBody>
+                                                                                                {bookingPassengers.map((passenger, idx) => (
+                                                                                                    <TableRow 
+                                                                                                        key={passenger.id}
+                                                                                                        className={attendance[passenger.id]?.is_present ? 'bg-green-50' : ''}
+                                                                                                    >
+                                                                                                        <TableCell>
+                                                                                                            <Checkbox
+                                                                                                                checked={attendance[passenger.id]?.is_present || false}
+                                                                                                                onCheckedChange={() => toggleAttendance(passenger.id)}
+                                                                                                            />
+                                                                                                        </TableCell>
+                                                                                                        <TableCell>{idx + 1}</TableCell>
+                                                                                                        <TableCell className="font-medium">
+                                                                                                            <div className="flex items-center gap-2">
+                                                                                                                {attendance[passenger.id]?.is_present ? (
+                                                                                                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                                                                                                ) : (
+                                                                                                                    <XCircle className="h-4 w-4 text-red-400" />
+                                                                                                                )}
+                                                                                                                {passenger.fullname}
+                                                                                                            </div>
+                                                                                                        </TableCell>
+                                                                                                        <TableCell>{passenger.cccd || '-'}</TableCell>
+                                                                                                        <TableCell>
+                                                                                                            <Badge variant="outline">
+                                                                                                                {passengerTypeLabels[passenger.type] || 'N/A'}
+                                                                                                            </Badge>
+                                                                                                        </TableCell>
+                                                                                                        <TableCell>
+                                                                                                            <Input
+                                                                                                                placeholder="Ghi chú..."
+                                                                                                                className="h-8 w-40"
+                                                                                                                value={attendance[passenger.id]?.notes || ''}
+                                                                                                                onChange={(e) => updateNote(passenger.id, e.target.value)}
+                                                                                                            />
+                                                                                                        </TableCell>
+                                                                                                    </TableRow>
+                                                                                                ))}
+                                                                                            </TableBody>
+                                                                                        </Table>
+                                                                                    </div>
+                                                                                </CollapsibleContent>
+                                                                            </div>
+                                                                        </Collapsible>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    ) : checkInForm.data.checkin_time ? (
+                                                        <div className="text-center py-8 border rounded-lg">
+                                                            <p className="text-muted-foreground">
+                                                                Không có khách hàng nào cho ngày này
+                                                            </p>
+                                                        </div>
+                                                    ) : null}
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <Label>Thời gian check-in *</Label>
-                                                    <Input
-                                                        type="datetime-local"
-                                                        value={checkInForm.data.checkin_time}
-                                                        onChange={(e) => checkInForm.setData('checkin_time', e.target.value)}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <DialogFooter>
-                                                <Button type="button" variant="outline" onClick={() => setShowCheckInDialog(false)}>
+                                            </ScrollArea>
+                                            <DialogFooter className="mt-4">
+                                                <Button type="button" variant="outline" onClick={() => {
+                                                    setShowCheckInDialog(false);
+                                                    setModalPassengers([]);
+                                                    setAttendance({});
+                                                    checkInForm.reset();
+                                                }}>
                                                     Hủy
                                                 </Button>
-                                                <Button type="submit" disabled={checkInForm.processing}>
-                                                    Tạo
+                                                <Button type="submit" disabled={checkInForm.processing || !checkInForm.data.title || !checkInForm.data.checkin_time} className="gap-2">
+                                                    <Save className="h-4 w-4" />
+                                                    {checkInForm.processing ? 'Đang lưu...' : 'Lưu check-in'}
                                                 </Button>
                                             </DialogFooter>
                                         </form>

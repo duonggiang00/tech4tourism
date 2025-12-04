@@ -63,7 +63,39 @@ class GuideController extends Controller
     }
 
     /**
-     * Tạo đợt check-in mới (theo điểm đến)
+     * Lấy danh sách passengers theo assignment và checkin_time (cho modal)
+     */
+    public function getPassengersForCheckIn(Request $request, $assignmentId)
+    {
+        $assignment = TripAssignment::findOrFail($assignmentId);
+
+        if ($assignment->user_id !== auth()->id()) {
+            abort(403, 'Bạn không có quyền thực hiện');
+        }
+
+        $request->validate([
+            'checkin_time' => 'required|date',
+        ]);
+
+        $checkInDate = \Carbon\Carbon::parse($request->checkin_time)->format('Y-m-d');
+
+        // Lấy danh sách passengers từ booking có:
+        // - tour_id = tour được phân công
+        // - date_start = ngày check-in
+        // - status = 0 (Chờ xác nhận) hoặc 1 (Đã xác nhận)
+        $passengers = Passenger::whereHas('booking', function ($query) use ($assignment, $checkInDate) {
+            $query->where('tour_id', $assignment->tour_id)
+                  ->where('date_start', $checkInDate)
+                  ->whereIn('status', [0, 1]);
+        })->with(['booking' => function($q) {
+            $q->select('id', 'code', 'status', 'client_name');
+        }])->get();
+
+        return response()->json($passengers);
+    }
+
+    /**
+     * Tạo đợt check-in mới (theo điểm đến) kèm điểm danh
      */
     public function createCheckIn(Request $request, $assignmentId)
     {
@@ -76,18 +108,42 @@ class GuideController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'checkin_time' => 'required|date',
+            'passengers' => 'nullable|array',
+            'passengers.*.passenger_id' => 'required|exists:passengers,id',
+            'passengers.*.is_present' => 'required|boolean',
+            'passengers.*.notes' => 'nullable|string|max:500',
         ], [
             'title.required' => 'Vui lòng nhập tên điểm đến',
             'checkin_time.required' => 'Vui lòng chọn thời gian check-in',
         ]);
 
-        TripCheckIn::create([
-            'trip_assignment_id' => $assignmentId,
-            'title' => $validated['title'],
-            'checkin_time' => $validated['checkin_time'],
-        ]);
+        // Tạo check-in trong transaction
+        \DB::beginTransaction();
+        try {
+            $checkIn = TripCheckIn::create([
+                'trip_assignment_id' => $assignmentId,
+                'title' => $validated['title'],
+                'checkin_time' => $validated['checkin_time'],
+            ]);
 
-        return redirect()->back()->with('success', 'Tạo đợt check-in thành công');
+            // Tạo check-in details nếu có passengers data
+            if (isset($validated['passengers']) && is_array($validated['passengers'])) {
+                foreach ($validated['passengers'] as $passengerData) {
+                    CheckInDetail::create([
+                        'trip_check_in_id' => $checkIn->id,
+                        'passenger_id' => $passengerData['passenger_id'],
+                        'is_present' => $passengerData['is_present'],
+                        'notes' => $passengerData['notes'] ?? null,
+                    ]);
+                }
+            }
+
+            \DB::commit();
+            return redirect()->back()->with('success', 'Tạo đợt check-in và lưu điểm danh thành công');
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return redirect()->back()->withErrors(['error' => 'Có lỗi xảy ra: ' . $e->getMessage()]);
+        }
     }
 
     /**

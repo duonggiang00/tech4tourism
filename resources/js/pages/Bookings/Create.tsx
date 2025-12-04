@@ -213,7 +213,7 @@ export default function CreateBooking({
                 } else if (err?.message) {
                     toast.error(err.message);
                 } else {
-                    toast.error('Vui lòng kiểm tra lại thông tin.');
+                toast.error('Vui lòng kiểm tra lại thông tin.');
                 }
             },
         });
@@ -509,9 +509,9 @@ export default function CreateBooking({
                                         sách hành khách
                                     </CardTitle>
                                     <div className="flex items-center gap-3">
-                                        <span className="text-sm text-gray-500">
-                                            {data.passengers.length} người
-                                        </span>
+                                    <span className="text-sm text-gray-500">
+                                        {data.passengers.length} người
+                                    </span>
                                         <Button
                                             type="button"
                                             variant="outline"
@@ -612,8 +612,8 @@ export default function CreateBooking({
                                                               ? 'bg-amber-100 text-amber-800'
                                                               : 'bg-pink-100 text-pink-800'
                                                     }`}>
-                                                        {pax.type === 0
-                                                            ? 'Người lớn'
+                                                    {pax.type === 0
+                                                        ? 'Người lớn'
                                                             : pax.type === 1
                                                               ? 'Trẻ em'
                                                               : 'Em bé'}

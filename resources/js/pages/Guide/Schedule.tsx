@@ -48,7 +48,8 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 
 export default function Schedule({ assignments, filters }: Props) {
     const handleStatusFilter = (value: string) => {
-        router.get(guide.schedule(), {
+        const scheduleUrl = guide?.schedule ? guide.schedule() : '/guide/schedule';
+        router.get(scheduleUrl, {
             status: value === 'all' ? undefined : value,
         }, {
             preserveState: true,
@@ -161,7 +162,7 @@ export default function Schedule({ assignments, filters }: Props) {
                                                         Xác nhận đã nhận
                                                     </Button>
                                                 )}
-                                                <Link href={guide.tripDetail(assignment.id)}>
+                                                <Link href={guide?.tripDetail ? guide.tripDetail(assignment.id) : `/guide/trip/${assignment.id}`}>
                                                     <Button variant="outline" className="gap-2">
                                                         <Eye className="h-4 w-4" />
                                                         Xem chi tiết

@@ -88,6 +88,7 @@ Route::middleware(['auth', 'role:2'])->prefix('guide')->name('guide.')->group(fu
     Route::get('/trip/{id}', [GuideController::class, 'tripDetail'])->name('trip.detail');
     
     // Check-in
+    Route::get('/trip/{assignmentId}/passengers', [GuideController::class, 'getPassengersForCheckIn'])->name('passengers.get');
     Route::post('/trip/{assignmentId}/checkin', [GuideController::class, 'createCheckIn'])->name('checkin.create');
     Route::get('/checkin/{checkInId}', [GuideController::class, 'showCheckIn'])->name('checkin.show');
     Route::post('/checkin/{checkInId}/save', [GuideController::class, 'saveCheckIn'])->name('checkin.save');
