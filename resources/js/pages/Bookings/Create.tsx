@@ -1,3 +1,5 @@
+import ExcelImportDialog from '@/components/booking/ExcelImportDialog';
+import TourCombobox from '@/components/booking/TourCombobox';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,8 +13,8 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
-import { ArrowLeft, CalendarIcon, Minus, Plus, Users } from 'lucide-react';
-import { FormEventHandler, useEffect, useMemo } from 'react';
+import { ArrowLeft, CalendarIcon, FileSpreadsheet, Minus, Plus, Users } from 'lucide-react';
+import { FormEventHandler, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 export interface Tour {
@@ -35,6 +37,8 @@ interface CreateBookingProps {
 
 interface Passenger {
     fullname: string;
+    age?: number | null;
+    cccd?: string;
     type: number;
     gender: number;
 }
@@ -62,6 +66,7 @@ export default function CreateBooking({
     children: initialChildren,
 }: CreateBookingProps) {
     const isAdminMode = isAdmin || (Array.isArray(tours) && tours.length > 0);
+    const [showImportDialog, setShowImportDialog] = useState(false);
 
     // --- 2. KHỞI TẠO FORM VỚI CẤU TRÚC NESTED ---
     const { data, setData, post, processing, errors, reset } =
@@ -128,7 +133,7 @@ export default function CreateBooking({
                     (p) => p.type === 0,
                 ).length;
                 const type = currentAdults < data.booking.adults ? 0 : 1;
-                newPassengers.push({ fullname: '', type, gender: 0 });
+                newPassengers.push({ fullname: '', cccd: '', type, gender: 0 });
             }
         } else {
             // Xóa bớt
@@ -145,6 +150,25 @@ export default function CreateBooking({
         }
         setData('passengers', newPassengers);
     }, [data.booking.adults, data.booking.children]);
+
+    // --- XỬ LÝ IMPORT TỪ EXCEL ---
+    const handleExcelImport = (importedPassengers: Passenger[]) => {
+        // Đếm số người lớn và trẻ em từ dữ liệu import
+        const adultCount = importedPassengers.filter((p) => p.type === 0).length;
+        const childCount = importedPassengers.filter((p) => p.type === 1 || p.type === 2).length;
+
+        // Cập nhật cả booking và passengers cùng lúc
+        setData({
+            booking: {
+                ...data.booking,
+                adults: adultCount > 0 ? adultCount : 1,
+                children: childCount,
+            },
+            passengers: importedPassengers,
+        });
+
+        toast.success(`Đã import ${importedPassengers.length} hành khách từ Excel!`);
+    };
 
     // --- XỬ LÝ SUBMIT ---
     const submit: FormEventHandler = (e) => {
@@ -243,33 +267,14 @@ export default function CreateBooking({
                                                     *
                                                 </span>
                                             </Label>
-                                            <Select
-                                                value={data.booking.tour_id.toString()}
-                                                onValueChange={(val) =>
-                                                    setBookingData(
-                                                        'tour_id',
-                                                        Number(val),
-                                                    )
+                                            <TourCombobox
+                                                tours={tours}
+                                                value={data.booking.tour_id}
+                                                onChange={(tourId) =>
+                                                    setBookingData('tour_id', tourId)
                                                 }
-                                            >
-                                                <SelectTrigger className="h-11">
-                                                    <SelectValue placeholder="-- Chọn tour --" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {tours.map((t) => (
-                                                        <SelectItem
-                                                            key={t.id}
-                                                            value={t.id.toString()}
-                                                        >
-                                                            {t.title} (
-                                                            {Number(
-                                                                t.price_adult,
-                                                            ).toLocaleString()}
-                                                            đ)
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
+                                                placeholder="Tìm và chọn tour..."
+                                            />
                                             {/* Laravel Form Request nested rules trả về lỗi dạng 'booking.tour_id' */}
                                             {/* @ts-ignore */}
                                             {errors['booking.tour_id'] && (
@@ -478,9 +483,21 @@ export default function CreateBooking({
                                         <Users className="mr-2 h-5 w-5" /> Danh
                                         sách hành khách
                                     </CardTitle>
-                                    <span className="text-sm text-gray-500">
-                                        {data.passengers.length} người
-                                    </span>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-sm text-gray-500">
+                                            {data.passengers.length} người
+                                        </span>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setShowImportDialog(true)}
+                                            className="border-green-300 text-green-700 hover:bg-green-50 hover:text-green-800"
+                                        >
+                                            <FileSpreadsheet className="mr-2 h-4 w-4" />
+                                            Nhập từ Excel
+                                        </Button>
+                                    </div>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     {data.passengers.map((pax, index) => (
@@ -493,7 +510,8 @@ export default function CreateBooking({
                                             </div>
 
                                             <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-12">
-                                                <div className="sm:col-span-6">
+                                                {/* Họ và tên */}
+                                                <div className="sm:col-span-4">
                                                     <Input
                                                         placeholder="Họ và tên"
                                                         value={pax.fullname}
@@ -501,68 +519,80 @@ export default function CreateBooking({
                                                             const newPax = [
                                                                 ...data.passengers,
                                                             ];
-                                                            newPax[
-                                                                index
-                                                            ].fullname =
-                                                                e.target.value;
-                                                            setData(
-                                                                'passengers',
-                                                                newPax,
-                                                            );
+                                                            newPax[index].fullname = e.target.value;
+                                                            setData('passengers', newPax);
                                                         }}
                                                         required
                                                     />
                                                     {/* @ts-ignore */}
-                                                    {errors[
-                                                        `passengers.${index}.fullname`
-                                                    ] && (
+                                                    {errors[`passengers.${index}.fullname`] && (
                                                         <p className="mt-1 text-xs text-red-500">
-                                                            {
-                                                                errors[
-                                                                    `passengers.${index}.fullname`
-                                                                ]
-                                                            }
+                                                            {errors[`passengers.${index}.fullname`]}
                                                         </p>
                                                     )}
                                                 </div>
 
+                                                {/* CCCD */}
                                                 <div className="sm:col-span-3">
+                                                    <Input
+                                                        placeholder="Số CCCD"
+                                                        value={pax.cccd || ''}
+                                                        onChange={(e) => {
+                                                            const newPax = [...data.passengers];
+                                                            newPax[index].cccd = e.target.value;
+                                                            setData('passengers', newPax);
+                                                        }}
+                                                    />
+                                                    {/* @ts-ignore */}
+                                                    {errors[`passengers.${index}.cccd`] && (
+                                                        <p className="mt-1 text-xs text-red-500">
+                                                            {errors[`passengers.${index}.cccd`]}
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                {/* Giới tính */}
+                                                <div className="sm:col-span-2">
                                                     <Select
                                                         value={pax.gender.toString()}
-                                                        onValueChange={(
-                                                            val,
-                                                        ) => {
-                                                            const newPax = [
-                                                                ...data.passengers,
-                                                            ];
-                                                            newPax[
-                                                                index
-                                                            ].gender =
-                                                                parseInt(val);
-                                                            setData(
-                                                                'passengers',
-                                                                newPax,
-                                                            );
+                                                        onValueChange={(val) => {
+                                                            const newPax = [...data.passengers];
+                                                            newPax[index].gender = parseInt(val);
+                                                            setData('passengers', newPax);
                                                         }}
                                                     >
                                                         <SelectTrigger>
                                                             <SelectValue />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            <SelectItem value="0">
-                                                                Nam
-                                                            </SelectItem>
-                                                            <SelectItem value="1">
-                                                                Nữ
-                                                            </SelectItem>
+                                                            <SelectItem value="0">Nam</SelectItem>
+                                                            <SelectItem value="1">Nữ</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                 </div>
 
-                                                <div className="flex items-center justify-center rounded border bg-white text-sm text-gray-600 sm:col-span-3">
-                                                    {pax.type === 0
-                                                        ? 'Người lớn'
-                                                        : 'Trẻ em'}
+                                                {/* Tuổi (chỉ hiển thị nếu có) */}
+                                                {pax.age && (
+                                                    <div className="flex items-center justify-center text-sm text-gray-600 sm:col-span-1">
+                                                        {pax.age} tuổi
+                                                    </div>
+                                                )}
+
+                                                {/* Loại hành khách */}
+                                                <div className={`flex items-center justify-center rounded border bg-white text-sm text-gray-600 ${pax.age ? 'sm:col-span-2' : 'sm:col-span-3'}`}>
+                                                    <span className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
+                                                        pax.type === 0
+                                                            ? 'bg-blue-100 text-blue-800'
+                                                            : pax.type === 1
+                                                              ? 'bg-amber-100 text-amber-800'
+                                                              : 'bg-pink-100 text-pink-800'
+                                                    }`}>
+                                                        {pax.type === 0
+                                                            ? 'Người lớn'
+                                                            : pax.type === 1
+                                                              ? 'Trẻ em'
+                                                              : 'Em bé'}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -590,7 +620,7 @@ export default function CreateBooking({
                                                     src={
                                                         selectedTour.thumbnail
                                                             ? `/storage/${selectedTour.thumbnail}`
-                                                            : 'https://placehold.co/600x400?text=No+Image'
+                                                            : 'https://placehold.co/600x400?text=Chưa+có+ảnh'
                                                     }
                                                     alt={selectedTour.title}
                                                     className="h-full w-full object-cover"
@@ -674,6 +704,13 @@ export default function CreateBooking({
                     </form>
                 </div>
             </div>
+
+            {/* Dialog Import Excel */}
+            <ExcelImportDialog
+                open={showImportDialog}
+                onOpenChange={setShowImportDialog}
+                onImport={handleExcelImport}
+            />
         </AppLayout>
     );
 }

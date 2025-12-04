@@ -240,7 +240,7 @@ export default function BookingsIndex({
                         <div className="flex gap-2">
                             <Input
                                 type="text"
-                                placeholder="Tìm kiếm theo mã, tên, email..."
+                                placeholder="Tìm kiếm theo mã, tên khách, email, tên tour..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="max-w-md"
@@ -251,11 +251,22 @@ export default function BookingsIndex({
                                         ? String(statusFilter)
                                         : 'all'
                                 }
-                                onValueChange={(val) =>
-                                    setStatusFilter(
-                                        val === 'all' ? null : parseInt(val),
-                                    )
-                                }
+                                onValueChange={(val) => {
+                                    const newStatus = val === 'all' ? null : parseInt(val);
+                                    setStatusFilter(newStatus);
+                                    // Tự động filter khi chọn trạng thái
+                                    router.get(
+                                        bookingsRoutes.index().url,
+                                        {
+                                            search,
+                                            status: newStatus,
+                                        },
+                                        {
+                                            preserveState: true,
+                                            preserveScroll: true,
+                                        },
+                                    );
+                                }}
                             >
                                 <SelectTrigger className="w-[180px]">
                                     <SelectValue placeholder="Tất cả trạng thái" />
@@ -285,7 +296,7 @@ export default function BookingsIndex({
                                         router.get(bookingsRoutes.index().url);
                                     }}
                                 >
-                                    Xóa
+                                    Xóa bộ lọc
                                 </Button>
                             )}
                         </div>

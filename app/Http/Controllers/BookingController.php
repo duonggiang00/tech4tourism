@@ -54,6 +54,7 @@ class BookingController extends Controller
             'client_email' => 'required|email|max:255',
             'passengers' => 'required|array|min:1', // Phải có ít nhất 1 hành khách
             'passengers.*.fullname' => 'required|string|max:255',
+            'passengers.*.cccd' => 'nullable|string|max:20',
             'passengers.*.gender' => 'required|in:0,1',
             'passengers.*.type' => 'required|in:0,1,2', // 0: Adult, 1: Child, 2: Infant
         ], [
@@ -133,11 +134,18 @@ class BookingController extends Controller
     {
         $bookings = Booking::with('tour') // Load kèm tên tour
             ->when($request->search, function ($query, $search) {
-                $query->where('code', 'like', "%{$search}%")
-                    ->orWhere('client_name', 'like', "%{$search}%")
-                    ->orWhere('client_email', 'like', "%{$search}%");
+                $query->where(function ($q) use ($search) {
+                    $q->where('code', 'like', "%{$search}%")
+                        ->orWhere('client_name', 'like', "%{$search}%")
+                        ->orWhere('client_email', 'like', "%{$search}%")
+                        ->orWhere('client_phone', 'like', "%{$search}%")
+                        // Tìm kiếm theo tên tour
+                        ->orWhereHas('tour', function ($tourQuery) use ($search) {
+                            $tourQuery->where('title', 'like', "%{$search}%");
+                        });
+                });
             })
-            ->when($request->status !== null, function ($query) use ($request) {
+            ->when($request->status !== null && $request->status !== '', function ($query) use ($request) {
                 $query->where('status', $request->status);
             })
             ->orderBy('created_at', 'desc')

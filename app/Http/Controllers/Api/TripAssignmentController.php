@@ -1,8 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\TripAssignment;
+use App\Models\Notification;
+use App\Models\Tour;
 use App\Http\Requests\StoreTripAssignmentRequest;
 use App\Http\Requests\UpdateTripAssignmentRequest;
 use Illuminate\Http\Request;
@@ -47,8 +50,21 @@ class TripAssignmentController extends Controller
             'status' => $request->status ?? '0', // Mặc định là '0' (Chờ)
         ]);
 
-        // 3. Load thông tin User để trả về cho Frontend hiển thị ngay (tên, avatar...)
-        $assignment->load('user');
+        // 3. Load thông tin Tour và User
+        $assignment->load(['tour', 'user']);
+
+        // 4. Tạo thông báo cho HDV
+        Notification::create([
+            'user_id' => $request->user_id,
+            'type' => 'tour_assigned',
+            'title' => 'Bạn được phân công tour mới',
+            'message' => "Bạn đã được phân công tour: {$assignment->tour->title}",
+            'data' => [
+                'tour_id' => $tourId,
+                'tour_title' => $assignment->tour->title,
+                'assignment_id' => $assignment->id,
+            ],
+        ]);
 
         return response()->json([
             'message' => 'Thêm hướng dẫn viên thành công!',

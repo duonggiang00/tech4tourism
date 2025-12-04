@@ -36,7 +36,16 @@ class TourController extends Controller
     {
         $categories = Category::all();
         $policies = Policy::all();
-        $guides = User::all();
+        
+        // Lấy danh sách HDV (role=2) kèm thông tin đã có tour hay chưa
+        $busyGuideIds = TripAssignment::whereIn('status', ['0', '1']) // Chờ hoặc Đang thực hiện
+            ->pluck('user_id')
+            ->toArray();
+        
+        $guides = User::where('role', 2)->get()->map(function ($user) use ($busyGuideIds) {
+            $user->has_active_tour = in_array($user->id, $busyGuideIds);
+            return $user;
+        });
 
         // Lấy Quốc gia kèm theo Tỉnh thành
         // NHƯNG: Chỉ lấy những Tỉnh thỏa mãn điều kiện (có xe + có khách sạn)
@@ -187,7 +196,23 @@ class TourController extends Controller
         $categories = Category::all();
         $destinations = Destination::all();
         $availableServices = Service::all();
-        $guides = User::all();
+        
+        // Lấy danh sách HDV đã được gán cho tour hiện tại
+        $currentGuideIds = TripAssignment::where('tour_id', $tour->id)
+            ->pluck('user_id')
+            ->toArray();
+        
+        // Lấy danh sách HDV bận (đã có tour khác đang hoạt động)
+        $busyGuideIds = TripAssignment::whereIn('status', ['0', '1'])
+            ->where('tour_id', '!=', $tour->id)
+            ->pluck('user_id')
+            ->toArray();
+        
+        $guides = User::where('role', 2)->get()->map(function ($user) use ($busyGuideIds, $currentGuideIds) {
+            $user->has_active_tour = in_array($user->id, $busyGuideIds) && !in_array($user->id, $currentGuideIds);
+            return $user;
+        });
+        
         $tour->load([
             'images',
             'schedules.destination',
@@ -203,7 +228,23 @@ class TourController extends Controller
     {
         $categories = Category::all();
         $policies = Policy::all();
-        $guides = User::all();
+        
+        // Lấy danh sách HDV đã được gán cho tour hiện tại
+        $currentGuideIds = TripAssignment::where('tour_id', $tour->id)
+            ->pluck('user_id')
+            ->toArray();
+        
+        // Lấy danh sách HDV bận (đã có tour khác đang hoạt động)
+        $busyGuideIds = TripAssignment::whereIn('status', ['0', '1'])
+            ->where('tour_id', '!=', $tour->id)
+            ->pluck('user_id')
+            ->toArray();
+        
+        $guides = User::where('role', 2)->get()->map(function ($user) use ($busyGuideIds, $currentGuideIds) {
+            // HDV bận = đã có tour khác VÀ không phải là HDV đang được chọn cho tour này
+            $user->has_active_tour = in_array($user->id, $busyGuideIds) && !in_array($user->id, $currentGuideIds);
+            return $user;
+        });
 
         // Logic lấy countries y hệt hàm create để tái sử dụng component LocationSelector
         $countries = Country::with([
@@ -335,17 +376,40 @@ class TourController extends Controller
                 }
             }
 
-            // --- H. XỬ LÝ HƯỚNG DẪN VIÊN (Clean & Re-create) ---
+            // --- H. XỬ LÝ HƯỚNG DẪN VIÊN (Sync logic - Giữ lại dữ liệu cũ) ---
             if (isset($data['guide_ids'])) {
-                // Lưu ý: Nếu muốn giữ trạng thái 'status' của HDV cũ thì cần logic phức tạp hơn (sync)
-                // Ở đây ta làm đơn giản là reset lại assignment
-                TripAssignment::where('tour_id', $tour->id)->delete();
-                foreach ($data['guide_ids'] as $userId) {
+                $newGuideIds = $data['guide_ids'];
+                $currentAssignments = TripAssignment::where('tour_id', $tour->id)->get();
+                $currentGuideIds = $currentAssignments->pluck('user_id')->toArray();
+
+                // 1. Thêm HDV mới (chưa có trong DB)
+                $toAdd = array_diff($newGuideIds, $currentGuideIds);
+                foreach ($toAdd as $userId) {
                     TripAssignment::create([
                         'tour_id' => $tour->id,
                         'user_id' => $userId,
                         'status' => '0',
                     ]);
+                }
+
+                // 2. Xóa HDV bị bỏ chọn (chỉ xóa nếu chưa có check-ins/notes)
+                $toRemove = array_diff($currentGuideIds, $newGuideIds);
+                foreach ($toRemove as $userId) {
+                    $assignment = $currentAssignments->where('user_id', $userId)->first();
+                    if ($assignment) {
+                        // Kiểm tra xem assignment có dữ liệu liên quan không
+                        $hasCheckIns = $assignment->tripCheckIns()->exists();
+                        $hasNotes = $assignment->tripNotes()->exists();
+                        
+                        if (!$hasCheckIns && !$hasNotes) {
+                            // An toàn để xóa
+                            $assignment->delete();
+                        } else {
+                            // Đánh dấu là đã hủy thay vì xóa
+                            $assignment->update(['status' => '3']);
+                            Log::warning("Không thể xóa TripAssignment ID {$assignment->id} vì đã có dữ liệu. Đã chuyển sang status=3 (Đã hủy)");
+                        }
+                    }
                 }
             }
 

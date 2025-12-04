@@ -22,14 +22,14 @@ export default function Login() {
 
     return (
         <AuthLayout
-            title="Log in to your account"
-            description="Enter your credentials below to log in"
+            title="Đăng nhập vào tài khoản"
+            description="Nhập thông tin đăng nhập của bạn"
         >
-            <Head title="Login" />
+            <Head title="Đăng nhập" />
             <form onSubmit={submit} className="flex flex-col gap-6">
                 <div className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="email">Email address</Label>
+                        <Label htmlFor="email">Địa chỉ Email</Label>
                         <Input
                             id="email"
                             type="email"
@@ -46,7 +46,7 @@ export default function Login() {
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="password">Password</Label>
+                        <Label htmlFor="password">Mật khẩu</Label>
                         <Input
                             id="password"
                             type="password"
@@ -56,7 +56,7 @@ export default function Login() {
                             name="password"
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
-                            placeholder="Password"
+                            placeholder="Nhập mật khẩu"
                         />
                         <InputError message={errors.password} />
                     </div>
@@ -69,14 +69,14 @@ export default function Login() {
                         data-test="login-button"
                     >
                         {processing && <Spinner />}
-                        Log in
+                        Đăng nhập
                     </Button>
                 </div>
 
                 <div className="text-center text-sm text-muted-foreground">
-                    Don't have an account?{' '}
+                    Chưa có tài khoản?{' '}
                     <TextLink href={register()} tabIndex={4}>
-                        Sign up
+                        Đăng ký ngay
                     </TextLink>
                 </div>
             </form>

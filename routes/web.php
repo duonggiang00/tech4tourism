@@ -11,21 +11,24 @@ use App\Http\Controllers\{
     BookingController,
     CategoryController,
     CountryController,
+    DashboardController,
+    GuideController,
     ImageUploadController,
+    NotificationController,
     PolicyController,
     ProvidersController,
     ServiceAttributesController,
     ServiceController,
     ServiceTypeController,
     TourController,
-    TripAssignmentController,
     UserController
 };
 
 use App\Http\Controllers\Api\{
     TourImagesController,
     TourScheduleController,
-    TourServiceController
+    TourServiceController,
+    TripAssignmentController as ApiTripAssignmentController
 };
 
 /*
@@ -77,12 +80,35 @@ Route::middleware(['auth', 'role:1'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| GUIDE ROUTES (Role: 2 - Hướng dẫn viên)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:2'])->prefix('guide')->name('guide.')->group(function () {
+    Route::get('/schedule', [GuideController::class, 'schedule'])->name('schedule');
+    Route::get('/trip/{id}', [GuideController::class, 'tripDetail'])->name('trip.detail');
+    
+    // Check-in
+    Route::post('/trip/{assignmentId}/checkin', [GuideController::class, 'createCheckIn'])->name('checkin.create');
+    Route::get('/checkin/{checkInId}', [GuideController::class, 'showCheckIn'])->name('checkin.show');
+    Route::post('/checkin/{checkInId}/save', [GuideController::class, 'saveCheckIn'])->name('checkin.save');
+    Route::delete('/checkin/{checkInId}', [GuideController::class, 'deleteCheckIn'])->name('checkin.delete');
+    
+    // Notes
+    Route::get('/notes', [GuideController::class, 'notes'])->name('notes');
+    Route::post('/trip/{assignmentId}/note', [GuideController::class, 'createNote'])->name('note.create');
+    Route::put('/note/{noteId}', [GuideController::class, 'updateNote'])->name('note.update');
+    Route::delete('/note/{noteId}', [GuideController::class, 'deleteNote'])->name('note.delete');
+});
+
+
+/*
+|--------------------------------------------------------------------------
 | AUTHENTICATED ROUTES (Role: Admin + Sale + Guide...)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::get('dashboard', fn () => Inertia::render('dashboard'))->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Basic resources
     Route::resources([
@@ -96,15 +122,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'policies'           => PolicyController::class,
     ]);
 
-    // Nested API Resources (Tour Images, Schedules, Service)
+    // Nested API Resources (Tour Images, Schedules, Service, Assignments)
     Route::prefix('tours/{tour}')->group(function () {
         Route::apiResource('schedules', TourScheduleController::class);
         Route::apiResource('images', TourImagesController::class);
         Route::apiResource('tourservices', TourServiceController::class);
         Route::apiResource('tourpolicies', TourPolicyController::class);
-    
+        Route::apiResource('assignments', ApiTripAssignmentController::class)->except(['show', 'create', 'edit']);
     });
     Route::post('/upload-image', [ImageUploadController::class, 'upload'])->name('image.upload');
+    
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::post('/assignments/{assignmentId}/confirm', [NotificationController::class, 'confirmAssignment'])->name('assignments.confirm');
 });
 
 // Import Settings Routes

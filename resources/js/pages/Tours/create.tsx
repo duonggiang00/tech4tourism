@@ -28,11 +28,16 @@ import {
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+// Interface cho Guide với thông tin đã có tour
+interface GuideWithStatus extends User {
+    has_active_tour?: boolean;
+}
+
 // Props nhận từ Controller
 interface CreateProps {
     categories: Category[];
     policies: Policy[];
-    guides: User[];
+    guides: GuideWithStatus[];
     countries: Country[];
 }
 
@@ -1168,32 +1173,44 @@ export default function Create({
                                 Phân công HDV
                             </h3>
                             <div className="grid max-h-60 grid-cols-1 gap-2 overflow-y-auto md:grid-cols-2">
-                                {guides.map((u) => (
-                                    <label
-                                        key={u.id}
-                                        className="flex cursor-pointer items-center gap-3 rounded border p-2 hover:bg-gray-50"
-                                    >
-                                        <Checkbox
-                                            checked={data.guide_ids.includes(
-                                                u.id,
-                                            )}
-                                            onCheckedChange={() =>
-                                                toggleSelection(
-                                                    'guide_ids',
-                                                    u.id,
-                                                )
-                                            }
-                                        />
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-medium text-gray-800">
-                                                {u.name}
-                                            </span>
-                                            <span className="text-xs text-gray-500">
-                                                {u.email}
-                                            </span>
-                                        </div>
-                                    </label>
-                                ))}
+                                {guides.map((u) => {
+                                    const isDisabled = u.has_active_tour;
+                                    return (
+                                        <label
+                                            key={u.id}
+                                            className={`flex items-center gap-3 rounded border p-2 ${
+                                                isDisabled 
+                                                    ? 'cursor-not-allowed bg-gray-100 opacity-60' 
+                                                    : 'cursor-pointer hover:bg-gray-50'
+                                            }`}
+                                        >
+                                            <Checkbox
+                                                checked={data.guide_ids.includes(u.id)}
+                                                disabled={isDisabled}
+                                                onCheckedChange={() => {
+                                                    if (!isDisabled) {
+                                                        toggleSelection('guide_ids', u.id);
+                                                    }
+                                                }}
+                                            />
+                                            <div className="flex flex-col flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-medium text-gray-800">
+                                                        {u.name}
+                                                    </span>
+                                                    {u.has_active_tour && (
+                                                        <span className="rounded bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-700">
+                                                            Đã có tour
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className="text-xs text-gray-500">
+                                                    {u.email}
+                                                </span>
+                                            </div>
+                                        </label>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
