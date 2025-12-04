@@ -39,15 +39,15 @@ class ServiceSeeder extends Seeder
         $this->types = [
             'transport' => ServiceType::firstOrCreate(
                 ['name' => 'Vận chuyển'],
-                [ 'description' => 'Xe, Máy bay, Tàu hỏa', 'order' => 1]
+                ['description' => 'Xe, Máy bay, Tàu hỏa', 'order' => 1]
             ),
             'restaurant' => ServiceType::firstOrCreate(
                 ['name' => 'Nhà hàng'],
-                [ 'description' => 'Ăn uống, Tiệc', 'order' => 2]
+                ['description' => 'Ăn uống, Tiệc', 'order' => 2]
             ),
             'hotel' => ServiceType::firstOrCreate(
                 ['name' => 'Khách sạn'],
-                [ 'description' => 'Lưu trú, Nghỉ dưỡng', 'order' => 3]
+                ['description' => 'Lưu trú, Nghỉ dưỡng', 'order' => 3]
             ),
         ];
 
@@ -224,9 +224,9 @@ class ServiceSeeder extends Seeder
                         ? "Rental Car $carType (Full Day)"
                         : "Thuê xe $carType - " . $provider->name,
                     'description' => "Xe đời mới, máy lạnh, tài xế kinh nghiệm.",
-                    'price' => $faker->numberBetween(1500000, 6000000),
+
                     'type_car' => $carType,
-                    'limit' => 5,
+
                     'unit' => 'xe'
                 ]);
             }
@@ -241,9 +241,7 @@ class ServiceSeeder extends Seeder
                     'provider_id' => $provider->id,
                     'name' => $room,
                     'description' => "Phòng đầy đủ tiện nghi, bao gồm ăn sáng.",
-                    'price' => $faker->numberBetween(800000, 5000000),
                     'type_room' => $room,
-                    'limit' => rand(10, 50),
                     'unit' => 'phòng'
                 ]);
             }
@@ -258,9 +256,7 @@ class ServiceSeeder extends Seeder
                     'provider_id' => $provider->id,
                     'name' => $menu,
                     'description' => "Thực đơn phong phú, đảm bảo vệ sinh ATTP.",
-                    'price' => $faker->numberBetween(150000, 800000),
                     'type_meal' => 'Set Menu',
-                    'limit' => 200,
                     'unit' => 'Suất'
                 ]);
             }
@@ -279,8 +275,6 @@ class ServiceSeeder extends Seeder
                     'provider_id' => $provider->id,
                     'name' => "$ticket - " . ($isInternational ? "International" : "Domestic"),
                     'description' => "Vé một chiều, đã bao gồm thuế phí.",
-                    'price' => $price,
-                    'limit' => 50,
                     'unit' => 'Vé'
                 ]);
 

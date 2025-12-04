@@ -29,8 +29,10 @@ class Provider extends Model
         return $this->belongsTo(Province::class,);
     }
 
+
     public function services()
     {
-        return $this->hasMany(Service::class);
+        return $this->hasMany(Service::class)
+            ->with(['serviceType', 'serviceAttributes']);
     }
 }

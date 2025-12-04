@@ -13,7 +13,7 @@ class ServiceAttribute extends Model
     protected $table = 'service_attributes';
 
     protected $fillable = [
-        'id_service',
+        'service_id',
         'name',
         'value',
         'type',
@@ -21,6 +21,6 @@ class ServiceAttribute extends Model
 
     public function service()
     {
-        return $this->belongsTo(Service::class, 'id_service');
+        return $this->belongsTo(Service::class, 'service_id');
     }
 }

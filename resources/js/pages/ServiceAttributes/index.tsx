@@ -25,10 +25,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 interface Attribute {
     id: number;
-    id_service: number;
+    service_id: number;
     name: string;
     value: string;
-    type: string;
     service?: { id: number; name: string };
 }
 
@@ -37,9 +36,13 @@ interface Service {
     name: string;
 }
 
+// PAGINATE FIXED HERE
 interface PageProps {
     flash: { message?: string };
-    attributes: Attribute[];
+    attributes: {
+        data: Attribute[];
+        links: { url: string | null; label: string; active: boolean }[];
+    };
     services: Service[];
 }
 
@@ -48,9 +51,7 @@ export default function Index() {
     const { delete: destroy } = useForm();
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [currentAttr, setCurrentAttr] = useState<Attribute | undefined>(
-        undefined,
-    );
+    const [currentAttr, setCurrentAttr] = useState<Attribute | undefined>();
 
     const handleDelete = (id: number, name: string) => {
         if (confirm(`Bạn có chắc muốn xóa thuộc tính "${name}"?`)) {
@@ -58,26 +59,14 @@ export default function Index() {
         }
     };
 
-    const openCreateDialog = () => {
-        setCurrentAttr(undefined);
-        setIsDialogOpen(true);
-    };
-
-    const openEditDialog = (attr: Attribute) => {
-        setCurrentAttr(attr);
-        setIsDialogOpen(true);
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Thuộc tính dịch vụ" />
 
+            {/* Flash message */}
             <div className="m-4">
                 {flash.message && (
-                    <Alert
-                        variant="default"
-                        className="border-green-200 bg-green-50"
-                    >
+                    <Alert className="border-green-200 bg-green-50">
                         <CircleCheck className="h-4 w-4 text-green-600" />
                         <AlertTitle className="text-green-800">
                             Thông báo!
@@ -89,8 +78,14 @@ export default function Index() {
                 )}
             </div>
 
+            {/* Add button + Dialog */}
             <div className="m-4 flex justify-end">
-                <Button onClick={openCreateDialog}>
+                <Button
+                    onClick={() => {
+                        setCurrentAttr(undefined);
+                        setIsDialogOpen(true);
+                    }}
+                >
                     <Plus className="mr-2 h-4 w-4" />
                     Thêm thuộc tính
                 </Button>
@@ -103,27 +98,30 @@ export default function Index() {
                     title={
                         currentAttr
                             ? `Chỉnh sửa: ${currentAttr.name}`
-                            : 'Thêm Thuộc Tính Dịch Vụ'
+                            : 'Thêm Thuộc Tính'
                     }
                 />
             </div>
 
-            <div className="m-8 rounded-lg border border-gray-200 bg-white shadow-sm">
+            {/* Table */}
+            <div className="m-8 rounded-lg border bg-white shadow-sm">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="text-center">STT</TableHead>
+                            <TableHead className="w-[50px] text-center">
+                                STT
+                            </TableHead>
                             <TableHead>Tên thuộc tính</TableHead>
                             <TableHead>Dịch vụ</TableHead>
                             <TableHead>Giá trị</TableHead>
-                            <TableHead>Loại</TableHead>
                             <TableHead className="text-center">
                                 Hành động
                             </TableHead>
                         </TableRow>
                     </TableHeader>
+
                     <TableBody>
-                        {attributes.map((attr, index) => (
+                        {attributes.data.map((attr, index) => (
                             <TableRow key={attr.id}>
                                 <TableCell className="text-center">
                                     {index + 1}
@@ -133,7 +131,7 @@ export default function Index() {
                                     {attr.service?.name || '—'}
                                 </TableCell>
                                 <TableCell>{attr.value || '—'}</TableCell>
-                                <TableCell>{attr.type || '—'}</TableCell>
+
                                 <TableCell>
                                     <div className="flex justify-center gap-2">
                                         <Link
@@ -145,26 +143,31 @@ export default function Index() {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="hover:bg-blue-50 hover:text-blue-600"
+                                                className="hover:text-blue-600"
                                             >
                                                 <Eye className="h-4 w-4" />
                                             </Button>
                                         </Link>
+
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => openEditDialog(attr)}
-                                            className="hover:bg-amber-50 hover:text-amber-600"
+                                            onClick={() => {
+                                                setCurrentAttr(attr);
+                                                setIsDialogOpen(true);
+                                            }}
+                                            className="hover:text-amber-600"
                                         >
                                             <Pencil className="h-4 w-4" />
                                         </Button>
+
                                         <Button
                                             variant="ghost"
                                             size="sm"
                                             onClick={() =>
                                                 handleDelete(attr.id, attr.name)
                                             }
-                                            className="hover:bg-red-50 hover:text-red-600"
+                                            className="hover:text-red-600"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
@@ -174,11 +177,29 @@ export default function Index() {
                         ))}
                     </TableBody>
                 </Table>
-                {attributes.length === 0 && (
+
+                {/* Empty */}
+                {attributes.data.length === 0 && (
                     <div className="p-8 text-center text-gray-500">
                         Chưa có thuộc tính nào.
                     </div>
                 )}
+
+                {/* PAGINATION */}
+                <div className="flex justify-center gap-2 p-4">
+                    {attributes.links.map((link, index) => (
+                        <Link
+                            key={index}
+                            href={link.url || '#'}
+                            dangerouslySetInnerHTML={{ __html: link.label }}
+                            className={`rounded border px-3 py-1 ${
+                                link.active
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-white hover:bg-gray-100'
+                            }`}
+                        />
+                    ))}
+                </div>
             </div>
         </AppLayout>
     );

@@ -1,5 +1,4 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Table,
@@ -28,9 +27,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 interface ServiceType {
     id: number;
     name: string;
-    icon: string;
     description: string;
-    order: number;
 }
 
 interface PageProps {
@@ -70,6 +67,7 @@ export default function Index() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Danh sách Loại Dịch Vụ" />
 
+            {/* ALert */}
             <div className="m-4">
                 {flash.message && (
                     <Alert
@@ -87,6 +85,7 @@ export default function Index() {
                 )}
             </div>
 
+            {/* Button tạo */}
             <div className="m-4 flex justify-end">
                 <Button onClick={openCreateDialog}>
                     <Plus className="mr-2 h-4 w-4" />
@@ -105,46 +104,37 @@ export default function Index() {
                 />
             </div>
 
+            {/* Table */}
             <div className="m-8 rounded-lg border border-gray-200 bg-white shadow-sm">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[50px] text-center">
+                            <TableHead className="w-[60px] text-center">
                                 STT
                             </TableHead>
                             <TableHead>Tên Loại Dịch Vụ</TableHead>
-                            <TableHead>Icon</TableHead>
                             <TableHead>Mô tả</TableHead>
-                            <TableHead>Thứ tự</TableHead>
                             <TableHead className="text-center">
                                 Hành động
                             </TableHead>
                         </TableRow>
                     </TableHeader>
+
                     <TableBody>
                         {service_types.map((type, index) => (
                             <TableRow key={type.id}>
                                 <TableCell className="text-center">
                                     {index + 1}
                                 </TableCell>
+
                                 <TableCell className="font-medium">
                                     {type.name}
                                 </TableCell>
-                                <TableCell>
-                                    {type.icon ? (
-                                        <img
-                                            src={type.icon}
-                                            alt={type.name}
-                                            className="h-10 w-10 rounded-md border object-cover"
-                                        />
-                                    ) : (
-                                        <Badge variant="outline">No Icon</Badge>
-                                    )}
-                                </TableCell>
-                                <TableCell className="max-w-xs truncate">
+
+                                <TableCell className="max-w-md truncate">
                                     {type.description || '—'}
                                 </TableCell>
-                                <TableCell>{type.order}</TableCell>
+
                                 <TableCell>
                                     <div className="flex justify-center gap-2">
                                         <Button
@@ -155,6 +145,7 @@ export default function Index() {
                                         >
                                             <Pencil className="h-4 w-4" />
                                         </Button>
+
                                         <Button
                                             variant="ghost"
                                             size="sm"

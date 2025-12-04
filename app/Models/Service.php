@@ -17,13 +17,15 @@ class Service extends Model
         'provider_id',
         'name',
         'description',
-        'price',
         'type_room',
         'type_car',
         'type_meal',
-        'limit',
         'unit',
-        'priceDefault',
+    ];
+
+    protected $casts = [
+        'price' => 'decimal:2',
+        'limit' => 'integer',
     ];
 
     public function serviceType()
@@ -36,12 +38,17 @@ class Service extends Model
         return $this->belongsTo(Provider::class);
     }
 
-    public function tourService(){
+    public function tourService()
+    {
         return $this->hasMany(TourService::class);
     }
 
-    public function attributes()
+    public function serviceAttributes()
     {
-        return $this->hasMany(ServiceAttributes::class, 'id_service');
+        return $this->hasMany(ServiceAttribute::class, 'service_id');
+    }
+    public function tourServices()
+    {
+        return $this->hasMany(\App\Models\TourService::class, 'service_id');
     }
 }

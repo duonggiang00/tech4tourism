@@ -18,8 +18,8 @@ class Tour extends Model
      */
     protected $fillable = [
         'category_id',
-        'province_id', 
-        'user_id',        
+        'province_id',
+        'user_id',
         'title',
         'status',
         'day',
@@ -79,7 +79,15 @@ class Tour extends Model
         return $this->hasMany(TripAssignment::class);
     }
 
+    public function tour()
+    {
+        return $this->belongsTo(Tour::class);
+    }
 
+    public function service()
+    {
+        return $this->belongsTo(Service::class);
+    }
 
     public function bookings()
     {

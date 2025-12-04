@@ -24,14 +24,14 @@ import users from '@/routes/users';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import {
-    BananaIcon,
-    BanIcon,
     BookOpen,
     Calendar,
     Folder,
     LayoutGrid,
     ListIcon,
+    MessageCircleWarningIcon,
     PlaneTakeoff,
+    PuzzleIcon,
     ScrollText,
     User2Icon,
     Users,
@@ -106,7 +106,7 @@ export function AppSidebar() {
         {
             title: 'Services', //quản lý dịch vụ
             href: services.index(),
-            icon: BanIcon,
+            icon: PuzzleIcon,
         },
         {
             title: 'Provider', //quản lý nhà cung cấp
@@ -116,7 +116,7 @@ export function AppSidebar() {
         {
             title: 'Service_attributes',
             href: serviceAttributes.index(),
-            icon: BananaIcon,
+            icon: MessageCircleWarningIcon,
         },
         {
             title: 'Chính sách',

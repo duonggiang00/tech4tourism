@@ -122,7 +122,7 @@ export interface ServiceType {
     services?: Service[];
 }
 
-export interface Provider{
+export interface Provider {
     id: number;
     province_id: number;
     name: string;
@@ -149,15 +149,13 @@ export interface Service {
     type_car?: number;
     type_meal?: number;
 
-    limit: number;
     unit?: string;
-    price: number;
     service_type?: ServiceType;
     provider?: Provider;
     service_attributes?: ServiceAttribute[];
 }
 
-export interface ServiceAttribute{
+export interface ServiceAttribute {
     id: number;
     service_id: number;
     name: string;
@@ -252,10 +250,6 @@ export interface Policy {
     content: string;
 }
 
-
-
-
-
 export interface TourHeaderProps {
     tour: Tour;
     categoryName?: string;
@@ -288,4 +282,3 @@ export interface TripAssignment {
     status: '0' | '1' | '2' | '3';
     user?: User; // Quan hệ
 }
-

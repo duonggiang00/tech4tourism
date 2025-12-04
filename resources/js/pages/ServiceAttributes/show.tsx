@@ -3,6 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import serviceAttributes from '@/routes/service-attributes';
 import { BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
+import { Pencil } from 'lucide-react';
 
 interface Service {
     id: number;
@@ -11,10 +12,9 @@ interface Service {
 
 interface Attribute {
     id: number;
-    id_service: number;
+    service_id: number;
     name: string;
     value: string;
-    type: string;
     created_at: string;
     updated_at: string;
     service?: Service;
@@ -42,34 +42,38 @@ export default function Show() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Chi tiết thuộc tính: ${attribute.name}`} />
 
-            <div className="m-8 rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
+            <div className="relative m-8 rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
+                {/* NÚT SỬA TRÊN GÓC PHẢI */}
+                <Link
+                    href={serviceAttributes.edit(attribute.id).url}
+                    className="absolute top-6 right-6"
+                >
+                    <Button className="flex items-center gap-2">
+                        <Pencil className="h-4 w-4" />
+                        Sửa
+                    </Button>
+                </Link>
+
                 <h2 className="mb-6 text-2xl font-semibold text-gray-800">
                     Chi tiết thuộc tính dịch vụ
                 </h2>
 
-                <div className="space-y-4">
+                <div className="space-y-4 text-lg">
                     <div>
                         <strong className="text-gray-600">
                             Tên thuộc tính:
                         </strong>
-                        <p className="text-lg">{attribute.name}</p>
+                        <p>{attribute.name}</p>
                     </div>
 
                     <div>
                         <strong className="text-gray-600">Giá trị:</strong>
-                        <p className="text-lg">{attribute.value || '—'}</p>
-                    </div>
-
-                    <div>
-                        <strong className="text-gray-600">Loại:</strong>
-                        <p className="text-lg">{attribute.type || '—'}</p>
+                        <p>{attribute.value || '—'}</p>
                     </div>
 
                     <div>
                         <strong className="text-gray-600">Dịch vụ:</strong>
-                        <p className="text-lg">
-                            {attribute.service?.name || '—'}
-                        </p>
+                        <p>{attribute.service?.name || '—'}</p>
                     </div>
 
                     <div>
@@ -85,10 +89,8 @@ export default function Show() {
                     </div>
                 </div>
 
-                <div className="mt-8 flex gap-4">
-                    <Link href={serviceAttributes.edit(attribute.id).url}>
-                        <Button>Chỉnh sửa</Button>
-                    </Link>
+                {/* Nút quay lại */}
+                <div className="mt-10">
                     <Link href={serviceAttributes.index().url}>
                         <Button variant="outline">Quay lại</Button>
                     </Link>

@@ -14,17 +14,11 @@ import { useEffect } from 'react';
 
 interface Service {
     id?: number;
-    id_service_type?: number;
-    id_provider?: number;
+    service_type_id?: number;
+    provider_id?: number;
     name: string;
     description?: string;
-    price?: number;
-    type_room?: string;
-    type_car?: string;
-    type_meal?: string;
-    limit?: number;
     unit?: string;
-    priceDefault?: string;
 }
 
 interface ServiceType {
@@ -55,33 +49,22 @@ export function ServiceFormDialog({
     providers,
 }: Props) {
     const { data, setData, post, put, processing, errors, reset } = useForm({
-        id_service_type: '',
-        id_provider: '',
+        service_type_id: '',
+        provider_id: '',
         name: '',
         description: '',
-        price: '',
-        type_room: '',
-        type_car: '',
-        type_meal: '',
-        limit: '',
         unit: '',
-        priceDefault: '',
     });
 
+    // 🔥 Load dữ liệu khi sửa
     useEffect(() => {
         if (initialData) {
             setData({
-                id_service_type: initialData.id_service_type || '',
-                id_provider: initialData.id_provider || '',
+                service_type_id: initialData.service_type_id?.toString() || '',
+                provider_id: initialData.provider_id?.toString() || '',
                 name: initialData.name || '',
                 description: initialData.description || '',
-                price: initialData.price?.toString() || '',
-                type_room: initialData.type_room || '',
-                type_car: initialData.type_car || '',
-                type_meal: initialData.type_meal || '',
-                limit: initialData.limit?.toString() || '',
                 unit: initialData.unit || '',
-                priceDefault: initialData.priceDefault || '',
             });
         } else {
             reset();
@@ -113,31 +96,32 @@ export function ServiceFormDialog({
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* TÊN DỊCH VỤ */}
                     <div>
                         <label className="text-sm font-medium">
                             Tên dịch vụ
                         </label>
                         <Input
-                            placeholder="Nhập tên dịch vụ"
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                         />
                         {errors.name && (
-                            <p className="mt-1 text-sm text-red-500">
+                            <p className="text-sm text-red-500">
                                 {errors.name}
                             </p>
                         )}
                     </div>
 
+                    {/* LOẠI DỊCH VỤ */}
                     <div>
                         <label className="text-sm font-medium">
                             Loại dịch vụ
                         </label>
                         <select
                             className="w-full rounded-md border px-3 py-2"
-                            value={data.id_service_type}
+                            value={data.service_type_id}
                             onChange={(e) =>
-                                setData('id_service_type', e.target.value)
+                                setData('service_type_id', e.target.value)
                             }
                         >
                             <option value="">-- Chọn loại --</option>
@@ -147,17 +131,23 @@ export function ServiceFormDialog({
                                 </option>
                             ))}
                         </select>
+                        {errors.service_type_id && (
+                            <p className="text-sm text-red-500">
+                                {errors.service_type_id}
+                            </p>
+                        )}
                     </div>
 
+                    {/* NHÀ CUNG CẤP */}
                     <div>
                         <label className="text-sm font-medium">
                             Nhà cung cấp
                         </label>
                         <select
                             className="w-full rounded-md border px-3 py-2"
-                            value={data.id_provider}
+                            value={data.provider_id}
                             onChange={(e) =>
-                                setData('id_provider', e.target.value)
+                                setData('provider_id', e.target.value)
                             }
                         >
                             <option value="">-- Chọn nhà cung cấp --</option>
@@ -167,26 +157,31 @@ export function ServiceFormDialog({
                                 </option>
                             ))}
                         </select>
+
+                        {errors.provider_id && (
+                            <p className="text-sm text-red-500">
+                                {errors.provider_id}
+                            </p>
+                        )}
                     </div>
 
-                    <div>
-                        <label className="text-sm font-medium">Giá</label>
-                        <Input
-                            type="number"
-                            placeholder="Nhập giá (VND)"
-                            value={data.price}
-                            onChange={(e) => setData('price', e.target.value)}
-                        />
-                    </div>
-
+                    {/* MÔ TẢ */}
                     <div>
                         <label className="text-sm font-medium">Mô tả</label>
                         <Textarea
-                            placeholder="Nhập mô tả dịch vụ"
                             value={data.description}
                             onChange={(e) =>
                                 setData('description', e.target.value)
                             }
+                        />
+                    </div>
+
+                    {/* ĐƠN VỊ */}
+                    <div>
+                        <label className="text-sm font-medium">Đơn vị</label>
+                        <Input
+                            value={data.unit}
+                            onChange={(e) => setData('unit', e.target.value)}
                         />
                     </div>
 
