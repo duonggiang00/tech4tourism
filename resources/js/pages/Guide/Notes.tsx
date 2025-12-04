@@ -94,7 +94,7 @@ export default function Notes({ notes }: Props) {
                                     <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
                                         {note.content}
                                     </p>
-                                    <Link href={guide.tripDetail(note.trip_assignment.id)}>
+                                    <Link href={guide?.tripDetail ? guide.tripDetail(note.trip_assignment.id) : `/guide/trip/${note.trip_assignment.id}`}>
                                         <Badge variant="secondary" className="cursor-pointer hover:bg-secondary/80">
                                             <MapPin className="h-3 w-3 mr-1" />
                                             {note.trip_assignment.tour.title}

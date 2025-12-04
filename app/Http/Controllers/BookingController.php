@@ -46,7 +46,7 @@ class BookingController extends Controller
         // Quan trọng: 'tour_id' phải có trong rules để được phép đi qua validated()
         $validated = $request->validate([
             'tour_id' => 'required|exists:tours,id',
-            // 'date_start' => 'required|date|after_or_equal:today',
+            'date_start' => 'nullable|date', // Cho phép null, nếu không có sẽ dùng ngày hiện tại
             'adults' => 'required|integer|min:1',
             'children' => 'nullable|integer|min:0',
             'client_name' => 'required|string|max:255',
@@ -82,7 +82,7 @@ class BookingController extends Controller
                 'code' => 'BK-' . strtoupper(Str::random(8)), // Mã booking ngẫu nhiên
                 'tour_id' => $tour->id, // FIX LỖI: Dùng đúng tên cột trong DB
 
-                'date_start' => $validated['date_start'],
+                'date_start' => $validated['date_start'] ?? Carbon::now()->format('Y-m-d'),
                 // 'date_end' => $dateEnd,
 
                 'client_name' => $validated['client_name'],
@@ -136,7 +136,7 @@ class BookingController extends Controller
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('code', 'like', "%{$search}%")
-                        ->orWhere('client_name', 'like', "%{$search}%")
+                    ->orWhere('client_name', 'like', "%{$search}%")
                         ->orWhere('client_email', 'like', "%{$search}%")
                         ->orWhere('client_phone', 'like', "%{$search}%")
                         // Tìm kiếm theo tên tour

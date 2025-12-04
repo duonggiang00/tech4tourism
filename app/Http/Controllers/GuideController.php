@@ -104,11 +104,20 @@ class GuideController extends Controller
             abort(403, 'Bạn không có quyền truy cập');
         }
 
-        // Lấy danh sách passengers
-        $passengers = Passenger::whereHas('booking', function ($query) use ($checkIn) {
+        // Lấy ngày check-in để lọc booking
+        $checkInDate = \Carbon\Carbon::parse($checkIn->checkin_time)->format('Y-m-d');
+        
+        // Lấy danh sách passengers từ booking có:
+        // - tour_id = tour được phân công
+        // - date_start = ngày check-in
+        // - status = 0 (Chờ xác nhận) hoặc 1 (Đã xác nhận)
+        $passengers = Passenger::whereHas('booking', function ($query) use ($checkIn, $checkInDate) {
             $query->where('tour_id', $checkIn->tripAssignment->tour_id)
-                  ->where('status', 1);
-        })->with('booking')->get();
+                  ->where('date_start', $checkInDate)
+                  ->whereIn('status', [0, 1]); // Hiển thị cả booking chờ xác nhận và đã xác nhận
+        })->with(['booking' => function($q) {
+            $q->select('id', 'code', 'status', 'client_name');
+        }])->get();
 
         // Lấy trạng thái check-in hiện tại
         $checkedIn = $checkIn->checkInDetails->pluck('is_present', 'passenger_id')->toArray();

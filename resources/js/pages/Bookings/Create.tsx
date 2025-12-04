@@ -12,7 +12,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router } from '@inertiajs/react';
 import { ArrowLeft, CalendarIcon, FileSpreadsheet, Minus, Plus, Users } from 'lucide-react';
 import { FormEventHandler, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -181,15 +181,40 @@ export default function CreateBooking({
 
         const submitUrl = isAdminMode ? '/admin/bookings' : '/booking';
 
-        // Lúc này data gửi đi sẽ có dạng { booking: {...}, passengers: [...] }
-        post(submitUrl, {
+        // Transform nested data thành flat structure như backend mong đợi
+        const flatData = {
+            tour_id: Number(data.booking.tour_id), // Đảm bảo là number
+            date_start: data.booking.date_start || new Date().toISOString().split('T')[0],
+            adults: data.booking.adults,
+            children: data.booking.children || 0,
+            client_name: data.booking.client_name,
+            client_phone: data.booking.client_phone,
+            client_email: data.booking.client_email,
+            passengers: data.passengers,
+        };
+
+        // Kiểm tra lại trước khi gửi
+        if (!flatData.tour_id || flatData.tour_id === 0) {
+            toast.error('Vui lòng chọn Tour du lịch!');
+            return;
+        }
+
+        // Gửi data dạng flat trực tiếp
+        router.post(submitUrl, flatData, {
             onSuccess: () => {
                 toast.success('Tạo Booking thành công!');
                 if (isAdminMode) reset();
             },
             onError: (err) => {
-                console.error(err);
-                toast.error('Vui lòng kiểm tra lại thông tin.');
+                console.error('Booking error:', err);
+                // Hiển thị lỗi cụ thể nếu có
+                if (err?.errors?.tour_id) {
+                    toast.error(err.errors.tour_id);
+                } else if (err?.message) {
+                    toast.error(err.message);
+                } else {
+                    toast.error('Vui lòng kiểm tra lại thông tin.');
+                }
             },
         });
     };

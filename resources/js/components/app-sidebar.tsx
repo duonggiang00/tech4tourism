@@ -78,56 +78,56 @@ export function AppSidebar() {
         // Menu cho Admin (role = 1)
         if (isAdmin) {
             return [
-                {
+        {
                     title: 'Tổng quan',
-                    href: dashboard(),
-                    icon: LayoutGrid,
-                },
-                {
+            href: dashboard(),
+            icon: LayoutGrid,
+        },
+        {
                     title: 'Quốc gia',
-                    href: countries.index(),
-                    icon: LayoutGrid,
-                },
-                {
+            href: countries.index(),
+            icon: LayoutGrid,
+        },
+        {
                     title: 'Tour du lịch',
-                    href: tour.index(),
-                    icon: PlaneTakeoff,
-                },
-                {
+            href: tour.index(),
+            icon: PlaneTakeoff,
+        },
+        {
                     title: 'Loại dịch vụ',
-                    href: serviceTypes.index(),
-                    icon: ListIcon,
-                },
-                {
+            href: serviceTypes.index(),
+            icon: ListIcon,
+        },
+        {
                     title: 'Dịch vụ',
-                    href: services.index(),
-                    icon: BanIcon,
-                },
-                {
+            href: services.index(),
+            icon: BanIcon,
+        },
+        {
                     title: 'Nhà cung cấp',
-                    href: providers.index(),
-                    icon: User2Icon,
-                },
-                {
+            href: providers.index(),
+            icon: User2Icon,
+        },
+        {
                     title: 'Thuộc tính dịch vụ',
-                    href: serviceAttributes.index(),
-                    icon: BananaIcon,
-                },
-                {
-                    title: 'Chính sách',
-                    href: policies.index(),
-                    icon: ScrollText,
-                },
-                {
+            href: serviceAttributes.index(),
+            icon: BananaIcon,
+        },
+        {
+            title: 'Chính sách',
+            href: policies.index(),
+            icon: ScrollText,
+        },
+                  {
                     title: 'Quản lý người dùng',
-                    href: users.index(),
-                    icon: Users,
-                },
-                {
+                      href: users.index(),
+                      icon: Users,
+                  },
+                  {
                     title: 'Quản lý Booking',
-                    href: bookings.index(),
-                    icon: Calendar,
-                },
+                      href: bookings.index(),
+                      icon: Calendar,
+                  },
             ];
         }
 
