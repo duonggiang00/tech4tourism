@@ -47,6 +47,11 @@ interface Tour {
     title: string;
 }
 
+interface TourInstance {
+    id: number;
+    tourTemplate?: Tour;
+}
+
 interface Booking {
     id: number;
     code: string;
@@ -60,7 +65,8 @@ interface Booking {
     final_price: number;
     left_payment: number;
     status: number;
-    tour?: Tour;
+    tour?: Tour | null;
+    tourInstance?: TourInstance;
     created_at: string;
 }
 
@@ -328,7 +334,7 @@ export default function BookingsIndex({
                                                 {booking.code}
                                             </TableCell>
                                             <TableCell>
-                                                {booking.tour?.title || 'N/A'}
+                                                {booking.tourInstance?.tourTemplate?.title || booking.tour?.title || 'N/A'}
                                             </TableCell>
                                             <TableCell>
                                                 <div>
@@ -379,7 +385,7 @@ export default function BookingsIndex({
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
+                                                <div className="flex items-center justify-end gap-2">
                                                     <Link
                                                         href={
                                                             bookingsRoutes.show(
@@ -390,6 +396,7 @@ export default function BookingsIndex({
                                                         <Button
                                                             variant="outline"
                                                             size="icon"
+                                                            className="h-8 w-8"
                                                             title="Xem chi tiết"
                                                         >
                                                             <Eye className="h-4 w-4" />
@@ -398,6 +405,7 @@ export default function BookingsIndex({
                                                     <Button
                                                         variant="outline"
                                                         size="icon"
+                                                        className="h-8 w-8"
                                                         onClick={() =>
                                                             openEditModal(
                                                                 booking,
@@ -410,6 +418,7 @@ export default function BookingsIndex({
                                                     <Button
                                                         variant="destructive"
                                                         size="icon"
+                                                        className="h-8 w-8"
                                                         onClick={() =>
                                                             setDeletingBooking(
                                                                 booking,

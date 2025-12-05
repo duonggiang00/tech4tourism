@@ -77,12 +77,20 @@ interface Passenger {
     booking: Booking;
 }
 
+interface TourInstance {
+    id: number;
+    date_start: string;
+    date_end: string;
+    status: number;
+}
+
 interface TripAssignment {
     id: number;
     tour_id: number;
     user_id: number;
     status: string;
     tour: Tour;
+    tourInstance?: TourInstance;
     trip_check_ins: TripCheckIn[];
     trip_notes: TripNote[];
 }
@@ -265,6 +273,29 @@ export default function TripDetail({ assignment, passengers }: Props) {
         }
     };
 
+    // Kiểm tra xem hôm nay có phải là ngày cuối cùng không
+    const isLastDay = useMemo(() => {
+        if (!assignment.tourInstance?.date_end) return false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dateEnd = new Date(assignment.tourInstance.date_end);
+        dateEnd.setHours(0, 0, 0, 0);
+        return today.getTime() === dateEnd.getTime();
+    }, [assignment.tourInstance?.date_end]);
+
+    const handleCompleteTour = async () => {
+        if (!confirm('Bạn có chắc muốn xác nhận đã kết thúc tour? Hành động này không thể hoàn tác.')) {
+            return;
+        }
+        try {
+            await axios.post(`/guide/trip/${assignment.id}/complete`);
+            toast.success('Đã xác nhận kết thúc tour thành công!');
+            router.reload();
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || error.response?.data?.message || 'Có lỗi xảy ra');
+        }
+    };
+
     return (
         <AppLayout>
             <Head title={`Chi tiết chuyến đi - ${assignment.tour.title}`} />
@@ -290,6 +321,16 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                 >
                                     <Check className="h-4 w-4" />
                                     Xác nhận đã nhận
+                                </Button>
+                            )}
+                            {assignment.status === '1' && isLastDay && (
+                                <Button
+                                    onClick={handleCompleteTour}
+                                    size="sm"
+                                    className="gap-2 bg-green-600 hover:bg-green-700"
+                                >
+                                    <CheckCircle2 className="h-4 w-4" />
+                                    Xác nhận đã kết thúc tour
                                 </Button>
                             )}
                         </div>

@@ -20,34 +20,32 @@ class UpdateTourRequest extends FormRequest
      */
     public function rules(): array
     {
-        // Lấy ID của tour đang sửa từ route
-        // Ví dụ route: tours/{tour}, thì tham số là 'tour'
+        // Lấy ID của tour/template đang sửa từ route
         $tour = $this->route('tour');
-        $tourId = $tour instanceof \App\Models\Tour ? $tour->id : $tour;
+        $tourId = $tour instanceof \App\Models\Tour ? $tour->id : ($tour instanceof \App\Models\TourTemplate ? $tour->id : $tour);
 
         return [
-            // --- 1. Tour Basic ---
+            // --- 1. Tour Template Basic ---
             'category_id' => 'required|exists:categories,id',
             'province_id' => 'required|exists:provinces,id',
 
-            // QUAN TRỌNG: Bỏ qua check unique nếu là chính tour này
+            // QUAN TRỌNG: Bỏ qua check unique nếu là chính template này
             'title' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('tours', 'title')->ignore($tourId),
+                Rule::unique('tour_templates', 'title')->ignore($tourId),
             ],
 
-            'status' => 'required|in:0,1,2,3',
             'day' => 'required|integer|min:1',
             'night' => 'required|integer|min:0',
 
-            // Khi update, không bắt buộc ngày phải từ hôm nay trở đi (để sửa tour cũ)
-            'date_start' => 'required|date',
-
+            // Các field instance (optional khi update)
+            'date_start' => 'nullable|date',
             'limit' => 'nullable|integer|min:1',
-            'price_adult' => 'required|numeric|min:0',
+            'price_adult' => 'nullable|numeric|min:0',
             'price_children' => 'nullable|numeric|min:0',
+            'status' => 'nullable|in:0,1,2,3',
 
             // QUAN TRỌNG: Ảnh đại diện không bắt buộc khi update
             'thumbnail' => 'nullable|image|max:2048',
@@ -97,23 +95,20 @@ class UpdateTourRequest extends FormRequest
             'title.max' => 'Tên tour không được vượt quá 255 ký tự.',
             'title.unique' => 'Tên tour này đã tồn tại, vui lòng chọn tên khác.',
 
-            'status.required' => 'Vui lòng chọn trạng thái.',
-            'status.in' => 'Trạng thái không hợp lệ.',
-
             'day.required' => 'Số ngày không được để trống.',
             'day.min' => 'Số ngày tối thiểu là 1.',
 
             'night.required' => 'Số đêm không được để trống.',
             'night.min' => 'Số đêm không được nhỏ hơn 0.',
 
-            'date_start.required' => 'Vui lòng chọn ngày khởi hành.',
             'date_start.date' => 'Định dạng ngày không hợp lệ.',
 
             'limit.min' => 'Giới hạn số khách phải ít nhất là 1.',
 
-            'price_adult.required' => 'Vui lòng nhập giá người lớn.',
             'price_adult.numeric' => 'Giá người lớn phải là dạng số.',
             'price_adult.min' => 'Giá người lớn không được âm.',
+
+            'status.in' => 'Trạng thái không hợp lệ.',
 
             'price_children.numeric' => 'Giá trẻ em phải là dạng số.',
             'price_children.min' => 'Giá trẻ em không được âm.',

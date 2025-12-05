@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Tour;
+use App\Models\TourInstance;
+use App\Models\TourTemplate;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -52,8 +54,8 @@ class DashboardController extends Controller
             ? round((($newCustomers - $newCustomersLastMonth) / $newCustomersLastMonth) * 100, 1) 
             : 0;
 
-        // Tour đang hoạt động
-        $activeTours = Tour::count();
+        // Tour đang hoạt động (TourInstance với status = 1 hoặc 2)
+        $activeTours = TourInstance::whereIn('status', [1, 2])->count();
 
         // === 2. BIỂU ĐỒ DOANH THU 6 THÁNG ===
         $revenueChart = [];
@@ -80,24 +82,37 @@ class DashboardController extends Controller
         ];
 
         // === 4. BOOKING MỚI NHẤT ===
-        $latestBookings = Booking::with('tour:id,title')
+        $latestBookings = Booking::with(['tourInstance.tourTemplate:id,title', 'tour:id,title'])
             ->orderBy('created_at', 'desc')
             ->take(5)
-            ->get(['id', 'code', 'client_name', 'client_email', 'tour_id', 'status', 'final_price', 'created_at']);
+            ->get(['id', 'code', 'client_name', 'client_email', 'tour_id', 'tour_instance_id', 'status', 'final_price', 'created_at']);
 
-        // === 5. TOUR PHỔ BIẾN NHẤT ===
-        $popularTours = Tour::withCount('bookings')
+        // === 5. TOUR PHỔ BIẾN NHẤT (tính từ TourTemplate) ===
+        // Đếm số booking thông qua instances bằng subquery
+        $popularTours = TourTemplate::select('tour_templates.id', 'tour_templates.title')
+            ->selectRaw('(SELECT COUNT(*) FROM bookings 
+                         INNER JOIN tour_instances ON bookings.tour_instance_id = tour_instances.id 
+                         WHERE tour_instances.tour_template_id = tour_templates.id 
+                         AND tour_instances.deleted_at IS NULL 
+                         AND bookings.deleted_at IS NULL) as bookings_count')
             ->orderBy('bookings_count', 'desc')
             ->take(5)
-            ->get(['id', 'title', 'bookings_count']);
+            ->get()
+            ->map(function ($template) {
+                return [
+                    'id' => $template->id,
+                    'title' => $template->title,
+                    'bookings_count' => (int) $template->bookings_count,
+                ];
+            });
         
         $maxBookings = $popularTours->max('bookings_count') ?: 1;
         $popularTours = $popularTours->map(function ($tour) use ($maxBookings) {
             return [
-                'id' => $tour->id,
-                'title' => $tour->title,
-                'bookings_count' => $tour->bookings_count,
-                'percentage' => round(($tour->bookings_count / $maxBookings) * 100),
+                'id' => $tour['id'],
+                'title' => $tour['title'],
+                'bookings_count' => $tour['bookings_count'],
+                'percentage' => round(($tour['bookings_count'] / $maxBookings) * 100),
             ];
         });
 
@@ -119,14 +134,25 @@ class DashboardController extends Controller
             ],
         ];
 
-        // === 7. TOUR SẮP KHỞI HÀNH (giả định có date_start trong booking) ===
-        // Lấy các booking có ngày khởi hành trong 7 ngày tới
-        $upcomingBookings = Booking::with('tour:id,title,day')
-            ->where('status', 1) // Đã xác nhận
-            ->whereBetween('created_at', [$now, $now->copy()->addDays(30)])
-            ->orderBy('created_at', 'asc')
+        // === 7. TOUR SẮP KHỞI HÀNH (từ TourInstance.date_start) ===
+        // Lấy các tour instance có ngày khởi hành trong 30 ngày tới
+        $upcomingInstances = TourInstance::with('tourTemplate:id,title')
+            ->where('status', 1) // Sắp có
+            ->whereBetween('date_start', [$now, $now->copy()->addDays(30)])
+            ->orderBy('date_start', 'asc')
             ->take(5)
-            ->get();
+            ->get(['id', 'tour_template_id', 'date_start']);
+        
+        $upcomingBookings = $upcomingInstances->map(function($instance) {
+            return [
+                'id' => $instance->id,
+                'tour' => [
+                    'id' => $instance->tourTemplate->id,
+                    'title' => $instance->tourTemplate->title,
+                ],
+                'date_start' => $instance->date_start,
+            ];
+        });
 
         return Inertia::render('dashboard', [
             'stats' => [

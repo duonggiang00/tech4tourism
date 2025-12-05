@@ -1,5 +1,6 @@
 import ExcelImportDialog from '@/components/booking/ExcelImportDialog';
 import TourCombobox from '@/components/booking/TourCombobox';
+import TourTemplateCombobox from '@/components/booking/TourTemplateCombobox';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,17 +21,32 @@ import { toast } from 'sonner';
 export interface Tour {
     id: number;
     title: string;
-    price_adult: number;
-    price_children: number;
+    price_adult?: number;
+    price_children?: number;
     thumbnail: string;
     day: number;
 }
 
+export interface TourInstance {
+    id: number;
+    tour_template_id: number;
+    date_start: string;
+    date_end: string;
+    limit: number | null;
+    booked_count: number;
+    price_adult: number | null;
+    price_children: number | null;
+    status: number;
+    tourTemplate?: Tour;
+}
+
 interface CreateBookingProps {
-    tour?: Tour;
-    tours?: Tour[];
+    tour?: Tour; // Backward compatibility
+    tourInstance?: TourInstance; // Mới
+    tours?: Tour[]; // Backward compatibility
+    templates?: Array<Tour & { instances?: TourInstance[] }>; // TourTemplates với instances
+    instances?: TourInstance[]; // Danh sách instances
     isAdmin?: boolean;
-    // date_start đã bị xóa
     adults?: number;
     children?: number;
 }
@@ -46,8 +62,8 @@ interface Passenger {
 // 1. Định nghĩa cấu trúc dữ liệu mới
 interface BookingFormData {
     booking: {
-        tour_id: number | string;
-        // date_start đã bị xóa
+        tour_instance_id?: number | string; // Mới: ưu tiên
+        tour_id?: number | string; // Backward compatibility
         adults: number;
         children: number;
         client_name: string;
@@ -59,21 +75,24 @@ interface BookingFormData {
 
 export default function CreateBooking({
     tour: initialTour,
+    tourInstance: initialInstance,
     tours,
+    templates,
+    instances,
     isAdmin = false,
-    // date_start, // Đã xóa
     adults: initialAdults,
     children: initialChildren,
 }: CreateBookingProps) {
-    const isAdminMode = isAdmin || (Array.isArray(tours) && tours.length > 0);
+    const isAdminMode = isAdmin || (Array.isArray(templates) && templates.length > 0) || (Array.isArray(instances) && instances.length > 0);
     const [showImportDialog, setShowImportDialog] = useState(false);
+    const [selectedTemplateId, setSelectedTemplateId] = useState<number | string>('');
 
     // --- 2. KHỞI TẠO FORM VỚI CẤU TRÚC NESTED ---
     const { data, setData, post, processing, errors, reset } =
         useForm<BookingFormData>({
             booking: {
-                tour_id: initialTour?.id || tours?.[0]?.id || '',
-                // date_start: date_start || new Date().toISOString().split('T')[0], // Đã xóa
+                tour_instance_id: initialInstance?.id || instances?.[0]?.id || '',
+                tour_id: initialTour?.id || tours?.[0]?.id || '', // Backward compatibility
                 adults: initialAdults || 1,
                 children: initialChildren || 0,
                 client_name: '',
@@ -92,17 +111,80 @@ export default function CreateBooking({
     };
 
     // --- LOGIC TÍNH TOÁN ---
+    const selectedTemplate = useMemo(() => {
+        if (selectedTemplateId && templates) {
+            return templates.find((t) => t.id == Number(selectedTemplateId)) || null;
+        }
+        if (initialTour) return initialTour as any;
+        return null;
+    }, [selectedTemplateId, templates, initialTour]);
+
+    const selectedInstance = useMemo(() => {
+        if (initialInstance) return initialInstance;
+        
+        // Tìm instance từ tour_instance_id đã chọn
+        if (data.booking.tour_instance_id) {
+            // Tìm trong instances array trước
+            if (instances) {
+                const found = instances.find((i) => i.id == Number(data.booking.tour_instance_id));
+                if (found) return found;
+            }
+            // Nếu không tìm thấy, tìm trong templates[].instances
+            if (templates) {
+                for (const template of templates) {
+                    if (template.instances) {
+                        const found = template.instances.find((i) => i.id == Number(data.booking.tour_instance_id));
+                        if (found) return found;
+                    }
+                }
+            }
+        }
+        
+        // Nếu chỉ chọn template (không có tour_instance_id), tự động chọn instance phù hợp để hiển thị giá
+        if (templates && selectedTemplateId && !data.booking.tour_instance_id) {
+            const template = templates.find((t) => t.id == Number(selectedTemplateId));
+            if (template?.instances && template.instances.length > 0) {
+                // Ưu tiên instance có booking (booked_count > 0) và status = 1
+                const instanceWithBooking = template.instances.find(
+                    (i) => i.booked_count > 0 && i.status === 1 && new Date(i.date_start) >= new Date()
+                );
+                // Nếu không có, chọn instance sắp tới (status = 1, date_start >= today)
+                const upcomingInstance = instanceWithBooking || 
+                    template.instances.find(
+                        (i) => i.status === 1 && new Date(i.date_start) >= new Date()
+                    );
+                // Nếu vẫn không có, chọn instance đầu tiên có status = 1
+                return upcomingInstance || template.instances.find((i) => i.status === 1) || template.instances[0];
+            }
+        }
+        
+        return null;
+    }, [data.booking.tour_instance_id, initialInstance, instances, templates, selectedTemplateId]);
+
+    // Backward compatibility: selectedTour
     const selectedTour = useMemo(() => {
+        if (selectedInstance?.tourTemplate) return selectedInstance.tourTemplate;
+        if (selectedTemplate) return selectedTemplate;
         if (initialTour) return initialTour;
         if (tours && data.booking.tour_id) {
             return tours.find((t) => t.id == Number(data.booking.tour_id));
         }
         return null;
-    }, [data.booking.tour_id, initialTour, tours]);
+    }, [selectedInstance, selectedTemplate, initialTour, tours, data.booking.tour_id]);
 
-    // --- FIX: ĐỒNG BỘ TOUR_ID ---
+    // --- FIX: ĐỒNG BỘ TOUR_INSTANCE_ID ---
     useEffect(() => {
-        if (initialTour?.id) {
+        if (initialInstance?.id) {
+            setBookingData('tour_instance_id', initialInstance.id);
+        } else if (
+            isAdminMode &&
+            instances &&
+            instances.length > 0 &&
+            !data.booking.tour_instance_id
+        ) {
+            setBookingData('tour_instance_id', instances[0].id);
+        } else if (initialTour?.id) {
+            // Backward compatibility
             setBookingData('tour_id', initialTour.id);
         } else if (
             isAdminMode &&
@@ -112,7 +194,20 @@ export default function CreateBooking({
         ) {
             setBookingData('tour_id', tours[0].id);
         }
-    }, [initialTour, tours, isAdminMode]);
+    }, [initialInstance, instances, initialTour, tours, isAdminMode]);
+
+    // Nếu có templates nhưng chưa chọn template nào, tự chọn template đầu tiên
+    useEffect(() => {
+        if (!isAdminMode) return;
+        if (!templates || templates.length === 0) return;
+        if (selectedTemplateId) return;
+
+        const firstTemplate = templates[0];
+        setSelectedTemplateId(firstTemplate.id);
+        setBookingData('tour_id', firstTemplate.id);
+        // Không tự động chọn instance, để backend tự chọn instance phù hợp
+        setBookingData('tour_instance_id', '');
+    }, [templates, selectedTemplateId, isAdminMode]);
 
     // --- EFFECT: TỰ ĐỘNG CẬP NHẬT DANH SÁCH HÀNH KHÁCH ---
     // Lưu ý: Theo dõi data.booking.adults thay vì data.adults cũ
@@ -174,7 +269,8 @@ export default function CreateBooking({
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        if (!data.booking.tour_id) {
+        // Kiểm tra tour_instance_id (ưu tiên) hoặc tour_id (backward compatibility)
+        if (!data.booking.tour_instance_id && !data.booking.tour_id) {
             toast.error('Vui lòng chọn Tour du lịch!');
             return;
         }
@@ -182,9 +278,7 @@ export default function CreateBooking({
         const submitUrl = isAdminMode ? '/admin/bookings' : '/booking';
 
         // Transform nested data thành flat structure như backend mong đợi
-        const flatData = {
-            tour_id: Number(data.booking.tour_id), // Đảm bảo là number
-            date_start: data.booking.date_start || new Date().toISOString().split('T')[0],
+        const flatData: any = {
             adults: data.booking.adults,
             children: data.booking.children || 0,
             client_name: data.booking.client_name,
@@ -193,10 +287,33 @@ export default function CreateBooking({
             passengers: data.passengers,
         };
 
+        // Ưu tiên gửi tour_instance_id (hệ thống mới)
+        if (data.booking.tour_instance_id) {
+            flatData.tour_instance_id = Number(data.booking.tour_instance_id);
+        } else if (data.booking.tour_id) {
+            // Backward compatibility: gửi tour_id
+            flatData.tour_id = Number(data.booking.tour_id);
+        }
+
         // Kiểm tra lại trước khi gửi
-        if (!flatData.tour_id || flatData.tour_id === 0) {
+        if (!flatData.tour_instance_id && !flatData.tour_id) {
             toast.error('Vui lòng chọn Tour du lịch!');
             return;
+        }
+
+        // Kiểm tra danh sách hành khách
+        if (!flatData.passengers || flatData.passengers.length === 0) {
+            toast.error('Vui lòng thêm ít nhất 1 hành khách!');
+            return;
+        }
+
+        // Validate từng hành khách
+        for (let i = 0; i < flatData.passengers.length; i++) {
+            const p = flatData.passengers[i];
+            if (!p.fullname || !p.fullname.trim()) {
+                toast.error(`Vui lòng nhập tên cho hành khách thứ ${i + 1}!`);
+                return;
+            }
         }
 
         // Gửi data dạng flat trực tiếp
@@ -208,21 +325,36 @@ export default function CreateBooking({
             onError: (err) => {
                 console.error('Booking error:', err);
                 // Hiển thị lỗi cụ thể nếu có
-                if (err?.errors?.tour_id) {
+                if (err?.errors?.tour_instance_id) {
+                    toast.error(err.errors.tour_instance_id);
+                } else if (err?.errors?.tour_id) {
                     toast.error(err.errors.tour_id);
+                } else if (err?.errors?.passengers) {
+                    toast.error(err.errors.passengers);
                 } else if (err?.message) {
                     toast.error(err.message);
                 } else {
-                toast.error('Vui lòng kiểm tra lại thông tin.');
+                    toast.error('Vui lòng kiểm tra lại thông tin.');
                 }
             },
         });
     };
 
-    const totalPrice = selectedTour
-        ? Number(selectedTour.price_adult) * data.booking.adults +
-          Number(selectedTour.price_children) * data.booking.children
-        : 0;
+    // Tính giá từ instance (ưu tiên) hoặc tour
+    const totalPrice = useMemo(() => {
+        if (selectedInstance) {
+            return (Number(selectedInstance.price_adult || 0) * data.booking.adults +
+                   Number(selectedInstance.price_children || 0) * data.booking.children);
+        }
+        if (selectedTour) {
+            return (Number(selectedTour.price_adult || 0) * data.booking.adults +
+                   Number(selectedTour.price_children || 0) * data.booking.children);
+        }
+        return 0;
+    }, [selectedInstance, selectedTour, data.booking.adults, data.booking.children]);
+
+    // Lấy tour để hiển thị (từ instance hoặc trực tiếp)
+    const displayTour = selectedInstance?.tourTemplate || selectedTour;
 
     return (
         <AppLayout
@@ -276,31 +408,82 @@ export default function CreateBooking({
                     >
                         <div className="space-y-6 lg:col-span-2">
                             {/* 1. CHỌN TOUR */}
-                            {isAdminMode && tours && (
+                            {isAdminMode && (instances || templates || tours) && (
                                 <Card className="border-blue-100 shadow-sm">
                                     <CardHeader className="pb-3">
                                         <CardTitle className="flex items-center text-blue-700">
                                             <CalendarIcon className="mr-2 h-5 w-5" />{' '}
-                                            Chọn Tour Du Lịch
+                                            Chọn Tour
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="space-y-2">
-                                            <Label>
-                                                Tour muốn đặt{' '}
-                                                <span className="text-red-500">
-                                                    *
-                                                </span>
-                                            </Label>
-                                            <TourCombobox
-                                                tours={tours}
-                                                value={data.booking.tour_id}
-                                                onChange={(tourId) =>
-                                                    setBookingData('tour_id', tourId)
-                                                }
-                                                placeholder="Tìm và chọn tour..."
-                                            />
-                                            {/* Laravel Form Request nested rules trả về lỗi dạng 'booking.tour_id' */}
+                                        <div className="space-y-4">
+                                            {templates && templates.length > 0 ? (
+                                                <>
+                                                    <div className="space-y-2">
+                                                        <Label>
+                                                            Chọn Tour Template{' '}
+                                                            <span className="text-red-500">*</span>
+                                                        </Label>
+                                                        <TourTemplateCombobox
+                                                            templates={templates}
+                                                            value={selectedTemplateId || ''}
+                                                            onChange={(templateId) => {
+                                                                setSelectedTemplateId(templateId);
+                                                                const template = templates.find((t) => t.id === templateId);
+                                                                if (template) {
+                                                                    setBookingData('tour_id', template.id);
+                                                                    // Không tự động chọn instance, để backend tự chọn instance phù hợp
+                                                                    setBookingData('tour_instance_id', '');
+                                                                }
+                                                            }}
+                                                            placeholder="Tìm và chọn tour template..."
+                                                        />
+                                                    </div>
+                                                </>
+                                            ) : instances && instances.length > 0 ? (
+                                                <div className="space-y-2">
+                                                    <Label>
+                                                        Chọn Chuyến Đi{' '}
+                                                        <span className="text-red-500">*</span>
+                                                    </Label>
+                                                    <Select
+                                                        value={String(data.booking.tour_instance_id || '')}
+                                                        onValueChange={(value) => setBookingData('tour_instance_id', Number(value))}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Chọn chuyến đi..." />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {instances.map((instance) => (
+                                                                <SelectItem key={instance.id} value={String(instance.id)}>
+                                                                    {instance.tourTemplate?.title || 'Tour'} - {new Date(instance.date_start).toLocaleDateString('vi-VN')} - {instance.price_adult ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(instance.price_adult) : 'Chưa có giá'}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            ) : tours && tours.length > 0 ? (
+                                                <div className="space-y-2">
+                                                    <Label>
+                                                        Tour muốn đặt{' '}
+                                                        <span className="text-red-500">*</span>
+                                                    </Label>
+                                                    <TourCombobox
+                                                        tours={tours}
+                                                        value={data.booking.tour_id || ''}
+                                                        onChange={(tourId) => setBookingData('tour_id', tourId)}
+                                                        placeholder="Tìm và chọn tour..."
+                                                    />
+                                                </div>
+                                            ) : null}
+                                            {/* Error messages */}
+                                            {/* @ts-ignore */}
+                                            {errors['booking.tour_instance_id'] && (
+                                                <p className="text-sm text-red-500">
+                                                    {errors['booking.tour_instance_id']}
+                                                </p>
+                                            )}
                                             {/* @ts-ignore */}
                                             {errors['booking.tour_id'] && (
                                                 <p className="text-sm text-red-500">
@@ -638,22 +821,36 @@ export default function CreateBooking({
                                     <CardTitle>Tóm tắt đơn hàng</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-5 pt-6">
-                                    {selectedTour ? (
+                                    {displayTour ? (
                                         <>
                                             <div className="aspect-video w-full overflow-hidden rounded-md bg-gray-200">
                                                 <img
                                                     src={
-                                                        selectedTour.thumbnail
-                                                            ? `/storage/${selectedTour.thumbnail}`
+                                                        displayTour.thumbnail
+                                                            ? `/storage/${displayTour.thumbnail}`
                                                             : 'https://placehold.co/600x400?text=Chưa+có+ảnh'
                                                     }
-                                                    alt={selectedTour.title}
+                                                    alt={displayTour.title}
                                                     className="h-full w-full object-cover"
                                                 />
                                             </div>
                                             <h3 className="text-lg leading-tight font-bold text-gray-900">
-                                                {selectedTour.title}
+                                                {displayTour.title}
                                             </h3>
+                                            {selectedInstance ? (
+                                                <div className="text-sm text-gray-600">
+                                                    <p>Ngày khởi hành: {new Date(selectedInstance.date_start).toLocaleDateString('vi-VN')}</p>
+                                                    {selectedInstance.limit && (
+                                                        <p className="text-xs text-gray-500">
+                                                            Còn {selectedInstance.limit - selectedInstance.booked_count} chỗ trống
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            ) : selectedTemplate && (
+                                                <div className="text-sm text-gray-500 italic">
+                                                    <p>Hệ thống sẽ tự động chọn chuyến đi phù hợp</p>
+                                                </div>
+                                            )}
                                             <div className="space-y-2 border-t pt-4 text-sm text-gray-600">
                                                 <div className="flex justify-between">
                                                     <span>
@@ -661,12 +858,9 @@ export default function CreateBooking({
                                                         {data.booking.adults}
                                                     </span>
                                                     <span className="font-medium text-gray-900">
-                                                        {(
-                                                            Number(
-                                                                selectedTour.price_adult,
-                                                            ) *
-                                                            data.booking.adults
-                                                        ).toLocaleString()}{' '}
+                                                        {selectedInstance
+                                                            ? (Number(selectedInstance.price_adult || 0) * data.booking.adults).toLocaleString()
+                                                            : (Number(displayTour.price_adult || 0) * data.booking.adults).toLocaleString()}{' '}
                                                         đ
                                                     </span>
                                                 </div>
@@ -680,13 +874,9 @@ export default function CreateBooking({
                                                             }
                                                         </span>
                                                         <span className="font-medium text-gray-900">
-                                                            {(
-                                                                Number(
-                                                                    selectedTour.price_children,
-                                                                ) *
-                                                                data.booking
-                                                                    .children
-                                                            ).toLocaleString()}{' '}
+                                                            {selectedInstance
+                                                                ? (Number(selectedInstance.price_children || 0) * data.booking.children).toLocaleString()
+                                                                : (Number(displayTour.price_children || 0) * data.booking.children).toLocaleString()}{' '}
                                                             đ
                                                         </span>
                                                     </div>
@@ -709,7 +899,7 @@ export default function CreateBooking({
                                             <Button
                                                 type="submit"
                                                 className="mt-2 w-full bg-blue-600 py-6 text-lg hover:bg-blue-700"
-                                                disabled={processing}
+                                                disabled={processing || (!data.booking.tour_instance_id && !data.booking.tour_id)}
                                             >
                                                 {processing
                                                     ? 'Đang xử lý...'
@@ -719,9 +909,18 @@ export default function CreateBooking({
                                             </Button>
                                         </>
                                     ) : (
-                                        <div className="py-10 text-center text-gray-500">
-                                            <p>Vui lòng chọn tour để xem giá</p>
-                                        </div>
+                                        <>
+                                            <div className="py-10 text-center text-gray-500">
+                                                <p>Vui lòng chọn tour để xem giá</p>
+                                            </div>
+                                            <Button
+                                                type="submit"
+                                                className="mt-2 w-full bg-gray-400 py-6 text-lg cursor-not-allowed"
+                                                disabled={true}
+                                            >
+                                                {isAdminMode ? 'Tạo Booking' : 'Xác nhận đặt tour'}
+                                            </Button>
+                                        </>
                                     )}
                                 </CardContent>
                             </Card>

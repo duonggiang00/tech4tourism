@@ -14,6 +14,18 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function () {
+            // Cấu hình route model binding cho tours
+            \Illuminate\Support\Facades\Route::bind('tour', function ($value) {
+                // Ưu tiên tìm TourTemplate trước
+                $template = \App\Models\TourTemplate::find($value);
+                if ($template) {
+                    return $template;
+                }
+                // Fallback về Tour cũ nếu không tìm thấy TourTemplate
+                return \App\Models\Tour::findOrFail($value);
+            });
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state', 'jwt_token']);

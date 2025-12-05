@@ -19,14 +19,45 @@ class GuideController extends Controller
     {
         $user = $request->user();
         
-        $assignments = TripAssignment::with(['tour', 'tripCheckIns', 'tripNotes'])
+        // Chỉ lấy assignments ở instance level (có tour_instance_id) để tránh trùng lặp
+        // Hoặc nếu không có instance, lấy assignment ở template level nhưng không có instance nào khác
+        $assignments = TripAssignment::with([
+            'tourInstance.tourTemplate.images', // Load tourTemplate từ instance với images
+            'tripCheckIns', 
+            'tripNotes'
+        ])
             ->where('user_id', $user->id)
+            // Chỉ lấy assignments có tour_instance_id (instance level) để tránh trùng lặp
+            // Bỏ qua assignments ở template level nếu đã có instance
+            ->whereNotNull('tour_instance_id')
             ->when($request->status !== null && $request->status !== '', function ($query) use ($request) {
                 $query->where('status', $request->status);
             })
             ->orderBy('created_at', 'desc')
             ->paginate(10)
             ->withQueryString();
+
+        // Đảm bảo mỗi assignment có tour data (từ tourInstance.tourTemplate hoặc load TourTemplate từ tour_id)
+        $assignments->getCollection()->transform(function ($assignment) {
+            // Ưu tiên: lấy từ tourInstance.tourTemplate
+            if ($assignment->tourInstance && $assignment->tourInstance->tourTemplate) {
+                $assignment->setRelation('tour', $assignment->tourInstance->tourTemplate);
+            } 
+            // Nếu không có tourInstance, thử load TourTemplate từ tour_id
+            elseif ($assignment->tour_id) {
+                $tourTemplate = \App\Models\TourTemplate::with('images')->find($assignment->tour_id);
+                if ($tourTemplate) {
+                    $assignment->setRelation('tour', $tourTemplate);
+                } else {
+                    // Fallback: thử load Tour cũ
+                    $tour = \App\Models\Tour::find($assignment->tour_id);
+                    if ($tour) {
+                        $assignment->setRelation('tour', $tour);
+                    }
+                }
+            }
+            return $assignment;
+        });
 
         return Inertia::render('Guide/Schedule', [
             'assignments' => $assignments,
@@ -40,7 +71,9 @@ class GuideController extends Controller
     public function tripDetail($id)
     {
         $assignment = TripAssignment::with([
-            'tour.schedules.destination',
+            'tourInstance.tourTemplate.schedules.destination',
+            'tourInstance.tourTemplate.images',
+            'tour.schedules.destination', // Backward compatibility
             'tripCheckIns.checkInDetails.passenger',
             'tripNotes'
         ])->findOrFail($id);
@@ -50,10 +83,26 @@ class GuideController extends Controller
             abort(403, 'Bạn không có quyền truy cập chuyến đi này');
         }
 
-        // Lấy danh sách passengers từ các booking của tour này
+        // Đảm bảo assignment có tour data
+        if (!$assignment->tour && $assignment->tourInstance && $assignment->tourInstance->tourTemplate) {
+            $assignment->setRelation('tour', $assignment->tourInstance->tourTemplate);
+        } elseif (!$assignment->tour && $assignment->tour_id) {
+            $tourTemplate = \App\Models\TourTemplate::with('schedules.destination')->find($assignment->tour_id);
+            if ($tourTemplate) {
+                $assignment->setRelation('tour', $tourTemplate);
+            }
+        }
+
+        // Lấy danh sách passengers từ các booking của tour instance này
         $passengers = Passenger::whereHas('booking', function ($query) use ($assignment) {
-            $query->where('tour_id', $assignment->tour_id)
-                  ->where('status', 1); // Chỉ lấy booking đã xác nhận
+            if ($assignment->tour_instance_id) {
+                $query->where('tour_instance_id', $assignment->tour_instance_id)
+                      ->whereIn('status', [0, 1]); // Lấy cả chờ xác nhận và đã xác nhận
+            } else {
+                // Backward compatibility: nếu chưa có tour_instance_id
+                $query->where('tour_id', $assignment->tour_id)
+                      ->whereIn('status', [0, 1]);
+            }
         })->with('booking')->get();
 
         return Inertia::render('Guide/TripDetail', [
@@ -67,10 +116,14 @@ class GuideController extends Controller
      */
     public function getPassengersForCheckIn(Request $request, $assignmentId)
     {
-        $assignment = TripAssignment::findOrFail($assignmentId);
+        $assignment = TripAssignment::with('tourInstance')->findOrFail($assignmentId);
 
         if ($assignment->user_id !== auth()->id()) {
             abort(403, 'Bạn không có quyền thực hiện');
+        }
+
+        if (!$assignment->tourInstance) {
+            return response()->json(['error' => 'Tour instance không tồn tại'], 404);
         }
 
         $request->validate([
@@ -78,17 +131,19 @@ class GuideController extends Controller
         ]);
 
         $checkInDate = \Carbon\Carbon::parse($request->checkin_time)->format('Y-m-d');
+        $tourInstance = $assignment->tourInstance;
 
         // Lấy danh sách passengers từ booking có:
-        // - tour_id = tour được phân công
-        // - date_start = ngày check-in
+        // - tour_instance_id = tour instance được phân công
+        // - tour_instance.date_start = ngày check-in
         // - status = 0 (Chờ xác nhận) hoặc 1 (Đã xác nhận)
-        $passengers = Passenger::whereHas('booking', function ($query) use ($assignment, $checkInDate) {
-            $query->where('tour_id', $assignment->tour_id)
-                  ->where('date_start', $checkInDate)
-                  ->whereIn('status', [0, 1]);
+        $passengers = Passenger::whereHas('booking.tourInstance', function ($query) use ($tourInstance, $checkInDate) {
+            $query->where('id', $tourInstance->id)
+                  ->whereDate('date_start', $checkInDate);
+        })->whereHas('booking', function ($query) {
+            $query->whereIn('status', [0, 1]);
         })->with(['booking' => function($q) {
-            $q->select('id', 'code', 'status', 'client_name');
+            $q->select('id', 'code', 'status', 'client_name', 'tour_instance_id');
         }])->get();
 
         return response()->json($passengers);
@@ -162,18 +217,30 @@ class GuideController extends Controller
 
         // Lấy ngày check-in để lọc booking
         $checkInDate = \Carbon\Carbon::parse($checkIn->checkin_time)->format('Y-m-d');
+        $tourInstance = $checkIn->tripAssignment->tourInstance;
         
-        // Lấy danh sách passengers từ booking có:
-        // - tour_id = tour được phân công
-        // - date_start = ngày check-in
-        // - status = 0 (Chờ xác nhận) hoặc 1 (Đã xác nhận)
-        $passengers = Passenger::whereHas('booking', function ($query) use ($checkIn, $checkInDate) {
-            $query->where('tour_id', $checkIn->tripAssignment->tour_id)
-                  ->where('date_start', $checkInDate)
-                  ->whereIn('status', [0, 1]); // Hiển thị cả booking chờ xác nhận và đã xác nhận
-        })->with(['booking' => function($q) {
-            $q->select('id', 'code', 'status', 'client_name');
-        }])->get();
+        if (!$tourInstance) {
+            // Backward compatibility: nếu chưa có tour_instance
+            $passengers = Passenger::whereHas('booking', function ($query) use ($checkIn) {
+                $query->where('tour_id', $checkIn->tripAssignment->tour_id)
+                      ->whereIn('status', [0, 1]);
+            })->with(['booking' => function($q) {
+                $q->select('id', 'code', 'status', 'client_name');
+            }])->get();
+        } else {
+            // Lấy danh sách passengers từ booking có:
+            // - tour_instance_id = tour instance được phân công
+            // - tour_instance.date_start = ngày check-in
+            // - status = 0 (Chờ xác nhận) hoặc 1 (Đã xác nhận)
+            $passengers = Passenger::whereHas('booking.tourInstance', function ($query) use ($tourInstance, $checkInDate) {
+                $query->where('id', $tourInstance->id)
+                      ->whereDate('date_start', $checkInDate);
+            })->whereHas('booking', function ($query) {
+                $query->whereIn('status', [0, 1]);
+            })->with(['booking' => function($q) {
+                $q->select('id', 'code', 'status', 'client_name', 'tour_instance_id');
+            }])->get();
+        }
 
         // Lấy trạng thái check-in hiện tại
         $checkedIn = $checkIn->checkInDetails->pluck('is_present', 'passenger_id')->toArray();
@@ -226,12 +293,30 @@ class GuideController extends Controller
     {
         $user = $request->user();
 
-        $notes = TripNotes::with('tripAssignment.tour')
+        $notes = TripNotes::with([
+            'tripAssignment.tourInstance.tourTemplate',
+            'tripAssignment.tour'
+        ])
             ->whereHas('tripAssignment', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             })
             ->orderBy('created_at', 'desc')
             ->paginate(10);
+
+        // Đảm bảo mỗi note có tour data
+        $notes->getCollection()->transform(function ($note) {
+            if ($note->tripAssignment) {
+                if (!$note->tripAssignment->tour && $note->tripAssignment->tourInstance && $note->tripAssignment->tourInstance->tourTemplate) {
+                    $note->tripAssignment->setRelation('tour', $note->tripAssignment->tourInstance->tourTemplate);
+                } elseif (!$note->tripAssignment->tour && $note->tripAssignment->tour_id) {
+                    $tourTemplate = \App\Models\TourTemplate::find($note->tripAssignment->tour_id);
+                    if ($tourTemplate) {
+                        $note->tripAssignment->setRelation('tour', $tourTemplate);
+                    }
+                }
+            }
+            return $note;
+        });
 
         return Inertia::render('Guide/Notes', [
             'notes' => $notes,
@@ -318,6 +403,41 @@ class GuideController extends Controller
         $checkIn->delete();
 
         return redirect()->back()->with('success', 'Xóa đợt check-in thành công');
+    }
+
+    /**
+     * Xác nhận đã kết thúc tour (chỉ khi hôm nay là ngày cuối cùng)
+     */
+    public function completeTour(Request $request, $assignmentId)
+    {
+        $assignment = TripAssignment::with('tourInstance')->findOrFail($assignmentId);
+
+        if ($assignment->user_id !== auth()->id()) {
+            abort(403, 'Bạn không có quyền thực hiện');
+        }
+
+        if (!$assignment->tourInstance) {
+            return response()->json(['error' => 'Tour instance không tồn tại'], 404);
+        }
+
+        $today = \Carbon\Carbon::today();
+        $dateEnd = \Carbon\Carbon::parse($assignment->tourInstance->date_end);
+
+        // Kiểm tra xem hôm nay có phải là ngày cuối cùng không
+        if (!$today->isSameDay($dateEnd)) {
+            return response()->json([
+                'error' => 'Chỉ có thể xác nhận kết thúc tour vào ngày cuối cùng của chuyến đi'
+            ], 400);
+        }
+
+        // Cập nhật status của assignment và tour instance
+        $assignment->update(['status' => '2']); // Hoàn thành
+        $assignment->tourInstance->update(['status' => 3]); // Đã hoàn thành
+
+        return response()->json([
+            'message' => 'Đã xác nhận kết thúc tour thành công',
+            'assignment' => $assignment->fresh(['tourInstance.tourTemplate'])
+        ]);
     }
 }
 

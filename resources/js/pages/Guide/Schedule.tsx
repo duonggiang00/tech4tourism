@@ -12,8 +12,15 @@ import { toast } from 'sonner';
 interface Tour {
     id: number;
     title: string;
-    days: number;
+    days?: number;
+    day?: number;
     thumbnail: string | null;
+}
+
+interface TourInstance {
+    id: number;
+    tour_template_id: number;
+    tourTemplate?: Tour;
 }
 
 interface TripAssignment {
@@ -21,7 +28,8 @@ interface TripAssignment {
     tour_id: number;
     user_id: number;
     status: string;
-    tour: Tour;
+    tour: Tour | null; // Có thể null nếu assignment ở instance level
+    tourInstance?: TourInstance; // Mới: assignment có thể thuộc instance
     trip_check_ins: any[];
     trip_notes: any[];
     created_at: string;
@@ -109,15 +117,27 @@ export default function Schedule({ assignments, filters }: Props) {
                     </Card>
                 ) : (
                     <div className="grid gap-4">
-                        {assignments.data.map((assignment) => (
+                        {assignments.data.map((assignment) => {
+                            // Lấy tour từ tourInstance.tourTemplate hoặc tour trực tiếp
+                            const tour = assignment.tourInstance?.tourTemplate || assignment.tour;
+                            
+                            // Nếu không có tour, bỏ qua assignment này
+                            if (!tour) {
+                                return null;
+                            }
+                            
+                            const days = tour.days || tour.day || 0;
+                            const thumbnail = tour.thumbnail ? `/storage/${tour.thumbnail}` : null;
+                            
+                            return (
                             <Card key={assignment.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                                 <div className="flex flex-col md:flex-row">
                                     {/* Thumbnail */}
                                     <div className="w-full md:w-48 h-32 md:h-auto bg-muted flex-shrink-0">
-                                        {assignment.tour.thumbnail ? (
+                                        {thumbnail ? (
                                             <img 
-                                                src={assignment.tour.thumbnail} 
-                                                alt={assignment.tour.title}
+                                                src={thumbnail} 
+                                                alt={tour.title}
                                                 className="w-full h-full object-cover"
                                             />
                                         ) : (
@@ -136,12 +156,14 @@ export default function Schedule({ assignments, filters }: Props) {
                                                         {statusLabels[assignment.status]?.label || 'Không xác định'}
                                                     </Badge>
                                                 </div>
-                                                <h3 className="text-lg font-semibold">{assignment.tour.title}</h3>
+                                                <h3 className="text-lg font-semibold">{tour.title}</h3>
                                                 <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                                                    <span className="flex items-center gap-1">
-                                                        <Clock className="h-4 w-4" />
-                                                        {assignment.tour.days} ngày
-                                                    </span>
+                                                    {days > 0 && (
+                                                        <span className="flex items-center gap-1">
+                                                            <Clock className="h-4 w-4" />
+                                                            {days} ngày
+                                                        </span>
+                                                    )}
                                                     <span className="flex items-center gap-1">
                                                         <Users className="h-4 w-4" />
                                                         {assignment.trip_check_ins.length} điểm check-in
@@ -173,7 +195,8 @@ export default function Schedule({ assignments, filters }: Props) {
                                     </div>
                                 </div>
                             </Card>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
 

@@ -11,9 +11,15 @@ interface Tour {
     title: string;
 }
 
+interface TourInstance {
+    id: number;
+    tourTemplate?: Tour;
+}
+
 interface TripAssignment {
     id: number;
-    tour: Tour;
+    tour: Tour | null;
+    tourInstance?: TourInstance;
 }
 
 interface TripNote {
@@ -94,12 +100,18 @@ export default function Notes({ notes }: Props) {
                                     <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
                                         {note.content}
                                     </p>
-                                    <Link href={guide?.tripDetail ? guide.tripDetail(note.trip_assignment.id) : `/guide/trip/${note.trip_assignment.id}`}>
-                                        <Badge variant="secondary" className="cursor-pointer hover:bg-secondary/80">
-                                            <MapPin className="h-3 w-3 mr-1" />
-                                            {note.trip_assignment.tour.title}
-                                        </Badge>
-                                    </Link>
+                                    {(() => {
+                                        const tour = note.trip_assignment.tourInstance?.tourTemplate || note.trip_assignment.tour;
+                                        if (!tour) return null;
+                                        return (
+                                            <Link href={guide?.tripDetail ? guide.tripDetail(note.trip_assignment.id) : `/guide/trip/${note.trip_assignment.id}`}>
+                                                <Badge variant="secondary" className="cursor-pointer hover:bg-secondary/80">
+                                                    <MapPin className="h-3 w-3 mr-1" />
+                                                    {tour.title}
+                                                </Badge>
+                                            </Link>
+                                        );
+                                    })()}
                                 </CardContent>
                             </Card>
                         ))}

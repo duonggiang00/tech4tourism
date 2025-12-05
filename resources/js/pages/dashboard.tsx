@@ -340,9 +340,9 @@ export default function Dashboard({
                                             <span>{item.name}</span>
                                         </div>
                                         <span className="font-medium">{item.value}</span>
-                                    </div>
+                    </div>
                                 ))}
-                            </div>
+                    </div>
                         </CardContent>
                     </Card>
                 </div>

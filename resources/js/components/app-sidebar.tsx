@@ -18,7 +18,7 @@ import users from '@/routes/users';
 import bookings from '@/routes/admin/bookings';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, PlaneIcon, Users, Calendar, ListIcon, BanIcon, User2Icon, BananaIcon, PlaneTakeoff, ScrollText, FileText } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, PlaneIcon, Users, Calendar, ListIcon, BanIcon, User2Icon, BananaIcon, PlaneTakeoff, ScrollText, FileText, BarChart3 } from 'lucide-react';
 import AppLogo from './app-logo';
 import serviceTypes from '@/routes/service-types';
 import services from '@/routes/services';
@@ -127,6 +127,11 @@ export function AppSidebar() {
                     title: 'Quản lý Booking',
                       href: bookings.index(),
                       icon: Calendar,
+                  },
+                  {
+                    title: 'Báo cáo doanh thu',
+                      href: '/admin/reports/revenue',
+                      icon: BarChart3,
                   },
             ];
         }
