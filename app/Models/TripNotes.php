@@ -7,9 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class TripNotes extends Model
 {
-    /** @use HasFactory<\Database\Factories\TripNotesFactory> */
     use HasFactory;
-    public function tripAssignment(){
+
+    protected $fillable = [
+        'trip_assignment_id',
+        'title',
+        'content',
+    ];
+
+    public function tripAssignment()
+    {
         return $this->belongsTo(TripAssignment::class);
     }
 }

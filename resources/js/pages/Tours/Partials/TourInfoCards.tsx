@@ -4,7 +4,22 @@ import { InfoItem } from "../helperInfoItem";
 import { Calendar, Clock, DollarSign, MapPin, Users } from "lucide-react";
 import { TourInfoCardsProps } from "@/types";
 
-export default function TourInfoCards({ tour }: TourInfoCardsProps) {
+interface TourInstance {
+    id: number;
+    price_adult: number | null;
+    price_children: number | null;
+}
+
+interface TourInfoCardsExtendedProps extends TourInfoCardsProps {
+    instances?: TourInstance[];
+}
+
+export default function TourInfoCards({ tour, instances }: TourInfoCardsExtendedProps) {
+    // Lấy giá từ instance đầu tiên (nếu có), nếu không thì từ tour (backward compatibility)
+    const firstInstance = instances && instances.length > 0 ? instances[0] : null;
+    const priceAdult = firstInstance?.price_adult ?? tour.price_adult ?? null;
+    const priceChildren = firstInstance?.price_children ?? tour.price_children ?? null;
+
     return (
         <Card>
             <CardHeader>
@@ -17,24 +32,40 @@ export default function TourInfoCards({ tour }: TourInfoCardsProps) {
                     label="Giá vé"
                     value={
                         <div>
-                            <div className="grid grid-cols-2 gap-1">
-                                <div className="text-left">Người lớn:</div>
-                                <div className="text-right">
-                                    {new Intl.NumberFormat('vi-VN', {
-                                        style: 'currency',
-                                        currency: 'VND',
-                                    }).format(tour.price_adult ?? 0)}
+                            {priceAdult !== null || priceChildren !== null ? (
+                                <>
+                                    <div className="grid grid-cols-2 gap-1">
+                                        <div className="text-left">Người lớn:</div>
+                                        <div className="text-right">
+                                            {priceAdult !== null ? (
+                                                new Intl.NumberFormat('vi-VN', {
+                                                    style: 'currency',
+                                                    currency: 'VND',
+                                                }).format(priceAdult)
+                                            ) : (
+                                                <span className="text-gray-400">Chưa có giá</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-1">
+                                        <div className="text-left">Trẻ em:</div>
+                                        <div className="text-right">
+                                            {priceChildren !== null ? (
+                                                new Intl.NumberFormat('vi-VN', {
+                                                    style: 'currency',
+                                                    currency: 'VND',
+                                                }).format(priceChildren)
+                                            ) : (
+                                                <span className="text-gray-400">Chưa có giá</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="text-sm text-gray-500">
+                                    Chưa có chuyến đi nào. Vui lòng tạo chuyến đi để hiển thị giá.
                                 </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-1">
-                                <div className="text-left">Trẻ em:</div>
-                                <div className="text-right">
-                                    {new Intl.NumberFormat('vi-VN', {
-                                        style: 'currency',
-                                        currency: 'VND',
-                                    }).format(tour.price_children ?? 0)}
-                                </div>
-                            </div>
+                            )}
                         </div>
                     }
                 />

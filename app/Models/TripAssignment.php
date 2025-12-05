@@ -11,17 +11,34 @@ class TripAssignment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'tour_id',
+        'tour_id', // Giữ để backward compatibility
+        'tour_instance_id', // Mới: thuộc TourInstance
         'user_id',
         'status'
     ];
 
     /**
-     * Định nghĩa quan hệ: Chuyến đi thuộc về một Booking
+     * Quan hệ với TourInstance (mới)
+     */
+    public function tourInstance()
+    {
+        return $this->belongsTo(TourInstance::class, 'tour_instance_id');
+    }
+
+    /**
+     * Định nghĩa quan hệ: Chuyến đi thuộc về một Tour (backward compatibility)
+     * Lưu ý: Nếu có tour_instance_id, cần load tourInstance.tourTemplate thay vì dùng relationship này
      */
     public function tour()
     {
-        return $this->belongsTo(Tour::class);
+        // Backward compatibility: trả về TourTemplate nếu có tour_id
+        // Nếu tour_id trỏ đến TourTemplate (sau migration), dùng TourTemplate
+        // Nếu không, dùng Tour cũ
+        $tourTemplate = \App\Models\TourTemplate::find($this->tour_id);
+        if ($tourTemplate) {
+            return $this->belongsTo(\App\Models\TourTemplate::class, 'tour_id');
+        }
+        return $this->belongsTo(Tour::class, 'tour_id');
     }
 
     /**

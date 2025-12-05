@@ -16,6 +16,7 @@ class Passenger extends Model
         'fullname',
         'phone',
         'email',
+        'cccd',       // Căn cước công dân
         'gender',     // 0: Male, 1: Female
         'birth',
         'type',       // 0: Adult, 1: Child, 2: Infant

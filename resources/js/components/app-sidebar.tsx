@@ -18,34 +18,35 @@ import users from '@/routes/users';
 import bookings from '@/routes/admin/bookings';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, PlaneIcon, Users, Calendar, ListIcon, BanIcon, User2Icon, BananaIcon, PlaneTakeoff, ScrollText } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, PlaneIcon, Users, Calendar, ListIcon, BanIcon, User2Icon, BananaIcon, PlaneTakeoff, ScrollText, FileText, BarChart3 } from 'lucide-react';
 import AppLogo from './app-logo';
 import serviceTypes from '@/routes/service-types';
 import services from '@/routes/services';
 import providers from '@/routes/providers';
 import serviceAttributes from '@/routes/service-attributes';
 import policies from '@/routes/policies';
+import guide from '@/routes/guide';
 
 
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
+        title: 'Tổng quan',
         href: dashboard(),
         icon: LayoutGrid,
     },
     {
-        title: 'Countries',
+        title: 'Quốc gia',
         href: countries.index(),
         icon: LayoutGrid,
     },
     {
-        title: 'Categories',
+        title: 'Danh mục',
         href: categories.index(),
         icon: LayoutGrid,
     },
     {
-        title: 'Tour',
+        title: 'Tour du lịch',
         href: tour.index(),
         icon: LayoutGrid,
     },
@@ -55,12 +56,12 @@ const mainNavItems: NavItem[] = [
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Repository',
+        title: 'Mã nguồn',
         href: 'https://github.com/laravel/react-starter-kit',
         icon: Folder,
     },
     {
-        title: 'Documentation',
+        title: 'Tài liệu',
         href: 'https://laravel.com/docs/starter-kits#react',
         icon: BookOpen,
     },
@@ -72,41 +73,43 @@ export function AppSidebar() {
     const isAdmin = currentUser?.role === 1;
     const isHdv = currentUser?.role === 2;
 
-    const mainNavItems: NavItem[] = [
+    // Menu theo role
+    const getNavItems = (): NavItem[] => {
+        // Menu cho Admin (role = 1)
+        if (isAdmin) {
+            return [
         {
-            title: 'Dashboard',
+                    title: 'Tổng quan',
             href: dashboard(),
             icon: LayoutGrid,
         },
         {
-            title: 'Countries',
+                    title: 'Quốc gia',
             href: countries.index(),
             icon: LayoutGrid,
         },
-
         {
-            title: 'Tour',
+                    title: 'Tour du lịch',
             href: tour.index(),
             icon: PlaneTakeoff,
         },
-      
         {
-            title: 'Service_Types', //quản lý loại hình dịch vụ
+                    title: 'Loại dịch vụ',
             href: serviceTypes.index(),
             icon: ListIcon,
         },
         {
-            title: 'Services', //quản lý dịch vụ
+                    title: 'Dịch vụ',
             href: services.index(),
             icon: BanIcon,
         },
         {
-            title: 'Provider', //quản lý nhà cung cấp
+                    title: 'Nhà cung cấp',
             href: providers.index(),
             icon: User2Icon,
         },
         {
-            title: 'Service_attributes',
+                    title: 'Thuộc tính dịch vụ',
             href: serviceAttributes.index(),
             icon: BananaIcon,
         },
@@ -115,36 +118,54 @@ export function AppSidebar() {
             href: policies.index(),
             icon: ScrollText,
         },
-
-        // Chỉ hiển thị menu Users cho Admin
-        ...(isAdmin
-            ? [
                   {
-                      title: 'User Management',
+                    title: 'Quản lý người dùng',
                       href: users.index(),
                       icon: Users,
                   },
-              ]
-            : []),
-        ...(isAdmin
-            ? [
                   {
-                      title: 'Bookings Management',
+                    title: 'Quản lý Booking',
                       href: bookings.index(),
                       icon: Calendar,
                   },
-              ]
-            : []),
-        ];
+                  {
+                    title: 'Báo cáo doanh thu',
+                      href: '/admin/reports/revenue',
+                      icon: BarChart3,
+                  },
+            ];
+        }
+
+        // Menu cho Hướng dẫn viên (role = 2)
+        if (isHdv) {
+            return [
+                {
+                    title: 'Lịch trình của tôi',
+                    href: guide.schedule(),
+                    icon: Calendar,
+                },
+                {
+                    title: 'Nhật ký chuyến đi',
+                    href: guide.notes(),
+                    icon: FileText,
+                },
+            ];
+        }
+
+        // Các role khác: không có menu
+        return [];
+    };
+
+    const mainNavItems = getNavItems();
 
     const footerNavItems: NavItem[] = [
         {
-            title: 'Repository',
+            title: 'Mã nguồn',
             href: 'https://github.com/laravel/react-starter-kit',
             icon: Folder,
         },
         {
-            title: 'Documentation',
+            title: 'Tài liệu',
             href: 'https://laravel.com/docs/starter-kits#react',
             icon: BookOpen,
         },

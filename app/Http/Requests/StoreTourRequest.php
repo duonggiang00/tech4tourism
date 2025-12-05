@@ -22,15 +22,16 @@ class StoreTourRequest extends FormRequest
             // SỬA: Kiểm tra trong bảng 'provinces' thay vì 'destinations'
             'province_id' => 'required|exists:provinces,id',
 
-            'title' => 'required|string|max:255|unique:tours,title',
-            'status' => 'required|in:0,1,2,3', // Thêm status 3 nếu có (Sắp ra mắt)
+            'title' => 'required|string|max:255|unique:tour_templates,title',
             'day' => 'required|integer|min:1',
             'night' => 'required|integer|min:0',
-            'date_start' => 'required|date|after_or_equal:today',
+            // Các field instance (date_start, limit, price) sẽ được xử lý riêng khi tạo instance
+            'date_start' => 'nullable|date|after_or_equal:today', // Optional: có thể tạo instance ngay
             'limit' => 'nullable|integer|min:1',
-            'price_adult' => 'required|numeric|min:0',
+            'price_adult' => 'nullable|numeric|min:0',
             'price_children' => 'nullable|numeric|min:0',
-            'thumbnail' => 'required|image|max:2048',
+            'status' => 'nullable|in:0,1,2,3', // Status của instance nếu tạo ngay
+            'thumbnail' => 'nullable|image|max:2048', // Có thể không có thumbnail ngay
             'description' => 'nullable|string',
             'short_description' => 'nullable|string',
 
@@ -86,29 +87,26 @@ class StoreTourRequest extends FormRequest
             'title.max' => 'Tên tour không được vượt quá 255 ký tự.',
             'title.unique' => 'Tên tour này đã tồn tại, vui lòng chọn tên khác.',
 
-            'status.required' => 'Vui lòng chọn trạng thái.',
-            'status.in' => 'Trạng thái không hợp lệ.',
-
             'day.required' => 'Số ngày không được để trống.',
             'day.min' => 'Số ngày tối thiểu là 1.',
 
             'night.required' => 'Số đêm không được để trống.',
             'night.min' => 'Số đêm không được nhỏ hơn 0.',
 
-            'date_start.required' => 'Vui lòng chọn ngày khởi hành.',
             'date_start.date' => 'Định dạng ngày không hợp lệ.',
             'date_start.after_or_equal' => 'Ngày khởi hành phải từ hôm nay trở đi.',
 
             'limit.min' => 'Giới hạn số khách phải ít nhất là 1.',
 
-            'price_adult.required' => 'Vui lòng nhập giá người lớn.',
             'price_adult.numeric' => 'Giá người lớn phải là dạng số.',
             'price_adult.min' => 'Giá người lớn không được âm.',
 
             'price_children.numeric' => 'Giá trẻ em phải là dạng số.',
             'price_children.min' => 'Giá trẻ em không được âm.',
 
-            'thumbnail.required' => 'Vui lòng tải lên ảnh đại diện (Thumbnail).',
+            'status.in' => 'Trạng thái không hợp lệ.',
+
+            'thumbnail.image' => 'File tải lên phải là hình ảnh.',
             'thumbnail.image' => 'File tải lên phải là hình ảnh.',
             'thumbnail.max' => 'Dung lượng ảnh đại diện không được vượt quá 2MB.',
 

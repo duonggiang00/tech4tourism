@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -14,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import tourUrl from '@/routes/tours';
 import { Category, Country, Destination, Policy, Tour, User } from '@/types';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, Link } from '@inertiajs/react';
 import {
     Check,
     MapPin,
@@ -23,17 +24,24 @@ import {
     Search,
     Trash2,
     UploadCloud,
+    Users,
     X,
 } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+// Interface cho Guide với thông tin đã có tour
+interface GuideWithStatus extends User {
+    has_active_tour?: boolean;
+}
+
 // Props nhận từ Controller (Hàm edit)
 interface EditProps {
-    tour: Tour; // Dữ liệu Tour cần sửa
+    tour: Tour; // Dữ liệu Tour/Template cần sửa
+    template?: Tour & { instances?: any[] }; // TourTemplate với instances (nếu có)
     categories: Category[];
     policies: Policy[];
-    guides: User[];
+    guides: GuideWithStatus[];
     countries: Country[];
 }
 
@@ -59,43 +67,44 @@ interface TempTourService {
 
 export default function Edit({
     tour,
+    template,
     categories,
     policies,
     guides,
     countries,
 }: EditProps) {
+    // Sử dụng template nếu có, nếu không dùng tour
+    const tourData = template || tour;
+    const instances = (template as any)?.instances || [];
+
     // --- 1. SETUP FORM (LOAD DỮ LIỆU CŨ) ---
+    // Loại bỏ các field instance: date_start, limit, price_adult, price_children, status, guide_ids
     const { data, setData, post, processing, errors } = useForm({
         _method: 'PUT', // Quan trọng để Laravel hiểu đây là Update khi có File Upload
-        category_id: String(tour.category_id),
-        province_id: String(tour.province_id || ''), // Load tỉnh cũ
-        title: tour.title,
-        status: tour.status,
-        day: tour.day,
-        night: tour.night,
-        date_start: tour.date_start,
-        limit: tour.limit,
+        category_id: String(tourData.category_id),
+        province_id: String(tourData.province_id || ''), // Load tỉnh cũ
+        title: tourData.title,
+        day: tourData.day,
+        night: tourData.night,
 
         // Ảnh: Thumbnail là File mới (nếu upload) hoặc null (nếu giữ nguyên)
         thumbnail: null as File | null,
 
-        description: tour.description || '',
-        short_description: tour.short_description || '',
-        price_adult: tour.price_adult,
-        price_children: tour.price_children,
+        description: tourData.description || '',
+        short_description: tourData.short_description || '',
 
         // Gallery: Chỉ chứa ảnh MỚI upload thêm
         gallery_images: [] as File[],
 
         // Map dữ liệu quan hệ cũ sang cấu trúc form
-        schedules: (tour.schedules || []).map((s) => ({
+        schedules: ((tourData as any).schedules || []).map((s: any) => ({
             name: s.name,
             description: s.description || '',
             destination_id: String(s.destination_id),
             date: s.date,
         })) as TempSchedule[],
 
-        tour_services: (tour.tour_services || []).map((s) => ({
+        tour_services: ((tourData as any).tour_services || []).map((s: any) => ({
             service_id: String(s.service_id),
             service_name: s.service?.name, // Optional: để hiển thị nếu cần
             quantity: s.quantity,
@@ -105,18 +114,18 @@ export default function Edit({
             description: s.description || '',
         })) as TempTourService[],
 
-        policy_ids: (tour.tour_policies || []).map((p) => p.policy_id),
-        guide_ids: (tour.trip_assignments || []).map((t) => t.user_id),
+        policy_ids: ((tourData as any).tour_policies || []).map((p: any) => p.policy_id),
+        guide_ids: ((tourData as any).trip_assignments || []).filter((a: any) => !a.tour_instance_id).map((a: any) => a.user_id) || [],
     });
 
     // --- TỰ ĐỘNG TÌM QUỐC GIA CỦA TỈNH HIỆN TẠI ---
     const initialCountryId = useMemo(() => {
-        if (!tour.province_id) return '';
+        if (!tourData.province_id) return '';
         const country = countries.find((c) =>
-            c.provinces?.some((p) => String(p.id) === String(tour.province_id)),
+            c.provinces?.some((p) => String(p.id) === String(tourData.province_id)),
         );
         return country ? String(country.id) : '';
-    }, [tour.province_id, countries]);
+    }, [tourData.province_id, countries]);
 
     // --- STATE CHO LOCATION PANEL ---
     const [selectedCountryId, setSelectedCountryId] =
@@ -353,7 +362,7 @@ export default function Edit({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         // Sử dụng post nhưng trỏ vào route update (đã có _method: PUT trong data)
-        post(tourUrl.update(tour.id).url, {
+        post(tourUrl.update(tourData.id).url, {
             forceFormData: true,
             onError: (err) => {
                 console.error('Validation Errors:', err);
@@ -369,7 +378,7 @@ export default function Edit({
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Chỉnh sửa Tour', href: '#' }]}>
-            <Head title={`Chỉnh sửa: ${tour.title}`} />
+            <Head title={`Chỉnh sửa: ${tourData.title}`} />
             <div className="min-h-screen bg-gray-50 p-8 pb-24">
                 <form
                     onSubmit={handleSubmit}
@@ -441,87 +450,9 @@ export default function Edit({
                                     )}
                                 </div>
                             </div>
-                            <div className="space-y-4">
-                                <div>
-                                    <Label>Trạng thái</Label>
-                                    <Select
-                                        onValueChange={(v) =>
-                                            setData('status', Number(v))
-                                        }
-                                        value={String(data.status)}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="0">
-                                                Ẩn
-                                            </SelectItem>
-                                            <SelectItem value="1">
-                                                Hoạt động
-                                            </SelectItem>
-                                            <SelectItem value="2">
-                                                Tạm dừng
-                                            </SelectItem>
-                                            <SelectItem value="3">
-                                                Sắp ra mắt
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <Label>Giá người lớn ($)</Label>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            value={data.price_adult}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'price_adult',
-                                                    e.target.value,
-                                                )
-                                            }
-                                            className={
-                                                errors.price_adult
-                                                    ? 'border-red-500'
-                                                    : ''
-                                            }
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label>Giá trẻ em ($)</Label>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            value={data.price_children}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'price_children',
-                                                    e.target.value,
-                                                )
-                                            }
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                            {/* Các field instance (status, price, date_start, limit) đã được chuyển sang quản lý ở TourInstances */}
                         </div>
-                        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
-                            <div>
-                                <Label>Ngày khởi hành</Label>
-                                <Input
-                                    type="date"
-                                    value={data.date_start}
-                                    onChange={(e) =>
-                                        setData('date_start', e.target.value)
-                                    }
-                                    className={
-                                        errors.date_start
-                                            ? 'border-red-500'
-                                            : ''
-                                    }
-                                />
-                            </div>
+                        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                             <div>
                                 <Label>Số ngày</Label>
                                 <Input
@@ -1198,39 +1129,98 @@ export default function Edit({
                                 ))}
                             </div>
                         </div>
-                        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm md:col-span-2">
-                            <h3 className="mb-4 font-semibold text-gray-800">
-                                Phân công HDV
-                            </h3>
-                            <div className="grid max-h-60 grid-cols-1 gap-2 overflow-y-auto md:grid-cols-2">
-                                {guides.map((u) => (
-                                    <label
-                                        key={u.id}
-                                        className="flex cursor-pointer items-center gap-3 rounded border p-2 hover:bg-gray-50"
-                                    >
-                                        <Checkbox
-                                            checked={data.guide_ids.includes(
-                                                u.id,
+                        {/* Hướng dẫn viên */}
+                        <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm md:col-span-2">
+                            <div className="flex items-center gap-2">
+                                <Users className="h-5 w-5 text-gray-600" />
+                                <h3 className="text-lg font-semibold text-gray-800">
+                                    Hướng dẫn viên
+                                </h3>
+                            </div>
+                            <p className="text-sm text-gray-600">
+                                Chọn hướng dẫn viên cho tour này. Các hướng dẫn viên này sẽ được tự động gán cho các chuyến đi mới.
+                            </p>
+                            <div className="max-h-60 space-y-2 overflow-y-auto rounded-md border border-gray-200 p-3">
+                                {guides.length === 0 ? (
+                                    <p className="text-sm text-gray-500">
+                                        Chưa có hướng dẫn viên nào trong hệ thống.
+                                    </p>
+                                ) : (
+                                    guides.map((guide) => (
+                                        <div
+                                            key={guide.id}
+                                            className={`flex items-center justify-between rounded-md border p-3 ${
+                                                guide.has_active_tour
+                                                    ? 'border-amber-200 bg-amber-50'
+                                                    : 'border-gray-200 bg-white'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <Checkbox
+                                                    id={`guide-${guide.id}`}
+                                                    checked={data.guide_ids.includes(
+                                                        guide.id,
+                                                    )}
+                                                    onCheckedChange={() =>
+                                                        toggleSelection(
+                                                            'guide_ids',
+                                                            guide.id,
+                                                        )
+                                                    }
+                                                    disabled={
+                                                        guide.has_active_tour
+                                                    }
+                                                />
+                                                <Label
+                                                    htmlFor={`guide-${guide.id}`}
+                                                    className={`cursor-pointer ${
+                                                        guide.has_active_tour
+                                                            ? 'text-gray-400'
+                                                            : 'text-gray-700'
+                                                    }`}
+                                                >
+                                                    {guide.name} ({guide.email})
+                                                </Label>
+                                            </div>
+                                            {guide.has_active_tour && (
+                                                <Badge
+                                                    variant="secondary"
+                                                    className="bg-amber-100 text-amber-800"
+                                                >
+                                                    Đã có tour
+                                                </Badge>
                                             )}
-                                            onCheckedChange={() =>
-                                                toggleSelection(
-                                                    'guide_ids',
-                                                    u.id,
-                                                )
-                                            }
-                                        />
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-medium text-gray-800">
-                                                {u.name}
-                                            </span>
-                                            <span className="text-xs text-gray-500">
-                                                {u.email}
-                                            </span>
                                         </div>
-                                    </label>
-                                ))}
+                                    ))
+                                )}
                             </div>
                         </div>
+                        {/* Phân công HDV sẽ được thực hiện khi tạo/cập nhật TourInstance */}
+                        {instances.length > 0 && (
+                            <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-6 shadow-sm md:col-span-2">
+                                <h3 className="mb-2 font-semibold text-blue-800">
+                                    Quản lý Chuyến Đi
+                                </h3>
+                                <p className="mb-4 text-sm text-blue-700">
+                                    Tour này có {instances.length} chuyến đi. Bạn có thể quản lý từng chuyến đi (ngày khởi hành, giá, số chỗ, hướng dẫn viên) ở trang chi tiết tour.
+                                </p>
+                                <Link href={tourUrl.show(tourData.id).url}>
+                                    <Button variant="outline" size="sm">
+                                        Xem chi tiết và quản lý chuyến đi
+                                    </Button>
+                                </Link>
+                            </div>
+                        )}
+                        {instances.length === 0 && (
+                            <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-6 shadow-sm md:col-span-2">
+                                <h3 className="mb-2 font-semibold text-amber-800">
+                                    Chưa có Chuyến Đi
+                                </h3>
+                                <p className="text-sm text-amber-700">
+                                    Sau khi cập nhật Tour Template, bạn có thể tạo các chuyến đi cụ thể (với ngày khởi hành, giá, số chỗ, hướng dẫn viên) từ trang chi tiết tour.
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* FOOTER */}

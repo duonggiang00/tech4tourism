@@ -7,8 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class TripCheckIn extends Model
 {
-    /** @use HasFactory<\Database\Factories\TripCheckInFactory> */
     use HasFactory;
+
+    protected $fillable = [
+        'trip_assignment_id',
+        'title',
+        'checkin_time',
+    ];
+
+    protected $casts = [
+        'checkin_time' => 'datetime',
+    ];
+
     public function tripAssignment()
     {
         return $this->belongsTo(TripAssignment::class, 'trip_assignment_id');

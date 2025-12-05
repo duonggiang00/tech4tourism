@@ -47,6 +47,11 @@ interface Tour {
     title: string;
 }
 
+interface TourInstance {
+    id: number;
+    tourTemplate?: Tour;
+}
+
 interface Booking {
     id: number;
     code: string;
@@ -60,7 +65,8 @@ interface Booking {
     final_price: number;
     left_payment: number;
     status: number;
-    tour?: Tour;
+    tour?: Tour | null;
+    tourInstance?: TourInstance;
     created_at: string;
 }
 
@@ -240,7 +246,7 @@ export default function BookingsIndex({
                         <div className="flex gap-2">
                             <Input
                                 type="text"
-                                placeholder="Tìm kiếm theo mã, tên, email..."
+                                placeholder="Tìm kiếm theo mã, tên khách, email, tên tour..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="max-w-md"
@@ -251,11 +257,22 @@ export default function BookingsIndex({
                                         ? String(statusFilter)
                                         : 'all'
                                 }
-                                onValueChange={(val) =>
-                                    setStatusFilter(
-                                        val === 'all' ? null : parseInt(val),
-                                    )
-                                }
+                                onValueChange={(val) => {
+                                    const newStatus = val === 'all' ? null : parseInt(val);
+                                    setStatusFilter(newStatus);
+                                    // Tự động filter khi chọn trạng thái
+                                    router.get(
+                                        bookingsRoutes.index().url,
+                                        {
+                                            search,
+                                            status: newStatus,
+                                        },
+                                        {
+                                            preserveState: true,
+                                            preserveScroll: true,
+                                        },
+                                    );
+                                }}
                             >
                                 <SelectTrigger className="w-[180px]">
                                     <SelectValue placeholder="Tất cả trạng thái" />
@@ -285,7 +302,7 @@ export default function BookingsIndex({
                                         router.get(bookingsRoutes.index().url);
                                     }}
                                 >
-                                    Xóa
+                                    Xóa bộ lọc
                                 </Button>
                             )}
                         </div>
@@ -317,7 +334,7 @@ export default function BookingsIndex({
                                                 {booking.code}
                                             </TableCell>
                                             <TableCell>
-                                                {booking.tour?.title || 'N/A'}
+                                                {booking.tourInstance?.tourTemplate?.title || booking.tour?.title || 'N/A'}
                                             </TableCell>
                                             <TableCell>
                                                 <div>
@@ -368,7 +385,7 @@ export default function BookingsIndex({
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
+                                                <div className="flex items-center justify-end gap-2">
                                                     <Link
                                                         href={
                                                             bookingsRoutes.show(
@@ -379,6 +396,7 @@ export default function BookingsIndex({
                                                         <Button
                                                             variant="outline"
                                                             size="icon"
+                                                            className="h-8 w-8"
                                                             title="Xem chi tiết"
                                                         >
                                                             <Eye className="h-4 w-4" />
@@ -387,6 +405,7 @@ export default function BookingsIndex({
                                                     <Button
                                                         variant="outline"
                                                         size="icon"
+                                                        className="h-8 w-8"
                                                         onClick={() =>
                                                             openEditModal(
                                                                 booking,
@@ -399,6 +418,7 @@ export default function BookingsIndex({
                                                     <Button
                                                         variant="destructive"
                                                         size="icon"
+                                                        className="h-8 w-8"
                                                         onClick={() =>
                                                             setDeletingBooking(
                                                                 booking,
