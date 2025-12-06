@@ -104,7 +104,7 @@ export default function Notes({ notes }: Props) {
                                         const tour = note.trip_assignment.tourInstance?.tourTemplate || note.trip_assignment.tour;
                                         if (!tour) return null;
                                         return (
-                                            <Link href={guide?.tripDetail ? guide.tripDetail(note.trip_assignment.id) : `/guide/trip/${note.trip_assignment.id}`}>
+                                            <Link href={guide?.trip?.detail ? guide.trip.detail(note.trip_assignment.id) : `/guide/trip/${note.trip_assignment.id}`}>
                                                 <Badge variant="secondary" className="cursor-pointer hover:bg-secondary/80">
                                                     <MapPin className="h-3 w-3 mr-1" />
                                                     {tour.title}

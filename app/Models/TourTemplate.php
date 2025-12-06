@@ -24,6 +24,13 @@ class TourTemplate extends Model
         'thumbnail',
         'description',
         'short_description',
+        'price_adult',
+        'price_children',
+    ];
+
+    protected $casts = [
+        'price_adult' => 'decimal:2',
+        'price_children' => 'decimal:2',
     ];
 
     /**

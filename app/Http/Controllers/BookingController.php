@@ -57,12 +57,14 @@ class BookingController extends Controller
         }
 
         // Admin tạo booking: hiển thị danh sách tour templates với instances
+        // Load tất cả instances (không filter) để có thể hiển thị giá từ instance hoặc template
         $templates = TourTemplate::with(['instances' => function($q) {
-            $q->where('date_start', '>=', now());
+            $q->orderBy('date_start', 'desc'); // Sắp xếp để instance mới nhất lên đầu
         }])->get();
 
         return Inertia::render('Bookings/Create', [
             'templates' => $templates,
+            'isAdmin' => true,
         ]);
     }
     public function store(Request $request)
@@ -87,6 +89,8 @@ class BookingController extends Controller
             'passengers' => 'required|array|min:1', // Phải có ít nhất 1 hành khách
             'passengers.*.fullname' => 'required|string|max:255',
             'passengers.*.cccd' => 'nullable|string|max:20',
+            'passengers.*.phone' => 'nullable|string|max:20',
+            'passengers.*.request' => 'nullable|string|max:500',
             'passengers.*.gender' => 'required|in:0,1',
             'passengers.*.type' => 'required|in:0,1,2', // 0: Adult, 1: Child, 2: Infant
         ], [
@@ -153,13 +157,21 @@ class BookingController extends Controller
                 return back()->withErrors(['tour_id' => 'Vui lòng chọn tour du lịch.']);
             }
 
-            // Tính tổng tiền từ TourInstance hoặc Tour
+            // Tính tổng tiền: ưu tiên giá từ instance, nếu null thì dùng giá từ template
             if ($tourInstance) {
-                $basePrice = ($tourInstance->price_adult * $validated['adults']) +
-                    ($tourInstance->price_children * ($validated['children'] ?? 0));
+                // Lấy giá từ instance, nếu null thì dùng giá từ template
+                $priceAdult = $tourInstance->price_adult ?? $template->price_adult ?? 0;
+                $priceChildren = $tourInstance->price_children ?? $template->price_children ?? 0;
+                $basePrice = ($priceAdult * $validated['adults']) +
+                    ($priceChildren * ($validated['children'] ?? 0));
             } elseif ($tour) {
+                // Backward compatibility: dùng giá từ tour cũ
                 $basePrice = ($tour->price_adult * $validated['adults']) +
                     ($tour->price_children * ($validated['children'] ?? 0));
+            } elseif ($template) {
+                // Chỉ có template, dùng giá từ template
+                $basePrice = (($template->price_adult ?? 0) * $validated['adults']) +
+                    (($template->price_children ?? 0) * ($validated['children'] ?? 0));
             } else {
                 throw new \Exception('Không tìm thấy thông tin giá tour');
             }

@@ -35,12 +35,16 @@ interface ColumnMapping {
     fullname: string;
     age: string;
     cccd: string;
+    sdt: string;
+    request: string;
 }
 
 interface ImportedPassenger {
     fullname: string;
     age: number | null;
     cccd: string;
+    phone?: string;
+    request?: string;
     type: number; // 0: Adult, 1: Child, 2: Infant
     gender: number;
 }
@@ -62,6 +66,8 @@ export default function ExcelImportDialog({
         fullname: '',
         age: '',
         cccd: '',
+        sdt: '',
+        request: '',
     });
     const [fileName, setFileName] = useState<string>('');
     const [isDragging, setIsDragging] = useState(false);
@@ -98,6 +104,8 @@ export default function ExcelImportDialog({
                         fullname: '',
                         age: '',
                         cccd: '',
+                        sdt: '',
+                        request: '',
                     };
 
                     cols.forEach((col) => {
@@ -124,6 +132,27 @@ export default function ExcelImportDialog({
                             lowerCol.includes('identity')
                         ) {
                             autoMapping.cccd = col;
+                        }
+                        if (
+                            lowerCol.includes('sdt') ||
+                            lowerCol.includes('phone') ||
+                            lowerCol.includes('điện thoại') ||
+                            lowerCol.includes('số điện thoại') ||
+                            lowerCol.includes('tel')
+                        ) {
+                            autoMapping.sdt = col;
+                        }
+                        if (
+                            lowerCol.includes('yêu cầu') ||
+                            lowerCol.includes('yeu cau') ||
+                            lowerCol.includes('request') ||
+                            lowerCol.includes('ghi chú') ||
+                            lowerCol.includes('ghi chu') ||
+                            lowerCol.includes('note') ||
+                            lowerCol.includes('đặc biệt') ||
+                            lowerCol.includes('dac biet')
+                        ) {
+                            autoMapping.request = col;
                         }
                     });
 
@@ -182,6 +211,8 @@ export default function ExcelImportDialog({
                 fullname: String(row[mapping.fullname] || ''),
                 age: age && !isNaN(age) ? age : null,
                 cccd: mapping.cccd ? String(row[mapping.cccd] || '') : '',
+                phone: mapping.sdt ? String(row[mapping.sdt] || '') : '',
+                request: mapping.request ? String(row[mapping.request] || '') : '',
                 type: getPassengerType(age && !isNaN(age) ? age : null),
                 gender: 0, // Mặc định Nam, user có thể chỉnh sau
             };
@@ -196,7 +227,7 @@ export default function ExcelImportDialog({
     const handleReset = () => {
         setExcelData([]);
         setColumns([]);
-        setMapping({ fullname: '', age: '', cccd: '' });
+        setMapping({ fullname: '', age: '', cccd: '', sdt: '', request: '' });
         setFileName('');
     };
 
@@ -206,6 +237,8 @@ export default function ExcelImportDialog({
             fullname: mapping.fullname ? row[mapping.fullname] : '-',
             age: mapping.age ? row[mapping.age] : '-',
             cccd: mapping.cccd ? row[mapping.cccd] : '-',
+            sdt: mapping.sdt ? row[mapping.sdt] : '-',
+            request: mapping.request ? row[mapping.request] : '-',
         }));
     };
 
@@ -282,7 +315,7 @@ export default function ExcelImportDialog({
                             <h4 className="font-medium text-gray-900">
                                 📋 Mapping cột dữ liệu
                             </h4>
-                            <div className="grid gap-4 sm:grid-cols-3">
+                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                                 <div className="space-y-2">
                                     <Label>
                                         Họ và tên{' '}
@@ -354,6 +387,54 @@ export default function ExcelImportDialog({
                                         </SelectContent>
                                     </Select>
                                 </div>
+
+                                <div className="space-y-2">
+                                    <Label>Số điện thoại</Label>
+                                    <Select
+                                        value={mapping.sdt || '__none__'}
+                                        onValueChange={(val) =>
+                                            setMapping({ ...mapping, sdt: val === '__none__' ? '' : val })
+                                        }
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Chọn cột..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__none__">
+                                                -- Không chọn --
+                                            </SelectItem>
+                                            {columns.map((col) => (
+                                                <SelectItem key={col} value={col}>
+                                                    {col}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Yêu cầu đặc biệt</Label>
+                                    <Select
+                                        value={mapping.request || '__none__'}
+                                        onValueChange={(val) =>
+                                            setMapping({ ...mapping, request: val === '__none__' ? '' : val })
+                                        }
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Chọn cột..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="__none__">
+                                                -- Không chọn --
+                                            </SelectItem>
+                                            {columns.map((col) => (
+                                                <SelectItem key={col} value={col}>
+                                                    {col}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -378,6 +459,12 @@ export default function ExcelImportDialog({
                                             </TableHead>
                                             <TableHead className="w-36">
                                                 CCCD
+                                            </TableHead>
+                                            <TableHead className="w-32">
+                                                SĐT
+                                            </TableHead>
+                                            <TableHead className="w-40">
+                                                Yêu cầu
                                             </TableHead>
                                             <TableHead className="w-28">
                                                 Loại
@@ -418,6 +505,16 @@ export default function ExcelImportDialog({
                                                     <TableCell className="font-mono text-sm">
                                                         {row.cccd !== '-'
                                                             ? row.cccd
+                                                            : '-'}
+                                                    </TableCell>
+                                                    <TableCell className="font-mono text-sm">
+                                                        {row.sdt !== '-'
+                                                            ? row.sdt
+                                                            : '-'}
+                                                    </TableCell>
+                                                    <TableCell className="text-sm max-w-[150px] truncate" title={row.request !== '-' ? String(row.request) : ''}>
+                                                        {row.request !== '-'
+                                                            ? row.request
                                                             : '-'}
                                                     </TableCell>
                                                     <TableCell>

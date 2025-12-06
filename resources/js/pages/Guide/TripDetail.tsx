@@ -64,14 +64,16 @@ interface Booking {
     id: number;
     code: string;
     client_name: string;
+    status?: number;
 }
 
 interface Passenger {
     id: number;
     fullname: string;
-    phone: string;
-    email: string;
+    phone: string | null;
+    email: string | null;
     cccd: string | null;
+    request: string | null;
     gender: number;
     type: number;
     booking: Booking;
@@ -145,6 +147,16 @@ export default function TripDetail({ assignment, passengers }: Props) {
         return grouped;
     }, [modalPassengers]);
 
+    // Tính tổng số yêu cầu đặc biệt
+    const specialRequestsCount = useMemo(() => {
+        return passengers.filter(p => p.request && p.request.trim() !== '').length;
+    }, [passengers]);
+
+    // Danh sách passengers có yêu cầu đặc biệt
+    const passengersWithRequests = useMemo(() => {
+        return passengers.filter(p => p.request && p.request.trim() !== '');
+    }, [passengers]);
+
     // Mở tất cả booking mặc định
     useEffect(() => {
         const allCodes = Object.keys(passengersByBooking);
@@ -162,6 +174,13 @@ export default function TripDetail({ assignment, passengers }: Props) {
         });
         setAttendance(initial);
     }, [modalPassengers]);
+
+    // Tự động fetch passengers khi mở dialog và có checkin_time
+    useEffect(() => {
+        if (showCheckInDialog && checkInForm.data.checkin_time) {
+            handleCheckInTimeChange(checkInForm.data.checkin_time);
+        }
+    }, [showCheckInDialog]); // Chỉ chạy khi dialog mở/đóng
 
     // Fetch passengers khi chọn checkin_time
     const handleCheckInTimeChange = async (checkinTime: string) => {
@@ -394,6 +413,44 @@ export default function TripDetail({ assignment, passengers }: Props) {
 
                     {/* Danh sách khách hàng */}
                     <TabsContent value="passengers" className="space-y-4">
+                        {/* Thông báo yêu cầu đặc biệt */}
+                        {specialRequestsCount > 0 && (
+                            <Card className="border-orange-200 bg-orange-50">
+                                <CardContent className="pt-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex-shrink-0">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100">
+                                                <FileText className="h-5 w-5 text-orange-600" />
+                                            </div>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-semibold text-orange-900">
+                                                Có {specialRequestsCount} khách hàng có yêu cầu đặc biệt
+                                            </h3>
+                                            <p className="text-sm text-orange-700 mt-1">
+                                                Vui lòng kiểm tra và đảm bảo đáp ứng các yêu cầu này trong suốt chuyến đi
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 space-y-2">
+                                        {passengersWithRequests.map((passenger) => (
+                                            <div key={passenger.id} className="bg-white rounded-lg p-3 border border-orange-200">
+                                                <div className="flex items-start gap-2">
+                                                    <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-300">
+                                                        {passenger.booking?.code || 'N/A'}
+                                                    </Badge>
+                                                    <div className="flex-1">
+                                                        <p className="font-medium text-sm">{passenger.fullname}</p>
+                                                        <p className="text-xs text-muted-foreground mt-1">{passenger.request}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+                        
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
@@ -412,8 +469,10 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                             <TableRow>
                                                 <TableHead>#</TableHead>
                                                 <TableHead>Họ tên</TableHead>
+                                                <TableHead>SĐT</TableHead>
                                                 <TableHead>CCCD</TableHead>
                                                 <TableHead>Loại</TableHead>
+                                                <TableHead>Yêu cầu đặc biệt</TableHead>
                                                 <TableHead>Mã booking</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -424,11 +483,29 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                                     <TableCell className="font-medium">
                                                         {passenger.fullname}
                                                     </TableCell>
+                                                    <TableCell className="font-mono text-sm">
+                                                        {passenger.phone || '-'}
+                                                    </TableCell>
                                                     <TableCell>{passenger.cccd || '-'}</TableCell>
                                                     <TableCell>
                                                         <Badge variant="outline">
                                                             {passengerTypeLabels[passenger.type] || 'N/A'}
                                                         </Badge>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {passenger.request && passenger.request.trim() !== '' ? (
+                                                            <div className="max-w-[200px]">
+                                                                <Badge variant="outline" className="bg-orange-50 text-orange-800 border-orange-300 text-xs">
+                                                                    <FileText className="h-3 w-3 mr-1" />
+                                                                    Có yêu cầu
+                                                                </Badge>
+                                                                <p className="text-xs text-muted-foreground mt-1 truncate" title={passenger.request}>
+                                                                    {passenger.request}
+                                                                </p>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-muted-foreground text-sm">-</span>
+                                                        )}
                                                     </TableCell>
                                                     <TableCell>
                                                         <Badge variant="secondary">
@@ -471,15 +548,17 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                             Tạo đợt check-in
                                         </Button>
                                     </DialogTrigger>
-                                    <DialogContent className="max-w-4xl max-h-[90vh]">
+                                    
+                                    {/* --- CHỈNH SỬA Ở ĐÂY: Tăng chiều rộng modal --- */}
+                                    <DialogContent className="max-w-[95vw] sm:max-w-7xl max-h-[90vh] flex flex-col">
                                         <DialogHeader>
                                             <DialogTitle>Tạo đợt check-in mới</DialogTitle>
                                             <DialogDescription>
                                                 Nhập tên điểm đến, thời gian check-in và điểm danh khách hàng
                                             </DialogDescription>
                                         </DialogHeader>
-                                        <form onSubmit={handleCreateCheckIn}>
-                                            <ScrollArea className="max-h-[70vh] pr-4">
+                                        <form onSubmit={handleCreateCheckIn} className="flex flex-col flex-1 overflow-hidden">
+                                            <ScrollArea className="flex-1 -mr-4 pr-4">
                                                 <div className="space-y-4 py-4">
                                                     {/* Form thông tin check-in */}
                                                     <div className="space-y-4 border-b pb-4">
@@ -599,8 +678,10 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                                                                                     <TableHead className="w-[60px]">Có mặt</TableHead>
                                                                                                     <TableHead>#</TableHead>
                                                                                                     <TableHead>Họ tên</TableHead>
+                                                                                                    <TableHead>SĐT</TableHead>
                                                                                                     <TableHead>CCCD</TableHead>
                                                                                                     <TableHead>Loại</TableHead>
+                                                                                                    <TableHead>Yêu cầu đặc biệt</TableHead>
                                                                                                     <TableHead>Ghi chú</TableHead>
                                                                                                 </TableRow>
                                                                                             </TableHeader>
@@ -627,16 +708,34 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                                                                                                 {passenger.fullname}
                                                                                                             </div>
                                                                                                         </TableCell>
+                                                                                                        <TableCell className="font-mono text-sm">
+                                                                                                            {passenger.phone || '-'}
+                                                                                                        </TableCell>
                                                                                                         <TableCell>{passenger.cccd || '-'}</TableCell>
                                                                                                         <TableCell>
                                                                                                             <Badge variant="outline">
                                                                                                                 {passengerTypeLabels[passenger.type] || 'N/A'}
                                                                                                             </Badge>
                                                                                                         </TableCell>
+                                                                                                        <TableCell className="max-w-[150px]">
+                                                                                                            {passenger.request && passenger.request.trim() !== '' ? (
+                                                                                                                <div className="space-y-1">
+                                                                                                                    <Badge variant="outline" className="bg-orange-50 text-orange-800 border-orange-300 text-xs">
+                                                                                                                        <FileText className="h-3 w-3 mr-1" />
+                                                                                                                        Có yêu cầu
+                                                                                                                    </Badge>
+                                                                                                                    <p className="text-xs text-muted-foreground truncate" title={passenger.request}>
+                                                                                                                        {passenger.request}
+                                                                                                                    </p>
+                                                                                                                </div>
+                                                                                                            ) : (
+                                                                                                                <span className="text-muted-foreground text-sm">-</span>
+                                                                                                            )}
+                                                                                                        </TableCell>
                                                                                                         <TableCell>
                                                                                                             <Input
                                                                                                                 placeholder="Ghi chú..."
-                                                                                                                className="h-8 w-40"
+                                                                                                                className="h-8 w-full min-w-[150px]"
                                                                                                                 value={attendance[passenger.id]?.notes || ''}
                                                                                                                 onChange={(e) => updateNote(passenger.id, e.target.value)}
                                                                                                             />
@@ -662,7 +761,7 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                                     ) : null}
                                                 </div>
                                             </ScrollArea>
-                                            <DialogFooter className="mt-4">
+                                            <DialogFooter className="mt-4 pt-4 border-t">
                                                 <Button type="button" variant="outline" onClick={() => {
                                                     setShowCheckInDialog(false);
                                                     setModalPassengers([]);
@@ -708,7 +807,7 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <Link href={guide.checkIn(checkIn.id)}>
+                                                    <Link href={guide.checkin.show(checkIn.id)}>
                                                         <Button variant="outline" size="sm" className="gap-1">
                                                             <Eye className="h-4 w-4" />
                                                             Điểm danh
@@ -834,4 +933,3 @@ export default function TripDetail({ assignment, passengers }: Props) {
         </AppLayout>
     );
 }
-
