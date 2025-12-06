@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreServiceAttributeRequest;
 use App\Models\ServiceAttribute;
 use App\Models\Service;
 use App\Http\Requests\StoreServiceAttributesRequest;
+use App\Http\Requests\UpdateServiceAttributeRequest;
 use App\Http\Requests\UpdateServiceAttributesRequest;
 use Inertia\Inertia;
 
@@ -15,17 +17,25 @@ class ServiceAttributesController extends Controller
      */
     public function index()
     {
-        $attributes = ServiceAttribute::with('service:id,name')->get();
-        $services = Service::select('id', 'name')->get();
-        // dd($attributes);
+        $attributes = ServiceAttribute::with('service')
+            ->orderBy('id', 'desc')
+            ->paginate(10)
+            ->withQueryString();
 
-        return Inertia::render('ServiceAttributes/index', compact('attributes', 'services'));
+        $services = Service::select('id', 'name')->get();
+
+        return Inertia::render('ServiceAttributes/index', [
+            'attributes' => $attributes,
+            'services'   => $services,
+        ]);
     }
+
+
 
     /**
      * Thêm mới thuộc tính dịch vụ.
      */
-    public function store(StoreServiceAttributesRequest $request)
+    public function store(StoreServiceAttributeRequest $request)
     {
         ServiceAttribute::create($request->validated());
 
@@ -33,11 +43,17 @@ class ServiceAttributesController extends Controller
             ->route('service-attributes.index')
             ->with('message', 'Thêm thuộc tính dịch vụ thành công!');
     }
-
+    public function edit(ServiceAttribute $service_attribute)
+    {
+        return Inertia::render('ServiceAttributes/edit', [
+            'attribute' => $service_attribute->load('service'),
+            'services' => Service::all(['id', 'name']),
+        ]);
+    }
     /**
      * Cập nhật thuộc tính dịch vụ.
      */
-    public function update(UpdateServiceAttributesRequest $request, ServiceAttribute $serviceAttribute)
+    public function update(UpdateServiceAttributeRequest $request, ServiceAttribute $serviceAttribute)
     {
         $serviceAttribute->update($request->validated());
 
@@ -65,7 +81,7 @@ class ServiceAttributesController extends Controller
     {
         $serviceAttribute->load('service');
 
-        return Inertia::render('ServiceAttributes/Show', [
+        return Inertia::render('ServiceAttributes/show', [
             'attribute' => $serviceAttribute,
         ]);
     }

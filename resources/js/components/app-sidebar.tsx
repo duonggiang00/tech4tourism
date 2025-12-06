@@ -11,23 +11,35 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import bookings from '@/routes/admin/bookings';
 import categories from '@/routes/categories';
 import countries from '@/routes/countries';
-import tour from '@/routes/tours';
-import users from '@/routes/users';
-import bookings from '@/routes/admin/bookings';
-import { type NavItem, type SharedData } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, PlaneIcon, Users, Calendar, ListIcon, BanIcon, User2Icon, BananaIcon, PlaneTakeoff, ScrollText, FileText, BarChart3 } from 'lucide-react';
-import AppLogo from './app-logo';
-import serviceTypes from '@/routes/service-types';
-import services from '@/routes/services';
+import guide from '@/routes/guide';
+import policies from '@/routes/policies';
 import providers from '@/routes/providers';
 import serviceAttributes from '@/routes/service-attributes';
-import policies from '@/routes/policies';
-import guide from '@/routes/guide';
-
-
+import serviceTypes from '@/routes/service-types';
+import services from '@/routes/services';
+import tour from '@/routes/tours';
+import users from '@/routes/users';
+import { type NavItem, type SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/react';
+import {
+    BarChart3,
+    BookOpen,
+    Calendar,
+    FileText,
+    Folder,
+    LayoutGrid,
+    ListIcon,
+    MessageCircleWarningIcon,
+    PlaneTakeoff,
+    PuzzleIcon,
+    ScrollText,
+    User2Icon,
+    Users,
+} from 'lucide-react';
+import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
     {
@@ -50,8 +62,6 @@ const mainNavItems: NavItem[] = [
         href: tour.index(),
         icon: LayoutGrid,
     },
-
-   
 ];
 
 const footerNavItems: NavItem[] = [
@@ -78,61 +88,61 @@ export function AppSidebar() {
         // Menu cho Admin (role = 1)
         if (isAdmin) {
             return [
-        {
+                {
                     title: 'Tổng quan',
-            href: dashboard(),
-            icon: LayoutGrid,
-        },
-        {
+                    href: dashboard(),
+                    icon: LayoutGrid,
+                },
+                {
                     title: 'Quốc gia',
-            href: countries.index(),
-            icon: LayoutGrid,
-        },
-        {
+                    href: countries.index(),
+                    icon: LayoutGrid,
+                },
+                {
                     title: 'Tour du lịch',
-            href: tour.index(),
-            icon: PlaneTakeoff,
-        },
-        {
+                    href: tour.index(),
+                    icon: PlaneTakeoff,
+                },
+                {
                     title: 'Loại dịch vụ',
-            href: serviceTypes.index(),
-            icon: ListIcon,
-        },
-        {
+                    href: serviceTypes.index(),
+                    icon: ListIcon,
+                },
+                {
                     title: 'Dịch vụ',
-            href: services.index(),
-            icon: BanIcon,
-        },
-        {
+                    href: services.index(),
+                    icon: PuzzleIcon,
+                },
+                {
                     title: 'Nhà cung cấp',
-            href: providers.index(),
-            icon: User2Icon,
-        },
-        {
+                    href: providers.index(),
+                    icon: User2Icon,
+                },
+                {
                     title: 'Thuộc tính dịch vụ',
-            href: serviceAttributes.index(),
-            icon: BananaIcon,
-        },
-        {
-            title: 'Chính sách',
-            href: policies.index(),
-            icon: ScrollText,
-        },
-                  {
+                    href: serviceAttributes.index(),
+                    icon: MessageCircleWarningIcon,
+                },
+                {
+                    title: 'Chính sách',
+                    href: policies.index(),
+                    icon: ScrollText,
+                },
+                {
                     title: 'Quản lý người dùng',
-                      href: users.index(),
-                      icon: Users,
-                  },
-                  {
+                    href: users.index(),
+                    icon: Users,
+                },
+                {
                     title: 'Quản lý Booking',
-                      href: bookings.index(),
-                      icon: Calendar,
-                  },
-                  {
+                    href: bookings.index(),
+                    icon: Calendar,
+                },
+                {
                     title: 'Báo cáo doanh thu',
-                      href: '/admin/reports/revenue',
-                      icon: BarChart3,
-                  },
+                    href: '/admin/reports/revenue',
+                    icon: BarChart3,
+                },
             ];
         }
 

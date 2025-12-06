@@ -19,13 +19,13 @@ return new class extends Migration
 
             $table->string('name', 255);
             $table->text('description')->nullable();
-            $table->decimal('price', 12, 2);
+            // price đã bị bỏ
+            // limit đã bị bỏ
 
             $table->string('type_room', 100)->nullable();
             $table->string('type_car', 100)->nullable();
             $table->string('type_meal', 100)->nullable();
 
-            $table->integer('limit')->nullable();
             $table->string('unit', 50)->nullable();
 
             $table->timestamps();

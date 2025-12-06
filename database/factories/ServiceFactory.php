@@ -20,18 +20,15 @@ class ServiceFactory extends Factory
     public function definition(): array
     {
         return [
-            'service_type_id' => Service::inRandomOrder()->value('id') ?? ServiceType::factory(),
-            'provider_id' => Provider::inRandomOrder()->value('id') ?? Provider::factory(),
-
-            'name' => $this->faker->words(3, true),
+            'service_type_id' => ServiceType::factory(),
+            'provider_id' => Provider::factory(),
+            'name' => $this->faker->word(),
             'description' => $this->faker->paragraph(),
-            'price' => $this->faker->randomFloat(2, 10, 500),
 
             'type_room' => $this->faker->randomElement(['Phòng đơn', 'Phòng đôi', 'Suite', null]),
             'type_car' => $this->faker->randomElement(['Sedan', 'SUV', 'Xe giường nằm', null]),
             'type_meal' => $this->faker->randomElement(['Buffet sáng', 'Cơm trưa', 'Set menu', null]),
 
-            'limit' => $this->faker->numberBetween(5, 100),
             'unit' => $this->faker->randomElement(['người', 'phòng', 'xe', 'suất']),
 
             'created_at' => now(),

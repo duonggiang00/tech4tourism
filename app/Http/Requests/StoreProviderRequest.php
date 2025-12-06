@@ -23,6 +23,8 @@ class StoreProviderRequest extends FormRequest
             'website' => 'nullable|url|max:255',
             'status' => 'in:0,1,2',
             'notes' => 'nullable|string',
+            'province_id' => 'required|exists:provinces,id',
+
         ];
     }
 }

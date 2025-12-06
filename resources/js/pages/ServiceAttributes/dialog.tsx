@@ -19,10 +19,9 @@ interface Service {
 
 interface ServiceAttribute {
     id?: number;
-    id_service?: number;
+    service_id?: number;
     name: string;
     value?: string;
-    type?: string;
 }
 
 interface Props {
@@ -40,25 +39,18 @@ export function ServiceAttributeFormDialog({
     title,
     services,
 }: Props) {
-    const { data, setData, post, put, processing, errors, reset } = useForm<{
-        id_service: number | null;
-        name: string;
-        value: string;
-        type: string;
-    }>({
-        id_service: null,
+    const { data, setData, post, put, processing, errors, reset } = useForm({
+        service_id: '',
         name: '',
         value: '',
-        type: '',
     });
 
     useEffect(() => {
         if (initialData) {
             setData({
-                id_service: initialData.id_service || undefined,
+                service_id: initialData.service_id || '',
                 name: initialData.name || '',
                 value: initialData.value || '',
-                type: initialData.type || '',
             });
         } else {
             reset();
@@ -75,8 +67,8 @@ export function ServiceAttributeFormDialog({
         } else {
             post(serviceAttributes.store().url, {
                 onSuccess: () => {
-                    onOpenChange(false);
                     reset();
+                    onOpenChange(false);
                 },
             });
         }
@@ -84,45 +76,45 @@ export function ServiceAttributeFormDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-[700px]">
+            <DialogContent className="max-w-[600px]">
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Chọn dịch vụ */}
                     <div>
-                        <label className="text-sm font-medium">
-                            Chọn Dịch Vụ
-                        </label>
+                        <label className="text-sm font-medium">Dịch vụ</label>
                         <select
-                            value={data.id_service ?? ''}
+                            value={data.service_id}
                             onChange={(e) =>
-                                setData('id_service', Number(e.target.value))
+                                setData('service_id', Number(e.target.value))
                             }
-                            className="w-full rounded-md border border-gray-300 p-2"
+                            className="w-full rounded-md border p-2"
                         >
                             <option value="">-- Chọn dịch vụ --</option>
-                            {services.map((service) => (
-                                <option key={service.id} value={service.id}>
-                                    {service.name}
+                            {services.map((s) => (
+                                <option key={s.id} value={s.id}>
+                                    {s.name}
                                 </option>
                             ))}
                         </select>
-                        {errors.id_service && (
+                        {errors.service_id && (
                             <p className="text-sm text-red-500">
-                                {errors.id_service}
+                                {errors.service_id}
                             </p>
                         )}
                     </div>
 
+                    {/* Tên thuộc tính */}
                     <div>
                         <label className="text-sm font-medium">
-                            Tên Thuộc Tính
+                            Tên thuộc tính
                         </label>
                         <Input
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
-                            placeholder="VD: Wifi, Bữa sáng..."
+                            placeholder="VD: Wifi, Hồ bơi..."
                         />
                         {errors.name && (
                             <p className="text-sm text-red-500">
@@ -131,32 +123,14 @@ export function ServiceAttributeFormDialog({
                         )}
                     </div>
 
+                    {/* Giá trị */}
                     <div>
-                        <label className="text-sm font-medium">Giá Trị</label>
+                        <label className="text-sm font-medium">Giá trị</label>
                         <Textarea
                             value={data.value}
                             onChange={(e) => setData('value', e.target.value)}
                             placeholder="VD: Miễn phí, Có tính phí..."
                         />
-                        {errors.value && (
-                            <p className="text-sm text-red-500">
-                                {errors.value}
-                            </p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="text-sm font-medium">Loại</label>
-                        <Input
-                            value={data.type}
-                            onChange={(e) => setData('type', e.target.value)}
-                            placeholder="VD: Tiện ích, Quy định..."
-                        />
-                        {errors.type && (
-                            <p className="text-sm text-red-500">
-                                {errors.type}
-                            </p>
-                        )}
                     </div>
 
                     <DialogFooter>

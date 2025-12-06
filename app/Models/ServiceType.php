@@ -10,14 +10,17 @@ class ServiceType extends Model
 {
     /** @use HasFactory<\Database\Factories\ServiceTypeFactory> */
     use HasFactory, SoftDeletes;
+
     protected $table = 'service_types';
+
     protected $fillable = [
         'name',
         'icon',
         'description',
         'order',
     ];
-    public function service(){
+    public function service()
+    {
         return $this->hasMany(Service::class);
     }
 }
