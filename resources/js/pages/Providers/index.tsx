@@ -97,7 +97,7 @@ export default function Index() {
             <div className="m-4 flex justify-end">
                 <Link href={providersUrl.create().url}>
                     <Button>
-                        <Plus className="mr-2 h-4 w-4" />
+                        <Plus className="mr-2 h-2 w-4" />
                         Thêm Nhà Cung Cấp
                     </Button>
                 </Link>
