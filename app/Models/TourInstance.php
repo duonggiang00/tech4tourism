@@ -68,6 +68,22 @@ class TourInstance extends Model
     }
 
     /**
+     * Lấy giá người lớn: ưu tiên giá instance, nếu null thì dùng giá template
+     */
+    public function getEffectivePriceAdultAttribute()
+    {
+        return $this->price_adult ?? $this->tourTemplate->price_adult ?? null;
+    }
+
+    /**
+     * Lấy giá trẻ em: ưu tiên giá instance, nếu null thì dùng giá template
+     */
+    public function getEffectivePriceChildrenAttribute()
+    {
+        return $this->price_children ?? $this->tourTemplate->price_children ?? null;
+    }
+
+    /**
      * Alias để tương thích với code cũ
      */
     public function tour()

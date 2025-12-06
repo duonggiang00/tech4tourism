@@ -104,14 +104,15 @@ class TourInstanceController extends Controller
             // Tính date_end
             $dateEnd = Carbon::parse($validated['date_start'])->addDays($template->day - 1);
 
+            // Nếu instance không có giá, dùng giá từ template (giá mặc định)
             $instance = TourInstance::create([
                 'tour_template_id' => $template->id,
                 'date_start' => $validated['date_start'],
                 'date_end' => $dateEnd,
                 'limit' => $validated['limit'] ?? null,
                 'booked_count' => 0,
-                'price_adult' => $validated['price_adult'] ?? null,
-                'price_children' => $validated['price_children'] ?? null,
+                'price_adult' => $validated['price_adult'] ?? $template->price_adult,
+                'price_children' => $validated['price_children'] ?? $template->price_children,
                 'status' => $validated['status'] ?? 1,
             ]);
 

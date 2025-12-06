@@ -78,7 +78,8 @@ export default function Edit({
     const instances = (template as any)?.instances || [];
 
     // --- 1. SETUP FORM (LOAD DỮ LIỆU CŨ) ---
-    // Loại bỏ các field instance: date_start, limit, price_adult, price_children, status, guide_ids
+    // Loại bỏ các field instance: date_start, limit, status
+    // Giữ lại price_adult và price_children cho template (giá mặc định)
     const { data, setData, post, processing, errors } = useForm({
         _method: 'PUT', // Quan trọng để Laravel hiểu đây là Update khi có File Upload
         category_id: String(tourData.category_id),
@@ -92,6 +93,8 @@ export default function Edit({
 
         description: tourData.description || '',
         short_description: tourData.short_description || '',
+        price_adult: (tourData as any).price_adult ?? '',
+        price_children: (tourData as any).price_children ?? '',
 
         // Gallery: Chỉ chứa ảnh MỚI upload thêm
         gallery_images: [] as File[],
@@ -474,6 +477,50 @@ export default function Edit({
                                         setData('night', Number(e.target.value))
                                     }
                                 />
+                            </div>
+                        </div>
+                        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                            <div>
+                                <Label>
+                                    Giá người lớn (VND){' '}
+                                    <span className="text-gray-500 text-xs">(Giá mặc định)</span>
+                                </Label>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    step="1000"
+                                    value={data.price_adult}
+                                    onChange={(e) =>
+                                        setData('price_adult', e.target.value ? Number(e.target.value) : '')
+                                    }
+                                    placeholder="VD: 5000000"
+                                />
+                                {errors.price_adult && (
+                                    <p className="mt-1 text-xs text-red-500">
+                                        {errors.price_adult}
+                                    </p>
+                                )}
+                            </div>
+                            <div>
+                                <Label>
+                                    Giá trẻ em (VND){' '}
+                                    <span className="text-gray-500 text-xs">(Giá mặc định)</span>
+                                </Label>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    step="1000"
+                                    value={data.price_children}
+                                    onChange={(e) =>
+                                        setData('price_children', e.target.value ? Number(e.target.value) : '')
+                                    }
+                                    placeholder="VD: 3000000"
+                                />
+                                {errors.price_children && (
+                                    <p className="mt-1 text-xs text-red-500">
+                                        {errors.price_children}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>

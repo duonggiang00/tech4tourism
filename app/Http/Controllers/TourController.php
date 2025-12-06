@@ -155,7 +155,9 @@ class TourController extends Controller
             // Các field instance sẽ được tạo riêng ở TourInstances/Create
             // Lưu guide_ids trước khi unset để xử lý sau
             $guideIds = $data['guide_ids'] ?? [];
-            unset($data['date_start'], $data['date_end'], $data['limit'], $data['price_adult'], $data['price_children'], $data['status'], $data['guide_ids']);
+            // Giữ lại price_adult và price_children cho template (giá mặc định)
+            // Chỉ unset các field của instance
+            unset($data['date_start'], $data['date_end'], $data['limit'], $data['status'], $data['guide_ids']);
 
             // --- C. TẠO TOUR TEMPLATE ---
             $template = TourTemplate::create($data);
@@ -358,11 +360,11 @@ class TourController extends Controller
                 ->get();
         } else {
             $template->load([
-                'images',
-                'schedules.destination',
-                'tourServices.service.serviceType',
-                'tourPolicies.policy',
-                'province.destinations',
+            'images',
+            'schedules.destination',
+            'tourServices.service.serviceType',
+            'tourPolicies.policy',
+            'province.destinations',
                 'tripAssignments.user',
             ]);
         }
@@ -443,12 +445,12 @@ class TourController extends Controller
             ]);
         } else {
             $template->load([
-                'images',
-                'schedules',
+            'images',
+            'schedules',
                 'tourServices',
-                'tourPolicies',
+            'tourPolicies',
                 'tripAssignments',
-            ]);
+        ]);
         }
 
         // Trả về view edit với dữ liệu đầy đủ
@@ -523,8 +525,9 @@ class TourController extends Controller
             
             // Loại bỏ các field instance khỏi data template
             // Lưu guide_ids trước khi unset để xử lý sau
+            // Giữ lại price_adult và price_children cho template (giá mặc định)
             $guideIds = $data['guide_ids'] ?? null;
-            unset($data['date_start'], $data['date_end'], $data['limit'], $data['price_adult'], $data['price_children'], $data['status'], $data['guide_ids']);
+            unset($data['date_start'], $data['date_end'], $data['limit'], $data['status'], $data['guide_ids']);
 
             // --- C. CẬP NHẬT THÔNG TIN TEMPLATE ---
             $template->update($data);
@@ -767,9 +770,9 @@ class TourController extends Controller
 
             // 3. Xóa ảnh vật lý
             $thumbnail = $template->getRawOriginal('thumbnail');
-            if ($thumbnail && Storage::disk('public')->exists($thumbnail)) {
-                Storage::disk('public')->delete($thumbnail);
-            }
+        if ($thumbnail && Storage::disk('public')->exists($thumbnail)) {
+            Storage::disk('public')->delete($thumbnail);
+        }
 
             // 4. Xóa record trong DB (TourInstance sẽ tự động xóa do cascade)
             $template->delete();
@@ -777,7 +780,7 @@ class TourController extends Controller
             DB::commit();
             Log::info("Đã xóa TourTemplate ID {$template->id} và cập nhật {$allAssignments->count()} TripAssignment");
 
-            return redirect()->route('tours.index')->with('message', 'Xóa tour thành công!');
+        return redirect()->route('tours.index')->with('message', 'Xóa tour thành công!');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Lỗi khi xóa tour: ' . $e->getMessage());

@@ -184,7 +184,7 @@ export default function Schedule({ assignments, filters }: Props) {
                                                         Xác nhận đã nhận
                                                     </Button>
                                                 )}
-                                                <Link href={guide?.tripDetail ? guide.tripDetail(assignment.id) : `/guide/trip/${assignment.id}`}>
+                                                <Link href={guide?.trip?.detail ? guide.trip.detail(assignment.id) : `/guide/trip/${assignment.id}`}>
                                                     <Button variant="outline" className="gap-2">
                                                         <Eye className="h-4 w-4" />
                                                         Xem chi tiết

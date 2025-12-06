@@ -8,6 +8,7 @@ use App\Models\TripNotes;
 use App\Models\CheckInDetail;
 use App\Models\Passenger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class GuideController extends Controller
@@ -19,17 +20,30 @@ class GuideController extends Controller
     {
         $user = $request->user();
         
-        // Chỉ lấy assignments ở instance level (có tour_instance_id) để tránh trùng lặp
-        // Hoặc nếu không có instance, lấy assignment ở template level nhưng không có instance nào khác
+        // Lấy cả assignments ở instance level VÀ template level
+        // Ưu tiên instance level, nhưng nếu chưa có instance thì lấy template level
         $assignments = TripAssignment::with([
             'tourInstance.tourTemplate.images', // Load tourTemplate từ instance với images
             'tripCheckIns', 
             'tripNotes'
         ])
             ->where('user_id', $user->id)
-            // Chỉ lấy assignments có tour_instance_id (instance level) để tránh trùng lặp
-            // Bỏ qua assignments ở template level nếu đã có instance
-            ->whereNotNull('tour_instance_id')
+            // Lấy cả instance level và template level
+            // Nếu có cả 2 (cùng tour_id), chỉ lấy instance level để tránh trùng lặp
+            ->where(function($query) use ($user) {
+                $query->whereNotNull('tour_instance_id') // Instance level
+                      ->orWhere(function($q) use ($user) {
+                          // Template level: chỉ lấy nếu chưa có instance level assignment cho cùng tour_id và user_id
+                          $q->whereNull('tour_instance_id')
+                            ->whereNotExists(function($subQuery) use ($user) {
+                                $subQuery->select(DB::raw(1))
+                                    ->from('trip_assignments as ta2')
+                                    ->whereColumn('ta2.tour_id', 'trip_assignments.tour_id')
+                                    ->where('ta2.user_id', $user->id)
+                                    ->whereNotNull('ta2.tour_instance_id');
+                            });
+                      });
+            })
             ->when($request->status !== null && $request->status !== '', function ($query) use ($request) {
                 $query->where('status', $request->status);
             })
@@ -135,13 +149,11 @@ class GuideController extends Controller
 
         // Lấy danh sách passengers từ booking có:
         // - tour_instance_id = tour instance được phân công
-        // - tour_instance.date_start = ngày check-in
         // - status = 0 (Chờ xác nhận) hoặc 1 (Đã xác nhận)
-        $passengers = Passenger::whereHas('booking.tourInstance', function ($query) use ($tourInstance, $checkInDate) {
-            $query->where('id', $tourInstance->id)
-                  ->whereDate('date_start', $checkInDate);
-        })->whereHas('booking', function ($query) {
-            $query->whereIn('status', [0, 1]);
+        // KHÔNG filter theo date_start vì check-in có thể vào bất kỳ ngày nào trong tour
+        $passengers = Passenger::whereHas('booking', function ($query) use ($tourInstance) {
+            $query->where('tour_instance_id', $tourInstance->id)
+                  ->whereIn('status', [0, 1]); // Chỉ lấy booking đã xác nhận hoặc chờ xác nhận
         })->with(['booking' => function($q) {
             $q->select('id', 'code', 'status', 'client_name', 'tour_instance_id');
         }])->get();

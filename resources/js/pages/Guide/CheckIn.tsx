@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, MapPin, Clock, CheckCircle2, XCircle, Users, Save, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, CheckCircle2, XCircle, Users, Save, ChevronDown, ChevronRight, FileText } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import guide from '@/routes/guide';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -21,9 +21,10 @@ interface Booking {
 interface Passenger {
     id: number;
     fullname: string;
-    phone: string;
-    email: string;
+    phone: string | null;
+    email: string | null;
     cccd: string | null;
+    request: string | null;
     gender: number;
     type: number;
     booking: Booking;
@@ -74,6 +75,16 @@ export default function CheckInPage({ checkIn, passengers, checkedIn: initialChe
             grouped[bookingCode].push(passenger);
         });
         return grouped;
+    }, [passengers]);
+
+    // Tính tổng số yêu cầu đặc biệt
+    const specialRequestsCount = useMemo(() => {
+        return passengers.filter(p => p.request && p.request.trim() !== '').length;
+    }, [passengers]);
+
+    // Danh sách passengers có yêu cầu đặc biệt
+    const passengersWithRequests = useMemo(() => {
+        return passengers.filter(p => p.request && p.request.trim() !== '');
     }, [passengers]);
 
     // Mở tất cả booking mặc định
@@ -151,7 +162,7 @@ export default function CheckInPage({ checkIn, passengers, checkedIn: initialChe
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex items-center gap-4">
-                    <Link href={guide.tripDetail(checkIn.trip_assignment.id)}>
+                    <Link href={guide.trip.detail(checkIn.trip_assignment.id)}>
                         <Button variant="ghost" size="icon">
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
@@ -210,6 +221,44 @@ export default function CheckInPage({ checkIn, passengers, checkedIn: initialChe
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* Thông báo yêu cầu đặc biệt */}
+                {specialRequestsCount > 0 && (
+                    <Card className="border-orange-200 bg-orange-50">
+                        <CardContent className="pt-6">
+                            <div className="flex items-center gap-3">
+                                <div className="flex-shrink-0">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100">
+                                        <FileText className="h-5 w-5 text-orange-600" />
+                                    </div>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-semibold text-orange-900">
+                                        Có {specialRequestsCount} khách hàng có yêu cầu đặc biệt
+                                    </h3>
+                                    <p className="text-sm text-orange-700 mt-1">
+                                        Vui lòng kiểm tra và đảm bảo đáp ứng các yêu cầu này trong suốt chuyến đi
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="mt-4 space-y-2">
+                                {passengersWithRequests.map((passenger) => (
+                                    <div key={passenger.id} className="bg-white rounded-lg p-3 border border-orange-200">
+                                        <div className="flex items-start gap-2">
+                                            <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-300">
+                                                {passenger.booking?.code || 'N/A'}
+                                            </Badge>
+                                            <div className="flex-1">
+                                                <p className="font-medium text-sm">{passenger.fullname}</p>
+                                                <p className="text-xs text-muted-foreground mt-1">{passenger.request}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Attendance Table */}
                 <Card>
@@ -275,8 +324,10 @@ export default function CheckInPage({ checkIn, passengers, checkedIn: initialChe
                                                                     <TableHead className="w-[60px]">Có mặt</TableHead>
                                                                     <TableHead>#</TableHead>
                                                                     <TableHead>Họ tên</TableHead>
+                                                                    <TableHead>SĐT</TableHead>
                                                                     <TableHead>CCCD</TableHead>
                                                                     <TableHead>Loại</TableHead>
+                                                                    <TableHead>Yêu cầu đặc biệt</TableHead>
                                                                     <TableHead>Ghi chú</TableHead>
                                                                 </TableRow>
                                                             </TableHeader>
@@ -303,11 +354,29 @@ export default function CheckInPage({ checkIn, passengers, checkedIn: initialChe
                                                                                 {passenger.fullname}
                                                                             </div>
                                                                         </TableCell>
+                                                                        <TableCell className="font-mono text-sm">
+                                                                            {passenger.phone || '-'}
+                                                                        </TableCell>
                                                                         <TableCell>{passenger.cccd || '-'}</TableCell>
                                                                         <TableCell>
                                                                             <Badge variant="outline">
                                                                                 {passengerTypeLabels[passenger.type] || 'N/A'}
                                                                             </Badge>
+                                                                        </TableCell>
+                                                                        <TableCell className="max-w-[150px]">
+                                                                            {passenger.request && passenger.request.trim() !== '' ? (
+                                                                                <div className="space-y-1">
+                                                                                    <Badge variant="outline" className="bg-orange-50 text-orange-800 border-orange-300 text-xs">
+                                                                                        <FileText className="h-3 w-3 mr-1" />
+                                                                                        Có yêu cầu
+                                                                                    </Badge>
+                                                                                    <p className="text-xs text-muted-foreground truncate" title={passenger.request}>
+                                                                                        {passenger.request}
+                                                                                    </p>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <span className="text-muted-foreground text-sm">-</span>
+                                                                            )}
                                                                         </TableCell>
                                                                         <TableCell>
                                                                             <Input

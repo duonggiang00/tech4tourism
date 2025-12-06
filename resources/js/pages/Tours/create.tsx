@@ -72,8 +72,9 @@ export default function Create({
     countries,
 }: CreateProps) {
     // --- 1. SETUP FORM ---
-    // Loại bỏ các field instance: date_start, limit, price_adult, price_children, status, guide_ids
-    // Các field này sẽ được tạo ở TourInstances/Create.tsx
+    // Loại bỏ các field instance: date_start, limit, status
+    // Giữ lại price_adult và price_children cho template (giá mặc định)
+    // Các field instance sẽ được tạo ở TourInstances/Create.tsx
     const { data, setData, post, processing, errors } = useForm({
         category_id: '',
         province_id: '',
@@ -83,6 +84,8 @@ export default function Create({
         thumbnail: null as File | null,
         description: '',
         short_description: '',
+        price_adult: '' as string | number,
+        price_children: '' as string | number,
 
         gallery_images: [] as File[],
         schedules: [] as TempSchedule[],
@@ -485,6 +488,50 @@ export default function Create({
                                             {nightWarning}
                                         </p>
                                     )}
+                            </div>
+                        </div>
+                        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                            <div>
+                                <Label>
+                                    Giá người lớn (VND){' '}
+                                    <span className="text-gray-500 text-xs">(Giá mặc định)</span>
+                                </Label>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    step="1000"
+                                    value={data.price_adult}
+                                    onChange={(e) =>
+                                        setData('price_adult', e.target.value ? Number(e.target.value) : '')
+                                    }
+                                    placeholder="VD: 5000000"
+                                />
+                                {errors.price_adult && (
+                                    <p className="mt-1 text-xs text-red-500">
+                                        {errors.price_adult}
+                                    </p>
+                                )}
+                            </div>
+                            <div>
+                                <Label>
+                                    Giá trẻ em (VND){' '}
+                                    <span className="text-gray-500 text-xs">(Giá mặc định)</span>
+                                </Label>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    step="1000"
+                                    value={data.price_children}
+                                    onChange={(e) =>
+                                        setData('price_children', e.target.value ? Number(e.target.value) : '')
+                                    }
+                                    placeholder="VD: 3000000"
+                                />
+                                {errors.price_children && (
+                                    <p className="mt-1 text-xs text-red-500">
+                                        {errors.price_children}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
