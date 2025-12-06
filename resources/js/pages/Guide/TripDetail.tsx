@@ -185,7 +185,7 @@ export default function TripDetail({ assignment, passengers }: Props) {
     // Fetch passengers khi chọn checkin_time
     const handleCheckInTimeChange = async (checkinTime: string) => {
         checkInForm.setData('checkin_time', checkinTime);
-        
+
         if (!checkinTime) {
             setModalPassengers([]);
             return;
@@ -239,16 +239,16 @@ export default function TripDetail({ assignment, passengers }: Props) {
 
     const handleCreateCheckIn = (e: React.FormEvent) => {
         e.preventDefault();
-        
-        // Chuyển attendance thành array
-        const passengersData = Object.entries(attendance).map(([id, data]) => ({
-            passenger_id: parseInt(id),
-            is_present: data.is_present,
-            notes: data.notes,
+
+        checkInForm.transform((data) => ({
+            ...data,
+            passengers: Object.entries(attendance).map(([id, att]) => ({
+                passenger_id: parseInt(id),
+                is_present: att.is_present,
+                notes: att.notes,
+            })),
         }));
 
-        checkInForm.setData('passengers', passengersData);
-        
         checkInForm.post(`/guide/trip/${assignment.id}/checkin`, {
             onSuccess: () => {
                 setShowCheckInDialog(false);
@@ -318,7 +318,7 @@ export default function TripDetail({ assignment, passengers }: Props) {
     return (
         <AppLayout>
             <Head title={`Chi tiết chuyến đi - ${assignment.tour.title}`} />
-            
+
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex items-center gap-4">
@@ -389,22 +389,22 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                         {assignment.tour.schedules
                                             .sort((a, b) => a.date - b.date)
                                             .map((item) => (
-                                            <div key={item.id} className="border-l-4 border-primary pl-4 py-2">
-                                                <div className="font-semibold text-primary">
-                                                    Ngày {item.date}: {item.name}
+                                                <div key={item.id} className="border-l-4 border-primary pl-4 py-2">
+                                                    <div className="font-semibold text-primary">
+                                                        Ngày {item.date}: {item.name}
+                                                    </div>
+                                                    {item.destination && (
+                                                        <p className="text-xs text-muted-foreground">
+                                                            📍 {item.destination.name}
+                                                        </p>
+                                                    )}
+                                                    {item.description && (
+                                                        <p className="text-sm text-muted-foreground mt-1">
+                                                            {item.description}
+                                                        </p>
+                                                    )}
                                                 </div>
-                                                {item.destination && (
-                                                    <p className="text-xs text-muted-foreground">
-                                                        📍 {item.destination.name}
-                                                    </p>
-                                                )}
-                                                {item.description && (
-                                                    <p className="text-sm text-muted-foreground mt-1">
-                                                        {item.description}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        ))}
+                                            ))}
                                     </div>
                                 )}
                             </CardContent>
@@ -450,7 +450,7 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                 </CardContent>
                             </Card>
                         )}
-                        
+
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
@@ -548,7 +548,7 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                             Tạo đợt check-in
                                         </Button>
                                     </DialogTrigger>
-                                    
+
                                     {/* --- CHỈNH SỬA Ở ĐÂY: Tăng chiều rộng modal --- */}
                                     <DialogContent className="max-w-[95vw] sm:max-w-7xl max-h-[90vh] flex flex-col">
                                         <DialogHeader>
@@ -635,7 +635,7 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                                                     const bookingPresentCount = bookingPassengers.filter(
                                                                         (p) => attendance[p.id]?.is_present
                                                                     ).length;
-                                                                    
+
                                                                     return (
                                                                         <Collapsible
                                                                             key={bookingCode}
@@ -687,7 +687,7 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                                                                             </TableHeader>
                                                                                             <TableBody>
                                                                                                 {bookingPassengers.map((passenger, idx) => (
-                                                                                                    <TableRow 
+                                                                                                    <TableRow
                                                                                                         key={passenger.id}
                                                                                                         className={attendance[passenger.id]?.is_present ? 'bg-green-50' : ''}
                                                                                                     >
