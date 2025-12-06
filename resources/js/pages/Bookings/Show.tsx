@@ -11,8 +11,11 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Calendar, DollarSign, Mail, Phone, Users, Trash2, CircleCheck, CircleX } from 'lucide-react';
+import { ArrowLeft, Calendar, DollarSign, Mail, Phone, Users, Trash2, CircleCheck, CircleX, Plus, Edit, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import bookings from '@/routes/admin/bookings';
+import axios from 'axios';
+import { toast } from 'sonner';
 
 interface Tour {
     id: number;
@@ -97,6 +100,9 @@ const METHOD_OPTIONS = {
 export default function BookingShow({ booking, flash }: Props) {
     const [editingStatus, setEditingStatus] = useState(false);
     const [deletingBooking, setDeletingBooking] = useState(false);
+    const [addingPayment, setAddingPayment] = useState(false);
+    const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
+    const [deletingPayment, setDeletingPayment] = useState<Payment | null>(null);
 
     const { data, setData, put, processing, errors } = useForm({
         status: booking.status,
@@ -361,12 +367,22 @@ export default function BookingShow({ booking, flash }: Props) {
                     )}
 
                     {/* Lịch sử Thanh toán */}
-                    {booking.payments && booking.payments.length > 0 && (
-                        <Card className="mt-6">
-                            <CardHeader>
+                    <Card className="mt-6">
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
                                 <CardTitle>Lịch sử Thanh toán</CardTitle>
-                            </CardHeader>
-                            <CardContent>
+                                <Button
+                                    onClick={() => setAddingPayment(true)}
+                                    size="sm"
+                                    className="gap-2"
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    Thêm thanh toán
+                                </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            {booking.payments && booking.payments.length > 0 ? (
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
@@ -374,6 +390,7 @@ export default function BookingShow({ booking, flash }: Props) {
                                             <TableHead>Số tiền</TableHead>
                                             <TableHead>Phương thức</TableHead>
                                             <TableHead>Trạng thái</TableHead>
+                                            <TableHead>Thao tác</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -387,13 +404,33 @@ export default function BookingShow({ booking, flash }: Props) {
                                                         {payment.status === 1 ? 'Thành công' : 'Thất bại'}
                                                     </Badge>
                                                 </TableCell>
+                                                <TableCell>
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => setEditingPayment(payment)}
+                                                        >
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => setDeletingPayment(payment)}
+                                                        >
+                                                            <X className="h-4 w-4 text-red-500" />
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
                                 </Table>
-                            </CardContent>
-                        </Card>
-                    )}
+                            ) : (
+                                <p className="text-gray-500 text-center py-4">Chưa có thanh toán nào</p>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
 
@@ -456,7 +493,171 @@ export default function BookingShow({ booking, flash }: Props) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Dialog Thêm/Sửa Thanh toán */}
+            <PaymentFormDialog
+                booking={booking}
+                payment={editingPayment}
+                open={addingPayment || editingPayment !== null}
+                onClose={() => {
+                    setAddingPayment(false);
+                    setEditingPayment(null);
+                }}
+            />
+
+            {/* Alert Dialog Xác nhận xóa thanh toán */}
+            <AlertDialog open={deletingPayment !== null} onOpenChange={(open) => !open && setDeletingPayment(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Xác nhận xóa thanh toán</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Bạn có chắc chắn muốn xóa thanh toán này?
+                            Hành động này không thể hoàn tác.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Hủy</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={async () => {
+                                if (!deletingPayment) return;
+                                try {
+                                    await axios.delete(`/admin/payments/${deletingPayment.id}`);
+                                    toast.success('Xóa thanh toán thành công!');
+                                    router.reload();
+                                } catch (error: any) {
+                                    toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
+                                } finally {
+                                    setDeletingPayment(null);
+                                }
+                            }}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            Xóa
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </AppLayout>
+    );
+}
+
+// Component form thanh toán
+function PaymentFormDialog({ booking, payment, open, onClose }: { booking: Booking; payment: Payment | null; open: boolean; onClose: () => void }) {
+    const [formData, setFormData] = useState({
+        amount: payment?.amount || 0,
+        method: payment?.method?.toString() || '0',
+        date: payment?.date ? new Date(payment.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        status: payment?.status?.toString() || '1',
+        thumbnail: null as File | null,
+    });
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+
+        try {
+            const formDataToSend = new FormData();
+            formDataToSend.append('amount', formData.amount.toString());
+            formDataToSend.append('method', formData.method);
+            formDataToSend.append('date', formData.date);
+            formDataToSend.append('status', formData.status);
+            if (formData.thumbnail) {
+                formDataToSend.append('thumbnail', formData.thumbnail);
+            }
+
+            if (payment) {
+                await axios.put(`/admin/payments/${payment.id}`, formDataToSend, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+                toast.success('Cập nhật thanh toán thành công!');
+            } else {
+                await axios.post(`/admin/bookings/${booking.id}/payments`, formDataToSend, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+                toast.success('Thêm thanh toán thành công!');
+            }
+            router.reload();
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onClose}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{payment ? 'Sửa thanh toán' : 'Thêm thanh toán'}</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                        <Label>Số tiền *</Label>
+                        <Input
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            value={formData.amount}
+                            onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                            required
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Phương thức *</Label>
+                        <Select value={formData.method} onValueChange={(val) => setFormData({ ...formData, method: val })}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="0">Tiền mặt</SelectItem>
+                                <SelectItem value="1">Chuyển khoản</SelectItem>
+                                <SelectItem value="2">Thẻ tín dụng</SelectItem>
+                                <SelectItem value="3">Gateway</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Ngày thanh toán *</Label>
+                        <Input
+                            type="date"
+                            value={formData.date}
+                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                            required
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Trạng thái *</Label>
+                        <Select value={formData.status} onValueChange={(val) => setFormData({ ...formData, status: val })}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="0">Thất bại</SelectItem>
+                                <SelectItem value="1">Thành công</SelectItem>
+                                <SelectItem value="2">Chờ xử lý</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Ảnh biên lai (tùy chọn)</Label>
+                        <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setFormData({ ...formData, thumbnail: e.target.files?.[0] || null })}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="ghost" onClick={onClose}>
+                            Hủy
+                        </Button>
+                        <Button type="submit" disabled={submitting}>
+                            {submitting ? 'Đang lưu...' : payment ? 'Cập nhật' : 'Thêm'}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     );
 }
 

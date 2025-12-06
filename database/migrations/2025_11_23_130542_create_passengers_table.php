@@ -13,7 +13,7 @@ return new class extends Migration {
     {
         Schema::create('passengers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('booking_id')->constrained('bookings')->onDelete('cascade'); // Liên kết booking
+            $table->foreignId('tour_id'); 
 
             $table->string('fullname');
             $table->string('phone')->nullable();
@@ -23,7 +23,7 @@ return new class extends Migration {
             $table->date('birth')->nullable();
 
             $table->tinyInteger('type')->default(0)->comment('0:Adult, 1:Child, 2:Infant');
-            $table->text('request')->nullable(); // Yêu cầu đặc biệt (ăn chay, dị ứng...)
+            $table->text('request')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

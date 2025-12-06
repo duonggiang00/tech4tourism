@@ -11,21 +11,25 @@ use App\Http\Controllers\{
     BookingController,
     CategoryController,
     CountryController,
+    DashboardController,
+    GuideController,
     ImageUploadController,
+    NotificationController,
     PolicyController,
     ProvidersController,
+    ReportController,
     ServiceAttributesController,
     ServiceController,
     ServiceTypeController,
     TourController,
-    TripAssignmentController,
     UserController
 };
 
 use App\Http\Controllers\Api\{
     TourImagesController,
     TourScheduleController,
-    TourServiceController
+    TourServiceController,
+    TripAssignmentController as ApiTripAssignmentController
 };
 
 /*
@@ -51,6 +55,8 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 */
 Route::get('/booking/create', [BookingController::class, 'create'])->name('booking.create');
 Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
+Route::get('/booking/lookup', [BookingController::class, 'lookup'])->name('booking.lookup');
+Route::get('/booking/{code}', [BookingController::class, 'lookupByCode'])->name('booking.lookup.code');
 
 Route::get(
     '/booking/success/{code}',
@@ -79,7 +85,40 @@ Route::middleware(['auth', 'role:1'])->group(function () {
             'create',
             'store'
         ]);
+
+        // Payment routes
+        Route::post('bookings/{booking}/payments', [\App\Http\Controllers\PaymentController::class, 'store'])->name('bookings.payments.store');
+        Route::put('payments/{payment}', [\App\Http\Controllers\PaymentController::class, 'update'])->name('payments.update');
+        Route::delete('payments/{payment}', [\App\Http\Controllers\PaymentController::class, 'destroy'])->name('payments.destroy');
+
+        // Reports
+        Route::get('reports/revenue', [\App\Http\Controllers\ReportController::class, 'revenue'])->name('reports.revenue');
     });
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| GUIDE ROUTES (Role: 2 - Hướng dẫn viên)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:2'])->prefix('guide')->name('guide.')->group(function () {
+    Route::get('/schedule', [GuideController::class, 'schedule'])->name('schedule');
+    Route::get('/trip/{id}', [GuideController::class, 'tripDetail'])->name('trip.detail');
+
+    // Check-in
+    Route::get('/trip/{assignmentId}/passengers', [GuideController::class, 'getPassengersForCheckIn'])->name('passengers.get');
+    Route::post('/trip/{assignmentId}/checkin', [GuideController::class, 'createCheckIn'])->name('checkin.create');
+    Route::get('/checkin/{checkInId}', [GuideController::class, 'showCheckIn'])->name('checkin.show');
+    Route::post('/checkin/{checkInId}/save', [GuideController::class, 'saveCheckIn'])->name('checkin.save');
+    Route::delete('/checkin/{checkInId}', [GuideController::class, 'deleteCheckIn'])->name('checkin.delete');
+
+    // Notes
+    Route::get('/notes', [GuideController::class, 'notes'])->name('notes');
+    Route::post('/trip/{assignmentId}/note', [GuideController::class, 'createNote'])->name('note.create');
+    Route::put('/note/{noteId}', [GuideController::class, 'updateNote'])->name('note.update');
+    Route::delete('/note/{noteId}', [GuideController::class, 'deleteNote'])->name('note.delete');
+    Route::post('/trip/{assignmentId}/complete', [GuideController::class, 'completeTour'])->name('trip.complete');
 });
 
 
@@ -90,7 +129,7 @@ Route::middleware(['auth', 'role:1'])->group(function () {
 */
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::get('dashboard', fn() => Inertia::render('dashboard'))->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Basic resources
     Route::resources([
@@ -104,14 +143,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'policies'           => PolicyController::class,
     ]);
 
-    // Nested API Resources (Tour Images, Schedules, Service)
+    // Nested API Resources (Tour Images, Schedules, Service, Assignments)
     Route::prefix('tours/{tour}')->group(function () {
         Route::apiResource('schedules', TourScheduleController::class);
         Route::apiResource('images', TourImagesController::class);
         Route::apiResource('tourservices', TourServiceController::class);
         Route::apiResource('tourpolicies', TourPolicyController::class);
+        Route::apiResource('assignments', ApiTripAssignmentController::class)->except(['show', 'create', 'edit']);
+
+        // Tour Instances
+        Route::get('instances', [\App\Http\Controllers\TourInstanceController::class, 'index'])->name('tour-instances.index');
+        Route::get('instances/create', [\App\Http\Controllers\TourInstanceController::class, 'create'])->name('tour-instances.create');
+        Route::post('instances', [\App\Http\Controllers\TourInstanceController::class, 'store'])->name('tour-instances.store');
+    });
+
+    // Tour Instance routes (có thể cập nhật/xóa riêng)
+    Route::prefix('tour-instances')->name('tour-instances.')->group(function () {
+        Route::put('{instance}', [\App\Http\Controllers\TourInstanceController::class, 'update'])->name('update');
+        Route::delete('{instance}', [\App\Http\Controllers\TourInstanceController::class, 'destroy'])->name('destroy');
     });
     Route::post('/upload-image', [ImageUploadController::class, 'upload'])->name('image.upload');
+
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::post('/assignments/{assignmentId}/confirm', [NotificationController::class, 'confirmAssignment'])->name('assignments.confirm');
 });
 
 // Import Settings Routes

@@ -6,8 +6,27 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 // Hook nhận vào object Tour đầy đủ từ Props
-export const useTourData = (initialTourData: Tour) => {
+export const useTourData = (initialTourData: Tour | null | undefined) => {
     const [loading, setLoading] = useState(false);
+
+    // Defensive check: Nếu không có dữ liệu, trả về empty state
+    if (!initialTourData) {
+        return {
+            galleryImages: [],
+            schedules: [],
+            tourServices: [],
+            assignments: [],
+            tourPolicies: [],
+            loading: false,
+            refreshData: () => {},
+            deleteService: () => {},
+            deleteImage: () => {},
+            deleteSchedule: () => {},
+            deleteTour: () => {},
+            deletePolicy: () => {},
+            deleteAssignment: () => {},
+        };
+    }
 
     // 1. Khởi tạo State từ dữ liệu có sẵn (Eager Loaded)
     // Lưu ý: Laravel trả về JSON dạng snake_case (tour_services, tour_policies)
@@ -27,6 +46,7 @@ export const useTourData = (initialTourData: Tour) => {
         // @ts-ignore: Laravel trả về snake_case
         initialTourData.trip_assignments ||
             initialTourData.tripAssignments ||
+            (initialTourData as any).trip_assignments || // Fallback cho template
             [],
     );
 
@@ -56,6 +76,7 @@ export const useTourData = (initialTourData: Tour) => {
         setAssignments(
             initialTourData.trip_assignments ||
                 initialTourData.tripAssignments ||
+                (initialTourData as any).trip_assignments || // Fallback cho template
                 [],
         );
     }, [initialTourData]);
@@ -63,7 +84,7 @@ export const useTourData = (initialTourData: Tour) => {
     // 3. Hàm làm mới dữ liệu (Dùng Inertia Reload thay vì gọi API)
     const refreshData = () => {
         router.reload({
-            only: ['tour'], // Chỉ tải lại prop 'tour'
+            only: ['tour', 'template'], // Tải lại cả tour và template
             onStart: () => setLoading(true),
             onFinish: () => setLoading(false),
             preserveScroll: true, // Giữ vị trí cuộn trang

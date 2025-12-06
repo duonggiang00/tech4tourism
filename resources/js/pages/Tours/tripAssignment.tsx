@@ -19,11 +19,16 @@ import axios from 'axios';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+// Interface cho Guide với thông tin đã có tour
+interface GuideWithStatus extends User {
+    has_active_tour?: boolean;
+}
+
 interface Props {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     tourId: number;
-    allUsers: User[]; // Danh sách tất cả user để chọn
+    allUsers: GuideWithStatus[]; // Danh sách tất cả user để chọn
     currentAssignments: TripAssignment[]; // Danh sách đã gán để loại trừ
     onSuccess: () => void;
 }
@@ -40,10 +45,10 @@ export function GuideAssignmentDialog({
     const [status, setStatus] = useState<string>('1'); // Mặc định 1: Đang hoạt động
     const [loading, setLoading] = useState(false);
 
-    // Lọc ra những user chưa được gán vào tour này
+    // Lọc ra những user chưa được gán vào tour này VÀ chưa có tour khác đang hoạt động
     const availableUsers = useMemo(() => {
         const assignedIds = currentAssignments.map((a) => a.user_id);
-        return allUsers.filter((u) => !assignedIds.includes(u.id));
+        return allUsers.filter((u) => !assignedIds.includes(u.id) && !u.has_active_tour);
     }, [allUsers, currentAssignments]);
 
     const handleSubmit = async () => {
