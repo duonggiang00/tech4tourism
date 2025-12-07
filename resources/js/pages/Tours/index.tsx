@@ -329,7 +329,7 @@ export default function Index() {
                                                         <img
                                                             src={
                                                                 tour.thumbnail
-                                                                    ? `/storage/${tour.thumbnail}`
+                                                                    ? `${tour.thumbnail}`
                                                                     : 'https://placehold.co/48x48?text=No+Img'
                                                             }
                                                             alt={tour.title}

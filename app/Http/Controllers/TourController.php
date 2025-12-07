@@ -137,7 +137,8 @@ class TourController extends Controller
         Log::info('Request Files:', $request->allFiles());
         if ($request->hasFile('gallery_images')) {
             Log::info('Gallery Images detected:', array_map(function ($f) {
-                return $f->getClientOriginalName(); }, $request->file('gallery_images')));
+                return $f->getClientOriginalName();
+            }, $request->file('gallery_images')));
         } else {
             Log::info('NO Gallery Images detected.');
         }

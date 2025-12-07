@@ -16,7 +16,8 @@ class Destination extends Model
         'address',
         'status',
     ];
-    public function province(){
+    public function province()
+    {
         return $this->belongsTo(Province::class);
     }
 

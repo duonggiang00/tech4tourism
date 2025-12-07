@@ -292,14 +292,14 @@ export default function TripDetail({ assignment, passengers }: Props) {
         }
     };
 
-    // Kiểm tra xem hôm nay có phải là ngày cuối cùng không
-    const isLastDay = useMemo(() => {
+    // Kiểm tra xem hôm nay có phải là ngày cuối cùng (hoặc sau đó) không
+    const isEndedOrLater = useMemo(() => {
         if (!assignment.tourInstance?.date_end) return false;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const dateEnd = new Date(assignment.tourInstance.date_end);
         dateEnd.setHours(0, 0, 0, 0);
-        return today.getTime() === dateEnd.getTime();
+        return today.getTime() >= dateEnd.getTime();
     }, [assignment.tourInstance?.date_end]);
 
     const handleCompleteTour = async () => {
@@ -342,7 +342,7 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                     Xác nhận đã nhận
                                 </Button>
                             )}
-                            {assignment.status === '1' && isLastDay && (
+                            {assignment.status === '1' && isEndedOrLater && (
                                 <Button
                                     onClick={handleCompleteTour}
                                     size="sm"
@@ -360,6 +360,14 @@ export default function TripDetail({ assignment, passengers }: Props) {
                             <span className="mx-2">•</span>
                             <Users className="h-4 w-4" />
                             {passengers.length} khách
+                            {assignment.tourInstance && (
+                                <>
+                                    <span className="mx-2">•</span>
+                                    <span className="font-medium text-blue-600">
+                                        {new Date(assignment.tourInstance.date_start).toLocaleDateString('vi-VN')} - {new Date(assignment.tourInstance.date_end).toLocaleDateString('vi-VN')}
+                                    </span>
+                                </>
+                            )}
                         </p>
                     </div>
                 </div>

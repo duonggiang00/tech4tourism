@@ -463,10 +463,10 @@ class GuideController extends Controller
         $today = \Carbon\Carbon::today();
         $dateEnd = \Carbon\Carbon::parse($assignment->tourInstance->date_end);
 
-        // Kiểm tra xem hôm nay có phải là ngày cuối cùng không
-        if (!$today->isSameDay($dateEnd)) {
+        // Kiểm tra xem hôm nay có phải là ngày cuối cùng (hoặc sau đó) không
+        if ($today->lt($dateEnd)) {
             return response()->json([
-                'error' => 'Chỉ có thể xác nhận kết thúc tour vào ngày cuối cùng của chuyến đi'
+                'error' => 'Chưa đến ngày kết thúc tour, bạn chưa thể xác nhận hoàn thành.'
             ], 400);
         }
 
