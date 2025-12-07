@@ -179,11 +179,10 @@ export default function BookingsIndex({
     };
 
     const formatPrice = (price: number) => {
-        return new Intl.NumberFormat('en-US', {
+        return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
+            currency: 'VND',
+            maximumFractionDigits: 0,
         }).format(price);
     };
 
@@ -320,7 +319,6 @@ export default function BookingsIndex({
                                         <TableHead>Ngày đi</TableHead>
                                         <TableHead>Số người</TableHead>
                                         <TableHead>Tổng tiền</TableHead>
-                                        <TableHead>Còn nợ</TableHead>
                                         <TableHead>Trạng thái</TableHead>
                                         <TableHead className="text-right">
                                             Hành động
@@ -357,17 +355,6 @@ export default function BookingsIndex({
                                             <TableCell className="font-medium">
                                                 {formatPrice(
                                                     booking.final_price,
-                                                )}
-                                            </TableCell>
-                                            <TableCell
-                                                className={
-                                                    booking.left_payment > 0
-                                                        ? 'font-medium text-red-600'
-                                                        : 'text-green-600'
-                                                }
-                                            >
-                                                {formatPrice(
-                                                    booking.left_payment,
                                                 )}
                                             </TableCell>
                                             <TableCell>
@@ -451,13 +438,12 @@ export default function BookingsIndex({
                                                     <Link
                                                         key={index}
                                                         href={link.url || '#'}
-                                                        className={`rounded-md px-3 py-2 text-sm font-medium ${
-                                                            link.active
-                                                                ? 'bg-blue-600 text-white'
-                                                                : link.url
-                                                                  ? 'border bg-white text-gray-700 hover:bg-gray-50'
-                                                                  : 'cursor-not-allowed bg-gray-100 text-gray-400'
-                                                        }`}
+                                                        className={`rounded-md px-3 py-2 text-sm font-medium ${link.active
+                                                            ? 'bg-blue-600 text-white'
+                                                            : link.url
+                                                                ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                                                                : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                                            }`}
                                                         dangerouslySetInnerHTML={{
                                                             __html: link.label,
                                                         }}

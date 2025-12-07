@@ -26,11 +26,13 @@ class TourTemplate extends Model
         'short_description',
         'price_adult',
         'price_children',
+        'pricing_config',
     ];
 
     protected $casts = [
         'price_adult' => 'decimal:2',
         'price_children' => 'decimal:2',
+        'pricing_config' => 'array',
     ];
 
     /**

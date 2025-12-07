@@ -558,9 +558,9 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                     </DialogTrigger>
 
                                     {/* --- CHỈNH SỬA Ở ĐÂY: Tăng chiều rộng modal --- */}
-                                    <DialogContent className="max-w-[95vw] sm:max-w-7xl max-h-[90vh] flex flex-col">
+                                    <DialogContent className="max-w-[95vw] sm:max-w-7xl max-h-[100vh] flex flex-col">
                                         <DialogHeader>
-                                            <DialogTitle>Tạo đợt check-in mới</DialogTitle>
+                                            <DialogTitle>Tạo đợt check-in mới</DialogTitle> 
                                             <DialogDescription>
                                                 Nhập tên điểm đến, thời gian check-in và điểm danh khách hàng
                                             </DialogDescription>

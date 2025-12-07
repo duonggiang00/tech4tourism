@@ -132,6 +132,7 @@ class TourController extends Controller
 
     public function store(StoreTourRequest $request)
     {
+        dd($request->all());
         Log::info('------------ BẮT ĐẦU TẠO TOUR ------------');
         Log::info('Request All:', $request->all());
         Log::info('Request Files:', $request->allFiles());

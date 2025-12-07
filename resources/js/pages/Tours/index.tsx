@@ -80,12 +80,12 @@ interface PageProps {
 export default function Index() {
     const { tours, templates, flash, categories, destinations, filters = {} } =
         usePage<PageProps>().props;
-    
+
     // Xử lý templates: có thể là paginated hoặc array
     const templatesData = templates as PaginatedTemplates;
     const isPaginated = templatesData && 'data' in templatesData && 'links' in templatesData;
-    const tourTemplates = isPaginated 
-        ? templatesData.data 
+    const tourTemplates = isPaginated
+        ? templatesData.data
         : ((templates || tours) as TourTemplate[]);
 
     // --- STATE ---
@@ -368,9 +368,9 @@ export default function Index() {
                                                                 >
                                                                     {instance.price_adult
                                                                         ? new Intl.NumberFormat('vi-VN', {
-                                                                              style: 'currency',
-                                                                              currency: 'VND',
-                                                                          }).format(instance.price_adult)
+                                                                            style: 'currency',
+                                                                            currency: 'VND',
+                                                                        }).format(instance.price_adult)
                                                                         : 'Chưa có giá'}
                                                                 </div>
                                                             ))}
@@ -398,10 +398,10 @@ export default function Index() {
                                                                     {instance.status === 0
                                                                         ? 'Đã hủy'
                                                                         : instance.status === 1
-                                                                          ? 'Sắp có'
-                                                                          : instance.status === 2
-                                                                            ? 'Đang diễn ra'
-                                                                            : 'Đã hoàn thành'}
+                                                                            ? 'Sắp có'
+                                                                            : instance.status === 2
+                                                                                ? 'Đang diễn ra'
+                                                                                : 'Đã hoàn thành'}
                                                                 </Badge>
                                                             ))}
                                                         </div>
@@ -487,13 +487,12 @@ export default function Index() {
                                         <Link
                                             key={index}
                                             href={link.url || '#'}
-                                            className={`rounded-md px-3 py-2 text-sm font-medium ${
-                                                link.active
+                                            className={`rounded-md px-3 py-2 text-sm font-medium ${link.active
                                                     ? 'bg-blue-600 text-white'
                                                     : link.url
-                                                      ? 'border bg-white text-gray-700 hover:bg-gray-50'
-                                                      : 'cursor-not-allowed bg-gray-100 text-gray-400'
-                                            }`}
+                                                        ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                                                        : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                                }`}
                                             dangerouslySetInnerHTML={{
                                                 __html: link.label,
                                             }}
