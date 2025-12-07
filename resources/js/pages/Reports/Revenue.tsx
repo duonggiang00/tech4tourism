@@ -109,25 +109,27 @@ export default function RevenueReport({
                             <CardTitle>Lọc theo thời gian</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <form onSubmit={handleFilter} className="flex gap-4">
-                                <div className="space-y-2">
+                            <form onSubmit={handleFilter} className="flex flex-col gap-4 md:flex-row md:items-end">
+                                <div className="space-y-2 w-full md:w-auto">
                                     <Label>Từ ngày</Label>
                                     <Input
                                         type="date"
                                         value={startDate}
                                         onChange={(e) => setStartDate(e.target.value)}
+                                        className="w-full"
                                     />
                                 </div>
-                                <div className="space-y-2">
+                                <div className="space-y-2 w-full md:w-auto">
                                     <Label>Đến ngày</Label>
                                     <Input
                                         type="date"
                                         value={endDate}
                                         onChange={(e) => setEndDate(e.target.value)}
+                                        className="w-full"
                                     />
                                 </div>
-                                <div className="flex items-end">
-                                    <Button type="submit">Lọc</Button>
+                                <div className="flex w-full md:w-auto">
+                                    <Button type="submit" className="w-full md:w-auto">Lọc</Button>
                                 </div>
                             </form>
                         </CardContent>
@@ -258,9 +260,9 @@ export default function RevenueReport({
                                             <TableCell>
                                                 <Badge className={
                                                     item.status === 0 ? 'bg-yellow-500' :
-                                                    item.status === 1 ? 'bg-green-500' :
-                                                    item.status === 2 ? 'bg-red-500' :
-                                                    'bg-blue-500'
+                                                        item.status === 1 ? 'bg-green-500' :
+                                                            item.status === 2 ? 'bg-red-500' :
+                                                                'bg-blue-500'
                                                 }>
                                                     {item.label}
                                                 </Badge>

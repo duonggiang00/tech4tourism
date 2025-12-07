@@ -147,12 +147,12 @@ export default function TourDetail({
                     {/* 2. Tabs Interface */}
                     <div className="mt-6">
                         <Tabs defaultValue="overview" className="w-full">
-                            <TabsList className="grid w-full grid-cols-5 bg-white p-1 rounded-lg border">
-                                <TabsTrigger value="overview">Tổng quan</TabsTrigger>
-                                <TabsTrigger value="schedule">Lịch trình</TabsTrigger>
-                                <TabsTrigger value="services">Dịch vụ & Chính sách</TabsTrigger>
-                                <TabsTrigger value="departures">Lịch khởi hành</TabsTrigger>
-                                <TabsTrigger value="guides">Hướng dẫn viên</TabsTrigger>
+                            <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1 bg-white rounded-lg border">
+                                <TabsTrigger value="overview" className="flex-1 min-w-[100px] whitespace-nowrap">Tổng quan</TabsTrigger>
+                                <TabsTrigger value="schedule" className="flex-1 min-w-[100px] whitespace-nowrap">Lịch trình</TabsTrigger>
+                                <TabsTrigger value="services" className="flex-1 min-w-[150px] whitespace-nowrap">Dịch vụ & Chính sách</TabsTrigger>
+                                <TabsTrigger value="departures" className="flex-1 min-w-[120px] whitespace-nowrap">Lịch khởi hành</TabsTrigger>
+                                <TabsTrigger value="guides" className="flex-1 min-w-[120px] whitespace-nowrap">Hướng dẫn viên</TabsTrigger>
                             </TabsList>
 
                             {/* TAB 1: TỔNG QUAN */}

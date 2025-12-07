@@ -374,11 +374,11 @@ export default function TripDetail({ assignment, passengers }: Props) {
 
                 {/* Tabs */}
                 <Tabs defaultValue="itinerary" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="itinerary">Lịch trình</TabsTrigger>
-                        <TabsTrigger value="passengers">Khách hàng</TabsTrigger>
-                        <TabsTrigger value="checkin">Check-in</TabsTrigger>
-                        <TabsTrigger value="notes">Nhật ký</TabsTrigger>
+                    <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1">
+                        <TabsTrigger value="itinerary" className="flex-1 min-w-[100px]">Lịch trình</TabsTrigger>
+                        <TabsTrigger value="passengers" className="flex-1 min-w-[100px]">Khách hàng</TabsTrigger>
+                        <TabsTrigger value="checkin" className="flex-1 min-w-[100px]">Check-in</TabsTrigger>
+                        <TabsTrigger value="notes" className="flex-1 min-w-[100px]">Nhật ký</TabsTrigger>
                     </TabsList>
 
                     {/* Lịch trình Tour */}
@@ -472,58 +472,110 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                         Chưa có khách hàng nào
                                     </p>
                                 ) : (
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>#</TableHead>
-                                                <TableHead>Họ tên</TableHead>
-                                                <TableHead>SĐT</TableHead>
-                                                <TableHead>CCCD</TableHead>
-                                                <TableHead>Loại</TableHead>
-                                                <TableHead>Yêu cầu đặc biệt</TableHead>
-                                                <TableHead>Mã booking</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {passengers.map((passenger, index) => (
-                                                <TableRow key={passenger.id}>
-                                                    <TableCell>{index + 1}</TableCell>
-                                                    <TableCell className="font-medium">
-                                                        {passenger.fullname}
-                                                    </TableCell>
-                                                    <TableCell className="font-mono text-sm">
-                                                        {passenger.phone || '-'}
-                                                    </TableCell>
-                                                    <TableCell>{passenger.cccd || '-'}</TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="outline">
-                                                            {passengerTypeLabels[passenger.type] || 'N/A'}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {passenger.request && passenger.request.trim() !== '' ? (
-                                                            <div className="max-w-[200px]">
-                                                                <Badge variant="outline" className="bg-orange-50 text-orange-800 border-orange-300 text-xs">
-                                                                    <FileText className="h-3 w-3 mr-1" />
-                                                                    Có yêu cầu
+                                    <>
+                                        {/* Desktop Table */}
+                                        <div className="hidden md:block">
+                                            <Table>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead>#</TableHead>
+                                                        <TableHead>Họ tên</TableHead>
+                                                        <TableHead>SĐT</TableHead>
+                                                        <TableHead>CCCD</TableHead>
+                                                        <TableHead>Loại</TableHead>
+                                                        <TableHead>Yêu cầu đặc biệt</TableHead>
+                                                        <TableHead>Mã booking</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {passengers.map((passenger, index) => (
+                                                        <TableRow key={passenger.id}>
+                                                            <TableCell>{index + 1}</TableCell>
+                                                            <TableCell className="font-medium">
+                                                                {passenger.fullname}
+                                                            </TableCell>
+                                                            <TableCell className="font-mono text-sm">
+                                                                {passenger.phone || '-'}
+                                                            </TableCell>
+                                                            <TableCell>{passenger.cccd || '-'}</TableCell>
+                                                            <TableCell>
+                                                                <Badge variant="outline">
+                                                                    {passengerTypeLabels[passenger.type] || 'N/A'}
                                                                 </Badge>
-                                                                <p className="text-xs text-muted-foreground mt-1 truncate" title={passenger.request}>
-                                                                    {passenger.request}
-                                                                </p>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                {passenger.request && passenger.request.trim() !== '' ? (
+                                                                    <div className="max-w-[200px]">
+                                                                        <Badge variant="outline" className="bg-orange-50 text-orange-800 border-orange-300 text-xs">
+                                                                            <FileText className="h-3 w-3 mr-1" />
+                                                                            Có yêu cầu
+                                                                        </Badge>
+                                                                        <p className="text-xs text-muted-foreground mt-1 truncate" title={passenger.request}>
+                                                                            {passenger.request}
+                                                                        </p>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="text-muted-foreground text-sm">-</span>
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <Badge variant="secondary">
+                                                                    {passenger.booking?.code || '-'}
+                                                                </Badge>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+
+                                        {/* Mobile Card View */}
+                                        <div className="md:hidden space-y-4">
+                                            {passengers.map((passenger, index) => (
+                                                <div key={passenger.id} className="bg-white border rounded-lg p-4 space-y-3 shadow-sm">
+                                                    <div className="flex justify-between items-start">
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-sm font-semibold text-gray-500">#{index + 1}</span>
+                                                                <h3 className="font-bold text-gray-900">{passenger.fullname}</h3>
                                                             </div>
-                                                        ) : (
-                                                            <span className="text-muted-foreground text-sm">-</span>
+                                                            <div className="flex gap-2 mt-1">
+                                                                <Badge variant="outline" className="text-xs">
+                                                                    {passengerTypeLabels[passenger.type] || 'N/A'}
+                                                                </Badge>
+                                                                <Badge variant="secondary" className="text-xs">
+                                                                    {passenger.booking?.code || '-'}
+                                                                </Badge>
+                                                            </div>
+                                                        </div>
+                                                        {passenger.request && passenger.request.trim() !== '' && (
+                                                            <div className="flex-shrink-0">
+                                                                <FileText className="h-5 w-5 text-orange-500" />
+                                                            </div>
                                                         )}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="secondary">
-                                                            {passenger.booking?.code || '-'}
-                                                        </Badge>
-                                                    </TableCell>
-                                                </TableRow>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                                                        <div>
+                                                            <p className="text-xs text-gray-400">Số điện thoại</p>
+                                                            <p className="font-mono">{passenger.phone || '-'}</p>
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs text-gray-400">CCCD</p>
+                                                            <p>{passenger.cccd || '-'}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    {passenger.request && passenger.request.trim() !== '' && (
+                                                        <div className="bg-orange-50 p-2 rounded text-sm text-orange-800 border border-orange-100">
+                                                            <p className="text-xs font-bold mb-1">Yêu cầu đặc biệt:</p>
+                                                            {passenger.request}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             ))}
-                                        </TableBody>
-                                    </Table>
+                                        </div>
+                                    </>
                                 )}
                             </CardContent>
                         </Card>
@@ -680,78 +732,136 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                                                                 </CollapsibleTrigger>
                                                                                 <CollapsibleContent>
                                                                                     <div className="border-t">
-                                                                                        <Table>
-                                                                                            <TableHeader>
-                                                                                                <TableRow>
-                                                                                                    <TableHead className="w-[60px]">Có mặt</TableHead>
-                                                                                                    <TableHead>#</TableHead>
-                                                                                                    <TableHead>Họ tên</TableHead>
-                                                                                                    <TableHead>SĐT</TableHead>
-                                                                                                    <TableHead>CCCD</TableHead>
-                                                                                                    <TableHead>Loại</TableHead>
-                                                                                                    <TableHead>Yêu cầu đặc biệt</TableHead>
-                                                                                                    <TableHead>Ghi chú</TableHead>
-                                                                                                </TableRow>
-                                                                                            </TableHeader>
-                                                                                            <TableBody>
-                                                                                                {bookingPassengers.map((passenger, idx) => (
-                                                                                                    <TableRow
-                                                                                                        key={passenger.id}
-                                                                                                        className={attendance[passenger.id]?.is_present ? 'bg-green-50' : ''}
-                                                                                                    >
-                                                                                                        <TableCell>
+                                                                                        {/* Desktop Table */}
+                                                                                        <div className="hidden md:block">
+                                                                                            <Table>
+                                                                                                <TableHeader>
+                                                                                                    <TableRow>
+                                                                                                        <TableHead className="w-[60px]">Có mặt</TableHead>
+                                                                                                        <TableHead>#</TableHead>
+                                                                                                        <TableHead>Họ tên</TableHead>
+                                                                                                        <TableHead>SĐT</TableHead>
+                                                                                                        <TableHead>CCCD</TableHead>
+                                                                                                        <TableHead>Loại</TableHead>
+                                                                                                        <TableHead>Yêu cầu đặc biệt</TableHead>
+                                                                                                        <TableHead>Ghi chú</TableHead>
+                                                                                                    </TableRow>
+                                                                                                </TableHeader>
+                                                                                                <TableBody>
+                                                                                                    {bookingPassengers.map((passenger, idx) => (
+                                                                                                        <TableRow
+                                                                                                            key={passenger.id}
+                                                                                                            className={attendance[passenger.id]?.is_present ? 'bg-green-50' : ''}
+                                                                                                        >
+                                                                                                            <TableCell>
+                                                                                                                <Checkbox
+                                                                                                                    checked={attendance[passenger.id]?.is_present || false}
+                                                                                                                    onCheckedChange={() => toggleAttendance(passenger.id)}
+                                                                                                                />
+                                                                                                            </TableCell>
+                                                                                                            <TableCell>{idx + 1}</TableCell>
+                                                                                                            <TableCell className="font-medium">
+                                                                                                                <div className="flex items-center gap-2">
+                                                                                                                    {attendance[passenger.id]?.is_present ? (
+                                                                                                                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                                                                                                    ) : (
+                                                                                                                        <XCircle className="h-4 w-4 text-red-400" />
+                                                                                                                    )}
+                                                                                                                    {passenger.fullname}
+                                                                                                                </div>
+                                                                                                            </TableCell>
+                                                                                                            <TableCell className="font-mono text-sm">
+                                                                                                                {passenger.phone || '-'}
+                                                                                                            </TableCell>
+                                                                                                            <TableCell>{passenger.cccd || '-'}</TableCell>
+                                                                                                            <TableCell>
+                                                                                                                <Badge variant="outline">
+                                                                                                                    {passengerTypeLabels[passenger.type] || 'N/A'}
+                                                                                                                </Badge>
+                                                                                                            </TableCell>
+                                                                                                            <TableCell className="max-w-[150px]">
+                                                                                                                {passenger.request && passenger.request.trim() !== '' ? (
+                                                                                                                    <div className="space-y-1">
+                                                                                                                        <Badge variant="outline" className="bg-orange-50 text-orange-800 border-orange-300 text-xs">
+                                                                                                                            <FileText className="h-3 w-3 mr-1" />
+                                                                                                                            Có yêu cầu
+                                                                                                                        </Badge>
+                                                                                                                        <p className="text-xs text-muted-foreground truncate" title={passenger.request}>
+                                                                                                                            {passenger.request}
+                                                                                                                        </p>
+                                                                                                                    </div>
+                                                                                                                ) : (
+                                                                                                                    <span className="text-muted-foreground text-sm">-</span>
+                                                                                                                )}
+                                                                                                            </TableCell>
+                                                                                                            <TableCell>
+                                                                                                                <Input
+                                                                                                                    placeholder="Ghi chú..."
+                                                                                                                    className="h-8 w-full min-w-[150px]"
+                                                                                                                    value={attendance[passenger.id]?.notes || ''}
+                                                                                                                    onChange={(e) => updateNote(passenger.id, e.target.value)}
+                                                                                                                />
+                                                                                                            </TableCell>
+                                                                                                        </TableRow>
+                                                                                                    ))}
+                                                                                                </TableBody>
+                                                                                            </Table>
+                                                                                        </div>
+
+                                                                                        {/* Mobile Card List */}
+                                                                                        <div className="md:hidden space-y-2 p-3">
+                                                                                            {bookingPassengers.map((passenger, idx) => (
+                                                                                                <div
+                                                                                                    key={passenger.id}
+                                                                                                    className={`border rounded-lg p-3 ${attendance[passenger.id]?.is_present ? 'bg-green-50 border-green-200' : 'bg-white'}`}
+                                                                                                >
+                                                                                                    <div className="flex items-start gap-3">
+                                                                                                        <div className="pt-1">
                                                                                                             <Checkbox
                                                                                                                 checked={attendance[passenger.id]?.is_present || false}
                                                                                                                 onCheckedChange={() => toggleAttendance(passenger.id)}
+                                                                                                                className="h-5 w-5"
                                                                                                             />
-                                                                                                        </TableCell>
-                                                                                                        <TableCell>{idx + 1}</TableCell>
-                                                                                                        <TableCell className="font-medium">
-                                                                                                            <div className="flex items-center gap-2">
-                                                                                                                {attendance[passenger.id]?.is_present ? (
-                                                                                                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                                                                                                ) : (
-                                                                                                                    <XCircle className="h-4 w-4 text-red-400" />
-                                                                                                                )}
-                                                                                                                {passenger.fullname}
-                                                                                                            </div>
-                                                                                                        </TableCell>
-                                                                                                        <TableCell className="font-mono text-sm">
-                                                                                                            {passenger.phone || '-'}
-                                                                                                        </TableCell>
-                                                                                                        <TableCell>{passenger.cccd || '-'}</TableCell>
-                                                                                                        <TableCell>
-                                                                                                            <Badge variant="outline">
-                                                                                                                {passengerTypeLabels[passenger.type] || 'N/A'}
-                                                                                                            </Badge>
-                                                                                                        </TableCell>
-                                                                                                        <TableCell className="max-w-[150px]">
-                                                                                                            {passenger.request && passenger.request.trim() !== '' ? (
-                                                                                                                <div className="space-y-1">
-                                                                                                                    <Badge variant="outline" className="bg-orange-50 text-orange-800 border-orange-300 text-xs">
-                                                                                                                        <FileText className="h-3 w-3 mr-1" />
-                                                                                                                        Có yêu cầu
-                                                                                                                    </Badge>
-                                                                                                                    <p className="text-xs text-muted-foreground truncate" title={passenger.request}>
-                                                                                                                        {passenger.request}
-                                                                                                                    </p>
+                                                                                                        </div>
+                                                                                                        <div className="flex-1 space-y-2">
+                                                                                                            <div className="flex justify-between">
+                                                                                                                <div className="font-medium">
+                                                                                                                    {passenger.fullname}
                                                                                                                 </div>
-                                                                                                            ) : (
-                                                                                                                <span className="text-muted-foreground text-sm">-</span>
+                                                                                                                <Badge variant="outline" className="text-xs">
+                                                                                                                    {passengerTypeLabels[passenger.type] || 'N/A'}
+                                                                                                                </Badge>
+                                                                                                            </div>
+
+                                                                                                            {(passenger.phone || passenger.cccd) && (
+                                                                                                                <div className="text-xs text-gray-500 grid grid-cols-2 gap-2">
+                                                                                                                    {passenger.phone && (
+                                                                                                                        <div>SĐT: <span className="font-mono">{passenger.phone}</span></div>
+                                                                                                                    )}
+                                                                                                                    {passenger.cccd && (
+                                                                                                                        <div>CCCD: {passenger.cccd}</div>
+                                                                                                                    )}
+                                                                                                                </div>
                                                                                                             )}
-                                                                                                        </TableCell>
-                                                                                                        <TableCell>
+
+                                                                                                            {passenger.request && passenger.request.trim() !== '' && (
+                                                                                                                <div className="bg-orange-50 p-2 rounded text-xs text-orange-800 border border-orange-100 flex gap-2 items-center">
+                                                                                                                    <FileText className="h-3 w-3 flex-shrink-0" />
+                                                                                                                    <span>{passenger.request}</span>
+                                                                                                                </div>
+                                                                                                            )}
+
                                                                                                             <Input
-                                                                                                                placeholder="Ghi chú..."
-                                                                                                                className="h-8 w-full min-w-[150px]"
+                                                                                                                placeholder="Ghi chú (nếu có)..."
+                                                                                                                className="h-8 w-full text-sm"
                                                                                                                 value={attendance[passenger.id]?.notes || ''}
                                                                                                                 onChange={(e) => updateNote(passenger.id, e.target.value)}
                                                                                                             />
-                                                                                                        </TableCell>
-                                                                                                    </TableRow>
-                                                                                                ))}
-                                                                                            </TableBody>
-                                                                                        </Table>
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            ))}
+                                                                                        </div>
                                                                                     </div>
                                                                                 </CollapsibleContent>
                                                                             </div>

@@ -573,7 +573,7 @@ export default function Index() {
                                                                 <Pencil className="h-4 w-4" />
                                                             </Button>
                                                         </Link>
-                                                        {(!tour.instances || tour.instances.length === 0) && (
+                                                        
                                                             <Link
                                                                 href={`/tours/${tour.id}/instances/create`}
                                                             >
@@ -586,7 +586,7 @@ export default function Index() {
                                                                     <Plus className="h-4 w-4" />
                                                                 </Button>
                                                             </Link>
-                                                        )}
+                                                        
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
