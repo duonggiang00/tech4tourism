@@ -1,3 +1,14 @@
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +19,20 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from '@/components/ui/command';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 import {
     Table,
     TableBody,
@@ -21,7 +46,7 @@ import categoriesUrl from '@/routes/categories';
 import tourUrl from '@/routes/tours';
 import { BreadcrumbItem, Category, Destination, Tour } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { Share, Check, ChevronsUpDown, Copy, Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { CategoryFormDialog } from './category';
 
@@ -71,14 +96,17 @@ interface PageProps {
     templates?: PaginatedTemplates | TourTemplate[]; // Có thể là paginated hoặc array
     destinations: Destination[];
     categories: Category[];
+    allTours: { id: number; title: string }[];
     filters?: {
         search?: string;
         category_id?: string;
+        status?: string;
     };
+    [key: string]: unknown;
 }
 
 export default function Index() {
-    const { tours, templates, flash, categories, destinations, filters = {} } =
+    const { tours, templates, flash, categories, destinations, allTours, filters = {} } =
         usePage<PageProps>().props;
 
     // Xử lý templates: có thể là paginated hoặc array
@@ -98,6 +126,23 @@ export default function Index() {
     const [statusFilter, setStatusFilter] = useState<string>(
         filters.status || 'all'
     );
+
+    // Clone State
+    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+    const [isClonePopoverOpen, setIsClonePopoverOpen] = useState(false);
+    const [createMode, setCreateMode] = useState<'new' | 'clone'>('new');
+    const [selectedCloneTourId, setSelectedCloneTourId] = useState<string>('');
+    const { post, processing: processingClone } = useForm();
+
+    const handleCloneSubmit = () => {
+        if (createMode === 'clone' && selectedCloneTourId) {
+            post(`/tours/${selectedCloneTourId}/clone`, {
+                onSuccess: () => setIsCreateDialogOpen(false),
+            });
+        } else {
+            router.get(tourUrl.create().url);
+        }
+    };
 
     const { delete: destroy } = useForm();
 
@@ -203,20 +248,111 @@ export default function Index() {
                         <h1 className="text-2xl font-bold text-gray-900">
                             Danh sách Tour
                         </h1>
-                        <div className="flex items-center gap-3">
-                            <Button
-                                onClick={openCreateCategoryDialog}
-                                variant="secondary"
-                                className="border shadow-sm"
-                            >
-                                <Plus className="mr-2 h-4 w-4" /> Thêm Danh Mục
-                            </Button>
-                            <Link href={tourUrl.create()}>
+                        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                            <DialogTrigger asChild>
                                 <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                                     <Plus className="mr-2 h-4 w-4" /> Tạo Tour mới
                                 </Button>
-                            </Link>
-                        </div>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[500px]">
+                                <DialogHeader>
+                                    <DialogTitle>Tạo Tour Mới</DialogTitle>
+                                    <DialogDescription>
+                                        Bạn muốn tạo tour mới hoàn toàn hay sao chép từ tour có sẵn?
+                                    </DialogDescription>
+                                </DialogHeader>
+
+                                <div className="grid gap-6 py-4">
+                                    <RadioGroup
+                                        value={createMode}
+                                        onValueChange={(val: 'new' | 'clone') => setCreateMode(val)}
+                                        className="grid grid-cols-2 gap-4"
+                                    >
+                                        <div>
+                                            <RadioGroupItem value="new" id="new" className="peer sr-only" />
+                                            <Label
+                                                htmlFor="new"
+                                                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                                            >
+                                                <Plus className="mb-3 h-6 w-6" />
+                                                Tạo mới hoàn toàn
+                                            </Label>
+                                        </div>
+                                        <div>
+                                            <RadioGroupItem value="clone" id="clone" className="peer sr-only" />
+                                            <Label
+                                                htmlFor="clone"
+                                                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                                            >
+                                                <Copy className="mb-3 h-6 w-6" /> {/* Replace 'files' with valid icon later if needed, assuming Copy or similar exists. Using 'BoxSelect' or 'Copy' from lucide */}
+                                                Sao chép tour cũ
+                                            </Label>
+                                        </div>
+                                    </RadioGroup>
+
+                                    {createMode === 'clone' && (
+                                        <div className="space-y-2 flex flex-col">
+                                            <Label>Chọn Tour để sao chép</Label>
+                                            <Popover open={isClonePopoverOpen} onOpenChange={setIsClonePopoverOpen}>
+                                                <PopoverTrigger asChild>
+                                                    <Button
+                                                        variant="outline"
+                                                        role="combobox"
+                                                        aria-expanded={isClonePopoverOpen}
+                                                        className="w-full justify-between"
+                                                    >
+                                                        {selectedCloneTourId
+                                                            ? allTours.find((t) => String(t.id) === selectedCloneTourId)?.title
+                                                            : "-- Chọn tour --"}
+                                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-[450px] p-0">
+                                                    <Command>
+                                                        <CommandInput placeholder="Tìm kiếm tour..." />
+                                                        <CommandList>
+                                                            <CommandEmpty>Không tìm thấy tour nào.</CommandEmpty>
+                                                            <CommandGroup>
+                                                                {allTours.map((t) => (
+                                                                    <CommandItem
+                                                                        key={t.id}
+                                                                        value={t.title}
+                                                                        onSelect={() => {
+                                                                            setSelectedCloneTourId(String(t.id) === selectedCloneTourId ? "" : String(t.id));
+                                                                            setIsClonePopoverOpen(false);
+                                                                        }}
+                                                                    >
+                                                                        <Check
+                                                                            className={cn(
+                                                                                "mr-2 h-4 w-4",
+                                                                                selectedCloneTourId === String(t.id) ? "opacity-100" : "opacity-0"
+                                                                            )}
+                                                                        />
+                                                                        {t.title}
+                                                                    </CommandItem>
+                                                                ))}
+                                                            </CommandGroup>
+                                                        </CommandList>
+                                                    </Command>
+                                                </PopoverContent>
+                                            </Popover>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <DialogFooter>
+                                    <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                                        Hủy
+                                    </Button>
+                                    <Button
+                                        onClick={handleCloneSubmit}
+                                        disabled={createMode === 'clone' && !selectedCloneTourId || processingClone}
+                                    >
+                                        {createMode === 'new' ? 'Tiếp tục tạo mới' : 'Sao chép Tour'}
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                     </div>
 
                     {/* Search và Filter */}
@@ -339,9 +475,7 @@ export default function Index() {
                                                             <p className="font-medium text-gray-900">
                                                                 {tour.title}
                                                             </p>
-                                                            <p className="text-xs text-gray-500 line-clamp-1">
-                                                                {tour.short_description || 'Chưa có mô tả'}
-                                                            </p>
+
                                                         </div>
                                                     </div>
                                                 </TableCell>
@@ -439,7 +573,7 @@ export default function Index() {
                                                                 <Pencil className="h-4 w-4" />
                                                             </Button>
                                                         </Link>
-                                                        {(!tour.instances || tour.instances.length === 0) && (
+                                                        
                                                             <Link
                                                                 href={`/tours/${tour.id}/instances/create`}
                                                             >
@@ -452,7 +586,7 @@ export default function Index() {
                                                                     <Plus className="h-4 w-4" />
                                                                 </Button>
                                                             </Link>
-                                                        )}
+                                                        
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"

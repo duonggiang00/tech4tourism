@@ -455,7 +455,7 @@ export default function Edit({
     const toggleSelection = (field: 'policy_ids' | 'guide_ids', id: number) => {
         const currentIds = data[field];
         if (currentIds.includes(id)) {
-            setData(field, currentIds.filter((item) => item !== id));
+            setData(field, currentIds.filter((item: number) => item !== id));
         } else {
             setData(field, [...currentIds, id]);
         }
@@ -803,7 +803,11 @@ export default function Edit({
                                             </div>
                                             <div className="w-32">
                                                 <Label className="text-xs text-gray-500">Thành tiền</Label>
-                                                <div className="mt-1 flex h-10 items-center rounded-md border bg-gray-100 px-3 font-bold text-green-600">${item.price_total.toLocaleString()}</div>
+                                                <div className="mt-1 flex h-10 items-center rounded-md border bg-gray-100 px-3 font-bold text-green-600">
+                                                    {new Intl.NumberFormat('vi-VN', {
+                                                        style: 'decimal',
+                                                    }).format(item.price_total)}
+                                                </div>
                                             </div>
                                         </div>
                                     ))}

@@ -1,0 +1,70 @@
+
+> build
+> vite build
+
+[36mvite v7.1.5 [32mbuilding for production...[36m[39m
+[plugin @laravel/vite-plugin-wayfinder] Types generated for actions, routes, form variants
+transforming...
+[32m✓[39m 5 modules transformed.
+[31m✗[39m Build failed in 8.20s
+[31merror during build:
+[31m[vite:react-babel] D:\program\laragon\www\FPOLY\tech4tourism\resources\js\pages\Tours\index.tsx: Expected corresponding JSX closing tag for <AppLayout>. (607:8)
+
+[0m [90m 605 |[31m                 [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m 606 |[31m             [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+[31m[1m>[22m[31m[90m 607 |[31m         [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m     |[31m         [31m[1m^[22m[31m
+ [90m 608 |[31m
+ [90m 609 |[31m         {[90m/* Category Dialog */[31m }
+ [90m 610 |[31m     [33m<[31m[33mCategoryFormDialog[31m[0m[31m
+file: [36mD:/program/laragon/www/FPOLY/tech4tourism/resources/js/pages/Tours/index.tsx:607:8[31m
+    at constructor (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:367:19)
+    at TypeScriptParserMixin.raise (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:6630:19)
+    at TypeScriptParserMixin.jsxParseElementAt (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:4760:16)
+    at TypeScriptParserMixin.jsxParseElement (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:4782:17)
+    at TypeScriptParserMixin.parseExprAtom (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:4792:19)
+    at TypeScriptParserMixin.parseExprSubscripts (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:11085:23)
+    at TypeScriptParserMixin.parseUpdate (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:11070:21)
+    at TypeScriptParserMixin.parseMaybeUnary (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:11050:23)
+    at TypeScriptParserMixin.parseMaybeUnary (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:9857:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:10903:61)
+    at TypeScriptParserMixin.parseExprOps (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:10908:23)
+    at TypeScriptParserMixin.parseMaybeConditional (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:10885:23)
+    at TypeScriptParserMixin.parseMaybeAssign (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:10835:21)
+    at d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:9795:39
+    at TypeScriptParserMixin.tryParse (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:6938:20)
+    at TypeScriptParserMixin.parseMaybeAssign (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:9795:18)
+    at d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:10804:39
+    at TypeScriptParserMixin.allowInAnd (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:12436:12)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:10804:17)
+    at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:12503:17)
+    at TypeScriptParserMixin.parseParenAndDistinguishExpression (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:11683:28)
+    at TypeScriptParserMixin.parseExprAtom (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:11335:23)
+    at TypeScriptParserMixin.parseExprAtom (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:4797:20)
+    at TypeScriptParserMixin.parseExprSubscripts (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:11085:23)
+    at TypeScriptParserMixin.parseUpdate (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:11070:21)
+    at TypeScriptParserMixin.parseMaybeUnary (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:11050:23)
+    at TypeScriptParserMixin.parseMaybeUnary (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:9857:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:10903:61)
+    at TypeScriptParserMixin.parseExprOps (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:10908:23)
+    at TypeScriptParserMixin.parseMaybeConditional (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:10885:23)
+    at TypeScriptParserMixin.parseMaybeAssign (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:10835:21)
+    at TypeScriptParserMixin.parseMaybeAssign (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:9806:20)
+    at TypeScriptParserMixin.parseExpressionBase (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:10788:23)
+    at d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:10784:39
+    at TypeScriptParserMixin.allowInAnd (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:12431:16)
+    at TypeScriptParserMixin.parseExpression (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:10784:17)
+    at TypeScriptParserMixin.parseReturnStatement (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:13151:28)
+    at TypeScriptParserMixin.parseStatementContent (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:12807:21)
+    at TypeScriptParserMixin.parseStatementContent (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:9532:18)
+    at TypeScriptParserMixin.parseStatementLike (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:12776:17)
+    at TypeScriptParserMixin.parseStatementListItem (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:12756:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:13325:61)
+    at TypeScriptParserMixin.parseBlockBody (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:13318:10)
+    at TypeScriptParserMixin.parseBlock (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:13306:10)
+    at TypeScriptParserMixin.parseFunctionBody (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:12110:24)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:12096:10)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:9252:18)
+    at d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:13454:12
+    at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:12413:14)
+    at TypeScriptParserMixin.parseFunction (d:\program\laragon\www\FPOLY\tech4tourism\node_modules\@babel\parser\lib\index.js:13453:10)[39m

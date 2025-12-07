@@ -1,4 +1,4 @@
-import { TripAssignment } from '@/app';
+import { TripAssignment } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,8 +7,8 @@ import { Trash2, UserCheck } from 'lucide-react';
 
 interface Props {
     assignments: TripAssignment[];
-    onAdd: () => void;
-    onDelete: (id: number) => void;
+    onAdd?: () => void;
+    onDelete?: (id: number) => void;
 }
 
 // Helper để hiển thị trạng thái đẹp hơn
@@ -42,14 +42,16 @@ export default function GuideList({ assignments, onAdd, onDelete }: Props) {
                     <UserCheck className="h-5 w-5 text-blue-600" />
                     Hướng dẫn viên ({assignments.length})
                 </CardTitle>
-                <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={onAdd}
-                    className="h-8 text-xs"
-                >
-                    + Thêm
-                </Button>
+                {onAdd && (
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={onAdd}
+                        className="h-8 text-xs"
+                    >
+                        + Thêm
+                    </Button>
+                )}
             </CardHeader>
             <CardContent>
                 {assignments.length === 0 ? (
@@ -81,14 +83,16 @@ export default function GuideList({ assignments, onAdd, onDelete }: Props) {
                                 </div>
                                 <div className="flex items-center gap-3">
                                     {getStatusBadge(item.status)}
-                                    <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-700"
-                                        onClick={() => onDelete(item.id)}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    {onDelete && (
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-700"
+                                            onClick={() => onDelete(item.id)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         ))}

@@ -36,7 +36,7 @@ export default function GuideDashboard({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <div className="flex flex-col gap-6 p-6 min-h-screen bg-gray-50">
+            <div className="flex flex-col gap-6 p-4 md:p-6 min-h-screen bg-gray-50">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     <div>
@@ -48,8 +48,8 @@ export default function GuideDashboard({
                         </p>
                     </div>
                     {upcomingAssignments.length > 0 && (
-                        <Button className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200">
-                            <Link href="/guide/schedule" className="flex items-center gap-2">
+                        <Button className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200">
+                            <Link href="/guide/schedule" className="flex items-center justify-center gap-2 w-full">
                                 <Calendar className="w-4 h-4" /> Xem lịch chi tiết
                             </Link>
                         </Button>
@@ -121,7 +121,7 @@ export default function GuideDashboard({
                             <div className="grid gap-4">
                                 {upcomingAssignments.map((assignment) => (
                                     <div key={assignment.id} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all">
-                                        <div className="flex justify-between items-start">
+                                        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                                             <div>
                                                 <Badge className="mb-2 bg-blue-100 text-blue-700 hover:bg-blue-200 border-0">
                                                     {new Date(assignment.tour_instance.date_start).toLocaleDateString('vi-VN')}
@@ -129,7 +129,7 @@ export default function GuideDashboard({
                                                 <h3 className="font-bold text-gray-800 text-lg mb-1">
                                                     {assignment.tour_instance.tour_template?.title || 'Chuyến đi chưa cập nhật tên'}
                                                 </h3>
-                                                <div className="flex items-center gap-4 text-sm text-gray-500">
+                                                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                                                     <span className="flex items-center gap-1">
                                                         <Clock className="w-4 h-4" /> {assignment.tour_instance.tour_template?.day}N{assignment.tour_instance.tour_template?.night}Đ
                                                     </span>
@@ -138,7 +138,7 @@ export default function GuideDashboard({
                                                     </span>
                                                 </div>
                                             </div>
-                                            <Button variant="outline" asChild className="shrink-0">
+                                            <Button variant="outline" asChild className="shrink-0 w-full sm:w-auto">
                                                 <Link href={`/guide/trip/${assignment.id}`}>
                                                     Chi tiết
                                                 </Link>
@@ -170,7 +170,7 @@ export default function GuideDashboard({
                                     <div className="divide-y divide-gray-100">
                                         {pastAssignments.map((assignment) => (
                                             <div key={assignment.id} className="p-4 hover:bg-gray-50 transition-colors">
-                                                <div className="flex justify-between items-start mb-1 h-140">
+                                                <div className="flex justify-between items-start mb-1 h-auto min-h-[3rem]">
                                                     <p className="text-sm font-medium text-gray-900 line-clamp-2">
                                                         {assignment.tour_instance.tour_template?.title}
                                                     </p>

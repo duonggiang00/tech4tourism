@@ -487,37 +487,7 @@ export default function Create({
 
     const handleDayChange = (val: string) => {
         const newDay = Number(val);
-        // Cập nhật số ngày
-        // setData('day', newDay); // useForm setData merges, so we need to be careful. 
-        // Better to update both fields in one go if possible, but useForm's setData(key, val) is single.
-        // We will use setData(callback) style to update both.
-
-        setData(prev => {
-            const currentSchedules = [...prev.schedules];
-            if (newDay > currentSchedules.length) {
-                // Add new days
-                for (let i = currentSchedules.length; i < newDay; i++) {
-                    currentSchedules.push({
-                        name: `Ngày ${i + 1}: `,
-                        description: '',
-                        destination_id: '',
-                        date: i + 1,
-                        breakfast: false,
-                        lunch: false,
-                        dinner: false,
-                    });
-                }
-            } else if (newDay < currentSchedules.length) {
-                // Remove excess days
-                currentSchedules.length = newDay > 0 ? newDay : 0;
-            }
-
-            return {
-                ...prev,
-                day: newDay,
-                schedules: currentSchedules
-            };
-        });
+        setData('day', newDay);
     };
 
     // --- VALIDATION STATE ---
@@ -1364,15 +1334,16 @@ export default function Create({
                                                     Thành tiền
                                                 </Label>
                                                 <div className="mt-1 flex h-10 items-center rounded-md border bg-gray-100 px-3 font-bold text-green-600">
-                                                    $
-                                                    {item.price_total.toLocaleString()}
+                                                    {new Intl.NumberFormat('vi-VN', {
+                                                        style: 'decimal',
+                                                    }).format(item.price_total)}
                                                 </div>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm md:col-span-3">
                                 <h3 className="mb-4 font-semibold text-gray-800">
                                     Chính sách
                                 </h3>
@@ -1401,70 +1372,7 @@ export default function Create({
                                     ))}
                                 </div>
                             </div>
-                            {/* Hướng dẫn viên */}
-                            <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm md:col-span-2">
-                                <div className="flex items-center gap-2">
-                                    <Users className="h-5 w-5 text-gray-600" />
-                                    <h3 className="text-lg font-semibold text-gray-800">
-                                        Hướng dẫn viên
-                                    </h3>
-                                </div>
-                                <p className="text-sm text-gray-600">
-                                    Chọn hướng dẫn viên cho tour này. Các hướng dẫn viên này sẽ được tự động gán cho các chuyến đi mới.
-                                </p>
-                                <div className="max-h-60 space-y-2 overflow-y-auto rounded-md border border-gray-200 p-3">
-                                    {guides.length === 0 ? (
-                                        <p className="text-sm text-gray-500">
-                                            Chưa có hướng dẫn viên nào trong hệ thống.
-                                        </p>
-                                    ) : (
-                                        guides.map((guide) => (
-                                            <div
-                                                key={guide.id}
-                                                className={`flex items-center justify-between rounded-md border p-3 ${guide.has_active_tour
-                                                    ? 'border-amber-200 bg-amber-50'
-                                                    : 'border-gray-200 bg-white'
-                                                    }`}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <Checkbox
-                                                        id={`guide-${guide.id}`}
-                                                        checked={data.guide_ids.includes(
-                                                            guide.id,
-                                                        )}
-                                                        onCheckedChange={() =>
-                                                            toggleSelection(
-                                                                'guide_ids',
-                                                                guide.id,
-                                                            )
-                                                        }
-                                                        disabled={
-                                                            guide.has_active_tour
-                                                        }
-                                                    />
-                                                    <Label
-                                                        htmlFor={`guide-${guide.id}`}
-                                                        className={`cursor-pointer ${guide.has_active_tour
-                                                            ? 'text-gray-400'
-                                                            : 'text-gray-700'
-                                                            }`}
-                                                    >
-                                                        {guide.name} ({guide.email})
-                                                    </Label>
-                                                </div>
-                                                {guide.has_active_tour && (
-                                                    <Badge
-                                                        variant="secondary"
-                                                        className="bg-amber-100 text-amber-800"
-                                                    >
-                                                        Đã có tour
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
+
                         </div>
 
                     </div>
@@ -1694,8 +1602,8 @@ export default function Create({
 
 
                     {/* FOOTER ACTION BUTTONS */}
-                    <div className="fixed bottom-0 left-0 right-0 border-t bg-white p-4 shadow-lg z-50">
-                        <div className="mx-auto max-w-7xl flex justify-between items-center">
+                    <div className="fixed bottom-6 left-1/2 z-50 w-full max-w-4xl -translate-x-1/2 rounded-full border bg-white px-6 py-3 shadow-2xl">
+                        <div className="flex items-center justify-between">
                             <Button
                                 type="button"
                                 variant="outline"

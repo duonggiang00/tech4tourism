@@ -102,7 +102,10 @@ class TourInstanceController extends Controller
         DB::beginTransaction();
         try {
             // Tính date_end
-            $dateEnd = Carbon::parse($validated['date_start'])->addDays($template->day - 1);
+            $templateDay = (int) $template->day; // Ensure int
+            $startDate = Carbon::parse($validated['date_start']);
+            // date_end = start_date + (day-1) days. Time is preserved.
+            $dateEnd = $startDate->copy()->addDays(max(0, $templateDay - 1));
 
             // Nếu instance không có giá, dùng giá từ template (giá mặc định)
             $instance = TourInstance::create([
@@ -146,8 +149,10 @@ class TourInstanceController extends Controller
             DB::commit();
             Log::info('TourInstance created ID: ' . $instance->id);
 
-            return redirect()->route('tours.show', $template)
-                ->with('success', 'Đã tạo chuyến đi thành công!');
+            return back()->with([
+                'success' => 'Đã tạo chuyến đi thành công!',
+                'success_instance_id' => $instance->id
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Lỗi khi tạo TourInstance: ' . $e->getMessage());
@@ -174,6 +179,40 @@ class TourInstanceController extends Controller
         ]);
     }
 
+
+
+    /**
+     * Hiển thị form chỉnh sửa instance
+     */
+    public function edit($instanceId)
+    {
+        $instance = TourInstance::with(['tourTemplate', 'assignments'])->findOrFail($instanceId);
+        $template = $instance->tourTemplate;
+
+        // Lấy danh sách HDV (role=2)
+        // Logic tương tự create: check busy assignments
+        // Tuy nhiên, nếu assignment thuộc về CHÍNH instance này thì không coi là busy
+        $busyGuideIds = TripAssignment::whereIn('status', ['0', '1']) // Chờ hoặc Đang thực hiện
+            ->where('tour_instance_id', '!=', $instanceId) // KHÔNG tính instance đang sửa
+            ->pluck('user_id')
+            ->toArray();
+
+        $guides = User::where('role', 2)->get()->map(function ($user) use ($busyGuideIds) {
+            $user->has_active_tour = in_array($user->id, $busyGuideIds);
+            return $user;
+        });
+
+        // Lấy danh sách guide_ids hiện tại của instance
+        $currentGuideIds = $instance->assignments->pluck('user_id')->toArray();
+
+        return Inertia::render('TourInstances/Edit', [
+            'instance' => $instance,
+            'template' => $template,
+            'guides' => $guides,
+            'currentGuideIds' => $currentGuideIds,
+        ]);
+    }
+
     /**
      * Cập nhật instance
      */
@@ -185,6 +224,8 @@ class TourInstanceController extends Controller
             'price_adult' => 'nullable|numeric|min:0',
             'price_children' => 'nullable|numeric|min:0',
             'status' => 'required|in:0,1,2,3',
+            'guide_ids' => 'nullable|array',
+            'guide_ids.*' => 'exists:users,id',
         ]);
 
         $instance = TourInstance::with('tourTemplate')->findOrFail($instanceId);
@@ -197,8 +238,48 @@ class TourInstanceController extends Controller
 
             $instance->update($validated);
 
+            // Cập nhật hướng dẫn viên (Trip Assignments)
+            // 1. Lấy danh sách guide IDs hiện tại
+            $currentGuideIds = TripAssignment::where('tour_instance_id', $instance->id)
+                ->pluck('user_id')
+                ->toArray();
+
+            $newGuideIds = $validated['guide_ids'] ?? [];
+
+            // 2. Xác định guides cần thêm và cần xóa
+            $toAdd = array_diff($newGuideIds, $currentGuideIds);
+            $toRemove = array_diff($currentGuideIds, $newGuideIds);
+
+            // 3. Thêm mới assignments
+            foreach ($toAdd as $guideId) {
+                TripAssignment::create([
+                    'tour_id' => $instance->tourTemplate->id,
+                    'tour_instance_id' => $instance->id,
+                    'user_id' => $guideId,
+                    'status' => '0', // Mặc định là chờ xác nhận
+                ]);
+            }
+
+            // 4. Xóa assignments (chỉ xóa nếu status cho phép hoặc force delete)
+            if (!empty($toRemove)) {
+                TripAssignment::where('tour_instance_id', $instance->id)
+                    ->whereIn('user_id', $toRemove)
+                    ->delete();
+            }
+
             DB::commit();
-            return redirect()->back()->with('success', 'Cập nhật chuyến đi thành công!');
+
+            // Redirect về trang chi tiết tour thay vì back() để thấy thay đổi rõ hơn,
+            // hoặc back() cũng được nhưng cần đảm bảo frontend refresh.
+            // Trong Edit.tsx đang dùng router.visit nên nó sẽ load lại trang đích.
+            // Controller trả về redirect()->back() ở đây thực ra là trả về json cho Inertia handle.
+            // Tuy nhiên Edit.tsx đang expect onSuccess redirect về detail page.
+            // inertia response ở đây không quan trọng lắm nếu frontend chủ động navigate, 
+            // nhưng để đúng chuẩn Inertia thì nên redirect.
+
+            return redirect()->route('tours.show', $instance->tourTemplate->id)
+                ->with('success', 'Cập nhật chuyến đi thành công!');
+
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Có lỗi xảy ra: ' . $e->getMessage()]);
@@ -210,14 +291,16 @@ class TourInstanceController extends Controller
      */
     public function destroy($instanceId)
     {
-        $instance = TourInstance::findOrFail($instanceId);
+        $instance = TourInstance::with('tourTemplate')->findOrFail($instanceId);
 
         // Kiểm tra xem có booking nào không
         if ($instance->bookings()->count() > 0) {
             return back()->withErrors(['error' => 'Không thể xóa chuyến đi đã có booking!']);
         }
 
+        $tourId = $instance->tourTemplate->id;
         $instance->delete();
-        return redirect()->back()->with('success', 'Xóa chuyến đi thành công!');
+
+        return redirect()->route('tours.show', $tourId)->with('success', 'Xóa chuyến đi thành công!');
     }
 }

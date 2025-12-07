@@ -181,18 +181,18 @@ export default function Schedule({ assignments, filters }: Props) {
                                                     </div>
                                                 </div>
 
-                                                <div className="flex flex-col gap-2">
+                                                <div className="flex flex-col gap-2 w-full md:w-auto mt-4 md:mt-0">
                                                     {assignment.status === '0' && (
                                                         <Button
                                                             onClick={() => handleConfirmAssignment(assignment.id)}
-                                                            className="gap-2"
+                                                            className="gap-2 w-full md:w-auto"
                                                         >
                                                             <Check className="h-4 w-4" />
                                                             Xác nhận đã nhận
                                                         </Button>
                                                     )}
-                                                    <Link href={guide?.trip?.detail ? guide.trip.detail(assignment.id) : `/guide/trip/${assignment.id}`}>
-                                                        <Button variant="outline" className="gap-2">
+                                                    <Link href={guide?.trip?.detail ? guide.trip.detail(assignment.id) : `/guide/trip/${assignment.id}`} className="w-full md:w-auto">
+                                                        <Button variant="outline" className="gap-2 w-full md:w-auto">
                                                             <Eye className="h-4 w-4" />
                                                             Xem chi tiết
                                                         </Button>

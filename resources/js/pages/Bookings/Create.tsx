@@ -97,7 +97,7 @@ export default function CreateBooking({
 }: CreateBookingProps) {
     const isAdminMode = isAdmin || (Array.isArray(templates) && templates.length > 0) || (Array.isArray(instances) && instances.length > 0);
     const [showImportDialog, setShowImportDialog] = useState(false);
-    
+
     // State quản lý việc chọn Template
     const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
 
@@ -125,17 +125,24 @@ export default function CreateBooking({
         }));
     };
 
+    const updatePassengers = (newPassengers: Passenger[]) => {
+        setData((prevData) => ({
+            ...prevData,
+            passengers: newPassengers
+        }));
+    };
+
     // --- LOGIC LỌC INSTANCE ---
     // Khi chọn Template -> Lọc ra danh sách Instances thuộc Template đó
     const availableInstances = useMemo(() => {
         if (!isAdminMode) return instances || [];
-        
+
         // Nếu đã chọn Template, chỉ hiện instance của template đó
         if (selectedTemplateId && templates) {
             const template = templates.find(t => t.id === Number(selectedTemplateId));
             return template?.instances || [];
         }
-        
+
         // Mặc định hiện tất cả instances có sẵn
         return instances || [];
     }, [selectedTemplateId, templates, instances, isAdminMode]);
@@ -190,7 +197,7 @@ export default function CreateBooking({
                 return { ...p, type: 1 };
             });
         }
-        setData('passengers', newPassengers);
+        updatePassengers(newPassengers);
     }, [data.booking.adults, data.booking.children]);
 
     const handleExcelImport = (importedPassengers: Passenger[]) => {
@@ -219,7 +226,7 @@ export default function CreateBooking({
         }
 
         const submitUrl = isAdminMode ? '/admin/bookings' : '/booking';
-        
+
         // 2. Chuẩn bị dữ liệu gửi đi (Clean Data)
         const flatData: any = {
             adults: data.booking.adults,
@@ -245,7 +252,7 @@ export default function CreateBooking({
             onSuccess: () => {
                 toast.success('Thành công!');
                 if (isAdminMode) {
-                    reset(); 
+                    reset();
                     setSelectedTemplateId('');
                 }
             },
@@ -276,18 +283,18 @@ export default function CreateBooking({
         >
             <Head title="Tạo Booking" />
 
-            <div className="min-h-screen bg-gray-50/50 py-8">
+            <div className="min-h-screen bg-gray-50/50 py-4 lg:py-8">
                 <div className="mx-auto max-w-5xl px-4">
-                    <div className="mb-6 flex items-center justify-between">
-                        <Button variant="ghost" onClick={() => window.history.back()}>
+                    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <Button variant="ghost" onClick={() => window.history.back()} className="self-start sm:self-auto">
                             <ArrowLeft className="mr-2 h-4 w-4" /> Quay lại
                         </Button>
-                        <h1 className="text-2xl font-bold text-gray-800">
+                        <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
                             {isAdminMode ? 'Tạo Booking (Admin)' : 'Đặt tour'}
                         </h1>
                     </div>
 
-                    <form onSubmit={submit} className="grid gap-8 lg:grid-cols-3">
+                    <form onSubmit={submit} className="grid gap-6 lg:gap-8 lg:grid-cols-3">
                         <div className="space-y-6 lg:col-span-2">
                             {/* --- SECTION 1: CHỌN TOUR --- */}
                             {isAdminMode && (instances || templates || tours) && (
@@ -298,7 +305,7 @@ export default function CreateBooking({
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
-                                        
+
                                         {/* 1. Chọn Template Tour (Nếu có) */}
                                         {templates && templates.length > 0 && (
                                             <div className="space-y-2">
@@ -307,7 +314,7 @@ export default function CreateBooking({
                                                     templates={templates}
                                                     value={selectedTemplateId}
                                                     onChange={(val) => {
-                                                        setSelectedTemplateId(val);
+                                                        setSelectedTemplateId(String(val));
                                                         // Reset instance cũ khi chọn template mới
                                                         updateBookingField('tour_instance_id', '');
                                                         // KHÔNG update tour_id ở đây để tránh lỗi validation 'invalid id'
@@ -339,7 +346,7 @@ export default function CreateBooking({
                                                     <SelectContent>
                                                         {availableInstances.map((i) => (
                                                             <SelectItem key={i.id} value={String(i.id)}>
-                                                                {new Date(i.date_start).toLocaleDateString('vi-VN')} 
+                                                                {new Date(i.date_start).toLocaleDateString('vi-VN')}
                                                                 {i.tourTemplate ? ` - ${i.tourTemplate.title}` : ''}
                                                                 {i.price_adult ? ` (${new Intl.NumberFormat('vi-VN').format(i.price_adult)}đ)` : ''}
                                                             </SelectItem>
@@ -357,7 +364,7 @@ export default function CreateBooking({
                                             <div className="space-y-2">
                                                 <Label>Chọn Tour <span className="text-red-500">*</span></Label>
                                                 <TourCombobox
-                                                    tours={tours}
+                                                    tours={tours && tours.map(t => ({ ...t, price_adult: t.price_adult || 0, price_children: t.price_children || 0 }))}
                                                     value={data.booking.tour_id}
                                                     onChange={(val) => updateBookingField('tour_id', val)}
                                                     placeholder="Tìm tour..."
@@ -374,7 +381,7 @@ export default function CreateBooking({
                                 <CardContent className="grid gap-5 sm:grid-cols-2">
                                     <div className="sm:col-span-2">
                                         <Label>Họ tên <span className="text-red-500">*</span></Label>
-                                        <Input 
+                                        <Input
                                             value={data.booking.client_name}
                                             onChange={(e) => updateBookingField('client_name', e.target.value)}
                                             required placeholder="Nguyễn Văn A"
@@ -382,7 +389,7 @@ export default function CreateBooking({
                                     </div>
                                     <div>
                                         <Label>Số điện thoại <span className="text-red-500">*</span></Label>
-                                        <Input 
+                                        <Input
                                             value={data.booking.client_phone}
                                             onChange={(e) => updateBookingField('client_phone', e.target.value)}
                                             required placeholder="09xxxx"
@@ -390,7 +397,7 @@ export default function CreateBooking({
                                     </div>
                                     <div>
                                         <Label>Email <span className="text-red-500">*</span></Label>
-                                        <Input 
+                                        <Input
                                             type="email"
                                             value={data.booking.client_email}
                                             onChange={(e) => updateBookingField('client_email', e.target.value)}
@@ -403,7 +410,7 @@ export default function CreateBooking({
                             {/* --- SECTION 3: SỐ LƯỢNG --- */}
                             <Card>
                                 <CardHeader><CardTitle>Số lượng khách</CardTitle></CardHeader>
-                                <CardContent className="grid grid-cols-2 gap-6">
+                                <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     <div>
                                         <Label>Người lớn</Label>
                                         <div className="flex items-center gap-3 mt-2">
@@ -440,77 +447,82 @@ export default function CreateBooking({
                                 <CardHeader className="flex flex-row justify-between items-center">
                                     <CardTitle>Danh sách hành khách</CardTitle>
                                     <Button type="button" variant="outline" size="sm" onClick={() => setShowImportDialog(true)} className="text-green-700 border-green-200 hover:bg-green-50">
-                                        <FileSpreadsheet className="w-4 h-4 mr-2"/> Excel
+                                        <FileSpreadsheet className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Excel</span>
                                     </Button>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     {data.passengers.map((pax, idx) => (
                                         <div key={idx} className="space-y-3">
-                                            <div className="bg-gray-50 p-3 rounded-lg border grid gap-3 sm:grid-cols-12 items-center">
-                                                <div className="sm:col-span-1 flex justify-center font-bold text-gray-400">#{idx+1}</div>
+                                            <div className="bg-gray-50 p-3 rounded-lg border grid gap-3 grid-cols-1 sm:grid-cols-12 items-start sm:items-center">
+                                                <div className="sm:col-span-1 flex justify-between sm:justify-center font-bold text-gray-400">
+                                                    <span>#{idx + 1}</span>
+                                                    <span className={`sm:hidden text-xs px-2 py-1 rounded-full ${pax.type === 0 ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                        {pax.type === 0 ? 'Người lớn' : 'Trẻ em'}
+                                                    </span>
+                                                </div>
                                                 <div className="sm:col-span-4">
-                                                    <Input 
-                                                        placeholder="Họ tên" 
-                                                        value={pax.fullname} 
+                                                    <Input
+                                                        placeholder="Họ tên"
+                                                        value={pax.fullname}
                                                         onChange={(e) => {
                                                             const next = [...data.passengers];
                                                             next[idx].fullname = e.target.value;
-                                                            setData('passengers', next);
+                                                            updatePassengers(next);
                                                         }}
                                                     />
                                                 </div>
                                                 <div className="sm:col-span-2">
-                                                    <Input 
-                                                        placeholder="CCCD" 
-                                                        value={pax.cccd || ''} 
+                                                    <Input
+                                                        placeholder="CCCD"
+                                                        value={pax.cccd || ''}
                                                         onChange={(e) => {
                                                             const next = [...data.passengers];
                                                             next[idx].cccd = e.target.value;
-                                                            setData('passengers', next);
+                                                            updatePassengers(next);
                                                         }}
                                                     />
                                                 </div>
                                                 <div className="sm:col-span-2">
-                                                    <Input 
-                                                        placeholder="Số điện thoại" 
-                                                        value={pax.phone || ''} 
+                                                    <Input
+                                                        placeholder="Số điện thoại"
+                                                        value={pax.phone || ''}
                                                         onChange={(e) => {
                                                             const next = [...data.passengers];
                                                             next[idx].phone = e.target.value;
-                                                            setData('passengers', next);
+                                                            updatePassengers(next);
                                                         }}
                                                     />
                                                 </div>
                                                 <div className="sm:col-span-2">
-                                                    <Select 
-                                                        value={String(pax.gender)} 
+                                                    <Select
+                                                        value={String(pax.gender)}
                                                         onValueChange={(v) => {
                                                             const next = [...data.passengers];
                                                             next[idx].gender = Number(v);
-                                                            setData('passengers', next);
+                                                            updatePassengers(next);
                                                         }}
                                                     >
-                                                        <SelectTrigger><SelectValue/></SelectTrigger>
+                                                        <SelectTrigger><SelectValue placeholder="Giới tính" /></SelectTrigger>
                                                         <SelectContent>
                                                             <SelectItem value="0">Nam</SelectItem>
                                                             <SelectItem value="1">Nữ</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                 </div>
-                                                <div className="sm:col-span-1 flex justify-center">
-                                                     <span className={`text-xs px-2 py-1 rounded-full ${pax.type === 0 ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
-                                                        {pax.type === 0 ? 'Người lớn' : 'Trẻ em'}
-                                                     </span>
+                                                <div className="hidden sm:flex sm:col-span-1 justify-center">
+                                                    <span className={`text-xs px-2 py-1 rounded-full ${pax.type === 0 ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                        {pax.type === 0 ? 'NL' : 'TE'}
+                                                    </span>
                                                 </div>
                                             </div>
                                             <div>
-                                                <Textarea 
-                                                    placeholder="Yêu cầu đặc biệt (nếu có)" 
-                                                    value={pax.request || ''} 
+                                                <Textarea
+                                                    placeholder="Yêu cầu đặc biệt (nếu có)"
+                                                    value={pax.request || ''}
                                                     onChange={(e) => {
                                                         const next = [...data.passengers];
                                                         next[idx].request = e.target.value;
-                                                        setData('passengers', next);
+                                                        updatePassengers(next);
                                                     }}
                                                     className="min-h-[60px]"
                                                 />
@@ -523,16 +535,16 @@ export default function CreateBooking({
 
                         {/* --- CỘT PHẢI: BILLING --- */}
                         <div className="lg:col-span-1">
-                            <Card className="sticky top-6 border-blue-200 shadow-lg">
+                            <Card className="sticky bottom-0 lg:top-6 border-blue-200 shadow-lg z-10">
                                 <CardHeader className="bg-blue-50 border-b border-blue-100">
                                     <CardTitle>Tổng quan</CardTitle>
                                 </CardHeader>
                                 <CardContent className="pt-6 space-y-4">
                                     {displayTour ? (
                                         <>
-                                            <div className="aspect-video bg-gray-200 rounded overflow-hidden">
+                                            <div className="hidden lg:block aspect-video bg-gray-200 rounded overflow-hidden">
                                                 {/* FIX LỖI ẢNH 403 TẠI ĐÂY */}
-                                                <img 
+                                                <img
                                                     src={getImageUrl(displayTour.thumbnail)}
                                                     className="w-full h-full object-cover"
                                                     onError={(e) => {
@@ -541,8 +553,8 @@ export default function CreateBooking({
                                                     }}
                                                 />
                                             </div>
-                                            <h3 className="font-bold text-lg">{displayTour.title}</h3>
-                                            
+                                            <h3 className="font-bold text-lg lg:text-lg">{displayTour.title}</h3>
+
                                             {selectedInstance ? (
                                                 <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
                                                     <p>Khởi hành: <span className="font-semibold">{new Date(selectedInstance.date_start).toLocaleDateString('vi-VN')}</span></p>
@@ -594,10 +606,10 @@ export default function CreateBooking({
                 </div>
             </div>
 
-            <ExcelImportDialog 
-                open={showImportDialog} 
-                onOpenChange={setShowImportDialog} 
-                onImport={handleExcelImport} 
+            <ExcelImportDialog
+                open={showImportDialog}
+                onOpenChange={setShowImportDialog}
+                onImport={handleExcelImport}
             />
         </AppLayout>
     );

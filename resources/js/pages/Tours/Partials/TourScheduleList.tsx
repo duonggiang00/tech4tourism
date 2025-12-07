@@ -64,7 +64,7 @@ export default function TourScheduleList({
                                 <p className="line-clamp-3 text-sm leading-relaxed whitespace-pre-line text-gray-600">
                                     {schedule.description}
                                 </p>
-                            
+
                             </div>
                         ))}
                     </div>

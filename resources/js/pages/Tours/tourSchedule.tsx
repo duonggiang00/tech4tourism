@@ -1,4 +1,4 @@
-import { Destination, Tour } from '@/app'; // Đảm bảo import đúng Types
+import { Destination, Tour } from '@/types'; // Đảm bảo import đúng Types
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -288,7 +288,20 @@ export function FormTourScheduleDialog({
                         <Select
                             value={form.destination_id}
                             onValueChange={(value) => {
-                                setForm({ ...form, destination_id: value });
+                                const selectedDest = availableLocations.find(
+                                    (d) => String(d.id) === value,
+                                );
+                                setForm({
+                                    ...form,
+                                    destination_id: value,
+                                    name: selectedDest
+                                        ? `Tham quan ${selectedDest.name}`
+                                        : form.name,
+                                    description: selectedDest
+                                        ? selectedDest.description ||
+                                        `Khám phá ${selectedDest.name}`
+                                        : form.description,
+                                });
                                 clearError('destination_id');
                             }}
                         >
@@ -412,8 +425,8 @@ export function FormTourScheduleDialog({
                         {loading
                             ? 'Đang lưu...'
                             : schedule
-                              ? 'Lưu thay đổi'
-                              : 'Thêm lịch trình'}
+                                ? 'Lưu thay đổi'
+                                : 'Thêm lịch trình'}
                     </Button>
                 </DialogFooter>
             </DialogContent>

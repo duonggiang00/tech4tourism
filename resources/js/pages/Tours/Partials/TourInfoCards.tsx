@@ -76,32 +76,10 @@ export default function TourInfoCards({ tour, instances }: TourInfoCardsExtended
                     value={`${tour.day} ngày / ${tour.night} đêm`}
                 />
                 <InfoItem
-                    icon={<Users className="h-5 w-5 text-green-600" />}
-                    bg="bg-green-100"
-                    label="Sức chứa"
-                    value={`${tour.limit || 'N/A'} người`}
-                />
-                <InfoItem
                     icon={<MapPin className="h-5 w-5 text-orange-600" />}
                     bg="bg-orange-100"
                     label="Địa điểm"
-                    value={tour.province.name || 'Đang cập nhật...'}
-                />
-                <InfoItem
-                    icon={<Calendar className="h-5 w-5 text-blue-600" />}
-                    bg="bg-blue-100"
-                    label="Thời gian"
-                    // Thay đổi ở đây: Truyền vào một thẻ div chứa 2 dòng thay vì cộng chuỗi
-                    value={
-                        tour.date_start && tour.date_end ? (
-                            <div className="flex flex-col">
-                                <span>Khởi hành: {tour.date_start}</span>
-                                <span>Kết thúc: {tour.date_end}</span>
-                            </div>
-                        ) : (
-                            'Đang cập nhật...'
-                        )
-                    }
+                    value={tour.province?.name || 'Đang cập nhật...'}
                 />
             </CardContent>
         </Card>
