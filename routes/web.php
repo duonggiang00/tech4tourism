@@ -142,6 +142,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         'policies' => PolicyController::class,
     ]);
 
+    Route::post('tours/{tour}/clone', [TourController::class, 'clone'])->name('tours.clone');
+
     // Nested API Resources (Tour Images, Schedules, Service, Assignments)
     Route::prefix('tours/{tour}')->group(function () {
         Route::apiResource('schedules', TourScheduleController::class);
@@ -158,6 +160,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Tour Instance routes (có thể cập nhật/xóa riêng)
     Route::prefix('tour-instances')->name('tour-instances.')->group(function () {
+        Route::get('{instance}/edit', [\App\Http\Controllers\TourInstanceController::class, 'edit'])->name('edit');
         Route::put('{instance}', [\App\Http\Controllers\TourInstanceController::class, 'update'])->name('update');
         Route::delete('{instance}', [\App\Http\Controllers\TourInstanceController::class, 'destroy'])->name('destroy');
     });

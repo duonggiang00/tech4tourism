@@ -6,12 +6,19 @@ import { TourHeaderProps } from '@/types';
 import { Link, router } from '@inertiajs/react';
 import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
 
+interface LocalProps {
+    tour: TourHeaderProps['tour'];
+    categoryName: TourHeaderProps['categoryName'];
+    onEdit?: () => void;
+    onDelete?: () => void;
+}
+
 export default function TourHeader({
     tour,
     categoryName,
     onEdit,
     onDelete,
-}: TourHeaderProps) {
+}: LocalProps) {
     const getStatusInfo = (status: number) => {
         switch (status) {
             case 0:

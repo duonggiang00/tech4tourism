@@ -16,9 +16,9 @@ import {
 
 interface Props {
     tourServices: TourService[];
-    onAdd: () => void;
-    onEdit: (item: TourService) => void;
-    onDelete: (item: TourService) => void;
+    onAdd?: () => void;
+    onEdit?: (item: TourService) => void;
+    onDelete?: (item: TourService) => void;
 }
 
 export default function TourServiceList({
@@ -34,9 +34,11 @@ export default function TourServiceList({
                     <Package className="h-5 w-5 text-blue-600" />
                     Dịch vụ đi kèm ({tourServices.length})
                 </CardTitle>
-                <Button size="sm" variant="outline" onClick={onAdd}>
-                    <Plus className="mr-2 h-4 w-4" /> Thêm mới
-                </Button>
+                {onAdd && (
+                    <Button size="sm" variant="outline" onClick={onAdd}>
+                        <Plus className="mr-2 h-4 w-4" /> Thêm mới
+                    </Button>
+                )}
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
                 {tourServices.length === 0 ? (
@@ -114,24 +116,28 @@ export default function TourServiceList({
 
                                 {/* Các nút Action (Tuyệt đối góc phải trên) */}
                                 <div className="absolute top-4 right-4 flex gap-1">
-                                    <Button
-                                        variant="outline"
-                                        size="icon"
-                                        className="h-8 w-8 hover:border-amber-200 hover:bg-amber-50 hover:text-amber-600"
-                                        onClick={() => onEdit(item)}
-                                        title="Chỉnh sửa"
-                                    >
-                                        <Edit className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="icon"
-                                        className="h-8 w-8 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                                        onClick={() => onDelete(item)}
-                                        title="Xóa"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    {onEdit && (
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-8 w-8 hover:border-amber-200 hover:bg-amber-50 hover:text-amber-600"
+                                            onClick={() => onEdit(item)}
+                                            title="Chỉnh sửa"
+                                        >
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                    )}
+                                    {onDelete && (
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-8 w-8 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                            onClick={() => onDelete(item)}
+                                            title="Xóa"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         ))}

@@ -1,4 +1,4 @@
-import { TourPolicy } from '@/app';
+import { TourPolicy } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import policies from '@/routes/policies';
@@ -7,9 +7,9 @@ import { Eye, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 
 interface Props {
     tourPolicies: TourPolicy[];
-    onAdd: () => void;
+    onAdd?: () => void;
     // Đã xóa onEdit vì không dùng nữa
-    onDelete: (item: TourPolicy) => void;
+    onDelete?: (item: TourPolicy) => void;
 }
 
 export default function TourPolicyList({
@@ -24,9 +24,11 @@ export default function TourPolicyList({
                     <ShieldCheck className="h-5 w-5 text-blue-600" />
                     Chính sách Tour ({tourPolicies.length})
                 </CardTitle>
-                <Button size="sm" variant="outline" onClick={onAdd}>
-                    <Plus className="mr-2 h-4 w-4" /> Thêm mới
-                </Button>
+                {onAdd && (
+                    <Button size="sm" variant="outline" onClick={onAdd}>
+                        <Plus className="mr-2 h-4 w-4" /> Thêm mới
+                    </Button>
+                )}
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
                 {tourPolicies.length === 0 ? (
@@ -62,15 +64,17 @@ export default function TourPolicyList({
                                         </Button>
                                     </Link>
 
-                                    <Button
-                                        variant="outline"
-                                        size="icon"
-                                        className="h-8 w-8 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                                        onClick={() => onDelete(item)}
-                                        title="Xóa khỏi tour"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    {onDelete && (
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            className="h-8 w-8 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                            onClick={() => onDelete(item)}
+                                            title="Xóa khỏi tour"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         ))}

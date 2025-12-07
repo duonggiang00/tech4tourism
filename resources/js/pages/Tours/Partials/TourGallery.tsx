@@ -1,15 +1,21 @@
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { TourGalleryProps } from '@/types';
 import { Plus, X } from 'lucide-react';
+
+interface LocalProps {
+    tour: TourGalleryProps['tour'];
+    images: TourGalleryProps['images'];
+    onAddImage?: () => void;
+    onDeleteImage?: (id: number) => void;
+}
 
 export default function TourGallery({
     tour,
     images,
     onAddImage,
     onDeleteImage,
-}: TourGalleryProps) {
+}: LocalProps) {
     return (
         <Card className="overflow-hidden">
             <CardContent className="p-0">
@@ -26,14 +32,16 @@ export default function TourGallery({
                         <h4 className="text-sm font-semibold text-gray-700">
                             Thư viện ảnh
                         </h4>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 gap-1 text-xs"
-                            onClick={onAddImage}
-                        >
-                            <Plus className="h-3.5 w-3.5" /> Thêm ảnh
-                        </Button>
+                        {onAddImage && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 gap-1 text-xs"
+                                onClick={onAddImage}
+                            >
+                                <Plus className="h-3.5 w-3.5" /> Thêm ảnh
+                            </Button>
+                        )}
                     </div>
                     {images.length > 0 ? (
                         <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
@@ -51,15 +59,17 @@ export default function TourGallery({
                                         alt={img.alt || `Gallery ${index}`}
                                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                                     />
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onDeleteImage(img.id);
-                                        }}
-                                        className="absolute top-1 right-1 hidden h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white shadow-md group-hover:flex hover:bg-red-600"
-                                    >
-                                        <X className="h-3 w-3" />
-                                    </button>
+                                    {onDeleteImage && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDeleteImage(img.id);
+                                            }}
+                                            className="absolute top-1 right-1 hidden h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white shadow-md group-hover:flex hover:bg-red-600"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                    )}
                                 </div>
                             ))}
                         </div>

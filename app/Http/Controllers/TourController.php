@@ -59,7 +59,10 @@ class TourController extends Controller
         // Giữ $tours để backward compatibility (chỉ lấy data từ pagination)
         $tours = $templates->items();
 
-        return Inertia::render('Tours/index', compact('tours', 'templates', 'categories', 'destinations'));
+        // Lấy danh sách tất cả tour (id, title) để dùng cho chức năng Clone
+        $allTours = TourTemplate::select('id', 'title')->latest()->get();
+
+        return Inertia::render('Tours/index', compact('tours', 'templates', 'categories', 'destinations', 'allTours'));
     }
 
     public function create()
@@ -794,6 +797,78 @@ class TourController extends Controller
             DB::rollBack();
             Log::error('Lỗi khi xóa tour: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Có lỗi xảy ra khi xóa tour: ' . $e->getMessage()]);
+        }
+    }
+
+    public function clone($tour)
+    {
+        // Hỗ trợ cả Tour và TourTemplate
+        if ($tour instanceof TourTemplate) {
+            $template = $tour;
+        } elseif ($tour instanceof Tour) {
+            $template = TourTemplate::find($tour->id) ?? TourTemplate::where('title', $tour->title)->first();
+            if (!$template) {
+                $template = $tour;
+            }
+        } else {
+            $template = TourTemplate::find($tour) ?? Tour::find($tour);
+            if (!$template) {
+                abort(404);
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            // 1. Sao chép Tour Template
+            $newTemplate = $template->replicate();
+            $newTemplate->title = $template->title . ' (Copy)';
+            // $newTemplate->status = 1; // TourTemplate không có status
+            $newTemplate->created_at = Carbon::now();
+            $newTemplate->updated_at = Carbon::now();
+            $newTemplate->save();
+
+            Log::info("Cloned TourTemplate ID: {$template->id} -> New ID: {$newTemplate->id}");
+
+            // 2. Sao chép Relations
+
+            // 2.1. Images
+            foreach ($template->images as $image) {
+                $newImage = $image->replicate();
+                $newImage->tour_id = $newTemplate->id;
+                $newImage->created_at = Carbon::now();
+                $newImage->updated_at = Carbon::now();
+                $newImage->save();
+            }
+
+            // 2.2. Schedules
+            foreach ($template->schedules as $schedule) {
+                $newSchedule = $schedule->replicate();
+                $newSchedule->tour_id = $newTemplate->id;
+                // create_at/update_at tự động xử lý bởi replicate() nếu model có timestamps, nhưng an toàn thì set lại
+                $newSchedule->save();
+            }
+
+            // 2.3. Services
+            foreach ($template->tourServices as $service) {
+                $newService = $service->replicate();
+                $newService->tour_id = $newTemplate->id;
+                $newService->save();
+            }
+
+            // 2.4. Policies
+            foreach ($template->tourPolicies as $policy) {
+                $newPolicy = $policy->replicate();
+                $newPolicy->tour_id = $newTemplate->id;
+                $newPolicy->save();
+            }
+
+            DB::commit();
+            return redirect()->route('tours.edit', $newTemplate->id)->with('message', 'Sao chép tour thành công!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Lỗi khi clone tour: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Có lỗi xảy ra khi sao chép tour: ' . $e->getMessage()]);
         }
     }
 }

@@ -18,7 +18,7 @@ import users from '@/routes/users';
 import bookings from '@/routes/admin/bookings';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, PlaneIcon, Users, Calendar, ListIcon, BanIcon, User2Icon, BananaIcon, PlaneTakeoff, ScrollText, FileText, BarChart3 } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, PlaneIcon, Users, Calendar, ListIcon, BanIcon, User2Icon, BananaIcon, PlaneTakeoff, ScrollText, FileText, BarChart3, Briefcase } from 'lucide-react';
 import AppLogo from './app-logo';
 import serviceTypes from '@/routes/service-types';
 import services from '@/routes/services';
@@ -51,7 +51,7 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
 
-   
+
 ];
 
 const footerNavItems: NavItem[] = [
@@ -78,61 +78,68 @@ export function AppSidebar() {
         // Menu cho Admin (role = 1)
         if (isAdmin) {
             return [
-        {
+                {
                     title: 'Tổng quan',
-            href: dashboard(),
-            icon: LayoutGrid,
-        },
-        {
+                    href: dashboard(),
+                    icon: LayoutGrid,
+                },
+                {
+                    title: 'Quản lý Tour & Booking',
+                    href: '#',
+                    icon: PlaneTakeoff,
+                    items: [
+                        {
+                            title: 'Tour du lịch',
+                            href: tour.index(),
+                        },
+                        {
+                            title: 'Quản lý Booking',
+                            href: bookings.index(),
+                        },
+                    ]
+                },
+                {
+                    title: 'Quản lý Dịch vụ',
+                    href: '#',
+                    icon: Briefcase,
+                    items: [
+                        {
+                            title: 'Dịch vụ',
+                            href: services.index(),
+                        },
+                        {
+                            title: 'Loại dịch vụ',
+                            href: serviceTypes.index(),
+                        },
+                        {
+                            title: 'Nhà cung cấp',
+                            href: providers.index(),
+                        },
+                        {
+                            title: 'Thuộc tính dịch vụ',
+                            href: serviceAttributes.index(),
+                        },
+                        {
+                            title: 'Chính sách',
+                            href: policies.index(),
+                        },
+                    ]
+                },
+                {
                     title: 'Quốc gia',
-            href: countries.index(),
-            icon: LayoutGrid,
-        },
-        {
-                    title: 'Tour du lịch',
-            href: tour.index(),
-            icon: PlaneTakeoff,
-        },
-        {
-                    title: 'Loại dịch vụ',
-            href: serviceTypes.index(),
-            icon: ListIcon,
-        },
-        {
-                    title: 'Dịch vụ',
-            href: services.index(),
-            icon: BanIcon,
-        },
-        {
-                    title: 'Nhà cung cấp',
-            href: providers.index(),
-            icon: User2Icon,
-        },
-        {
-                    title: 'Thuộc tính dịch vụ',
-            href: serviceAttributes.index(),
-            icon: BananaIcon,
-        },
-        {
-            title: 'Chính sách',
-            href: policies.index(),
-            icon: ScrollText,
-        },
-                  {
+                    href: countries.index(),
+                    icon: LayoutGrid, // Or Globe if available, but staying with LayoutGrid as per previous context or whatever icon was used.
+                },
+                {
                     title: 'Quản lý người dùng',
-                      href: users.index(),
-                      icon: Users,
-                  },
-                  {
-                    title: 'Quản lý Booking',
-                      href: bookings.index(),
-                      icon: Calendar,
-                  },
-                  {
+                    href: users.index(),
+                    icon: Users,
+                },
+                {
                     title: 'Báo cáo doanh thu',
-                      href: '/admin/reports/revenue',
-                      icon: BarChart3,
-                  },
+                    href: '/admin/reports/revenue',
+                    icon: BarChart3,
+                },
             ];
         }
 

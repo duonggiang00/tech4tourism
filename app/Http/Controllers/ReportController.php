@@ -97,9 +97,7 @@ class ReportController extends Controller
             [
                 'status' => 2,
                 'label' => 'Đã hủy',
-                'revenue' => Booking::whereBetween('created_at', [$start, $end])
-                    ->where('status', 2)
-                    ->sum('final_price'),
+                'revenue' => 0, // Revenue for cancelled bookings should be 0
                 'count' => Booking::whereBetween('created_at', [$start, $end])
                     ->where('status', 2)
                     ->count(),

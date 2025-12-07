@@ -20,6 +20,7 @@ export interface NavItem {
     href: NonNullable<InertiaLinkProps['href']>;
     icon?: LucideIcon | null;
     isActive?: boolean;
+    items?: NavItem[];
 }
 
 export interface SharedData {
@@ -122,7 +123,7 @@ export interface ServiceType {
     services?: Service[];
 }
 
-export interface Provider{
+export interface Provider {
     id: number;
     province_id: number;
     name: string;
@@ -157,7 +158,7 @@ export interface Service {
     service_attributes?: ServiceAttribute[];
 }
 
-export interface ServiceAttribute{
+export interface ServiceAttribute {
     id: number;
     service_id: number;
     name: string;

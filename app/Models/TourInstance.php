@@ -24,8 +24,8 @@ class TourInstance extends Model
     ];
 
     protected $casts = [
-        'date_start' => 'date',
-        'date_end' => 'date',
+        'date_start' => 'datetime',
+        'date_end' => 'datetime',
         'price_adult' => 'decimal:2',
         'price_children' => 'decimal:2',
         'status' => 'integer',
@@ -47,6 +47,11 @@ class TourInstance extends Model
     public function tripAssignments()
     {
         return $this->hasMany(TripAssignment::class, 'tour_instance_id');
+    }
+
+    public function assignments()
+    {
+        return $this->tripAssignments();
     }
 
     /**

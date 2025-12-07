@@ -10,20 +10,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import AppLayout from '@/layouts/app-layout';
 import tourUrl from '@/routes/tours';
-import { User, PageProps } from '@/types';
-import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, Calendar as CalendarIcon, Clock, Users } from 'lucide-react';
-import { FormEventHandler, useState, useEffect } from 'react';
+import { User } from '@/types';
+import { Head, router, useForm } from '@inertiajs/react';
+import { ArrowLeft, Calendar as CalendarIcon, Clock, Trash2, Users } from 'lucide-react';
+import { FormEventHandler, useState } from 'react';
 import { toast } from 'sonner';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -39,15 +31,28 @@ interface TourTemplate {
     id: number;
     title: string;
     day: number;
-    today: number;
     night: number;
     price_adult?: number;
     price_children?: number;
 }
 
-interface CreateProps {
+interface TourInstance {
+    id: number;
+    tour_template_id: number;
+    date_start: string;
+    date_end: string;
+    limit: number | null;
+    booked_count: number;
+    price_adult: number | null;
+    price_children: number | null;
+    status: number;
+}
+
+interface EditProps {
+    instance: TourInstance;
     template: TourTemplate;
     guides: GuideWithStatus[];
+    currentGuideIds: number[];
 }
 
 const CurrencyInput = ({ value, onChange, placeholder, id }: { value: any, onChange: (val: string) => void, placeholder?: string, id?: string }) => {
@@ -75,57 +80,44 @@ const CurrencyInput = ({ value, onChange, placeholder, id }: { value: any, onCha
     );
 };
 
-export default function Create({ template, guides }: CreateProps) {
-    const { props } = usePage<PageProps>();
-    const flash = props.flash as any;
-
-    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-    const [timeValue, setTimeValue] = useState('08:00');
-
-    const { data, setData, post, processing, errors } = useForm({
-        date_start: '',
-        limit: '20', // Default limit
-        price_adult: template.price_adult ? Math.round(Number(template.price_adult)) : '',
-        price_children: template.price_children ? Math.round(Number(template.price_children)) : '',
-        status: '1',
-        guide_ids: [] as number[],
-    });
-
-    useEffect(() => {
-        if (flash?.success_instance_id) {
-            setIsSuccessModalOpen(true);
+export default function Edit({ instance, template, guides, currentGuideIds }: EditProps) {
+    const [timeValue, setTimeValue] = useState(() => {
+        if (instance.date_start) {
+            const date = new Date(instance.date_start);
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
         }
-    }, [flash]);
-
-    const handleCreateBooking = () => {
-        setIsSuccessModalOpen(false);
-        // Assuming booking.create route exists or we construct URL manually if needed
-        // Just in case, using direct URL pattern if route helper is not reliable
-        // But typically Inertia apps have route(), assuming it's available or we use router.visit
-        router.visit(`/booking/create?tour_instance_id=${flash.success_instance_id}`);
-    };
-
-    const handleBackToTour = () => {
-        setIsSuccessModalOpen(false);
-        router.visit(tourUrl.show(template.id).url);
-    };
+        return '08:00';
+    });
+    const { data, setData, put, delete: destroy, processing, errors } = useForm({
+        date_start: instance.date_start,
+        limit: instance.limit?.toString() || '',
+        price_adult: instance.price_adult?.toString() || '',
+        price_children: instance.price_children?.toString() || '',
+        status: instance.status.toString(),
+        guide_ids: currentGuideIds,
+    });
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        post(`/tours/${template.id}/instances`, {
-            preserveScroll: true,
-            onSuccess: (page) => {
-                const flash = page.props.flash as any;
-                if (flash?.success_instance_id) {
-                    setIsSuccessModalOpen(true);
-                }
-            },
+        put(`/tour-instances/${instance.id}`, {
             onError: (errors) => {
                 console.error('Errors:', errors);
-                toast.error('Có lỗi xảy ra khi tạo chuyến đi');
+                toast.error('Có lỗi xảy ra khi cập nhật chuyến đi');
             },
         });
+    };
+
+    const handleDelete = () => {
+        if (confirm('Bạn có chắc chắn muốn xóa chuyến đi này không? Hành động này không thể hoàn tác.')) {
+            destroy(`/tour-instances/${instance.id}`, {
+                onError: (errors) => {
+                    toast.error('Không thể xóa chuyến đi (có thể đã có booking)');
+                }
+            });
+        }
     };
 
     const toggleGuide = (guideId: number) => {
@@ -137,7 +129,7 @@ export default function Create({ template, guides }: CreateProps) {
         );
     };
 
-    // Tính date_end dựa trên date_start và day
+    // Tính date_end dự kiến
     const startDate = data.date_start ? new Date(data.date_start) : null;
     const dateEnd = startDate && !isNaN(startDate.getTime())
         ? new Date(
@@ -156,10 +148,10 @@ export default function Create({ template, guides }: CreateProps) {
                     title: template.title,
                     href: tourUrl.show(template.id).url,
                 },
-                { title: 'Tạo Chuyến Đi Mới', href: '#' },
+                { title: `Chỉnh sửa chuyến đi #${instance.id}`, href: '#' },
             ]}
         >
-            <Head title={`Tạo chuyến đi: ${template.title}`} />
+            <Head title={`Chỉnh sửa chuyến đi: ${template.title}`} />
 
             <div className="min-h-screen bg-gray-50/50 py-8">
                 <div className="mx-auto max-w-4xl px-4">
@@ -172,10 +164,19 @@ export default function Create({ template, guides }: CreateProps) {
                             <ArrowLeft className="mr-2 h-4 w-4" />
                             Quay lại
                         </Button>
-                        <h1 className="text-2xl font-bold text-gray-800">
-                            Tạo Chuyến Đi Mới
-                        </h1>
+                        <div className="flex gap-2">
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                onClick={handleDelete}
+                            >
+                                <Trash2 className="mr-2 h-4 w-4" /> Xóa Chuyến Đi
+                            </Button>
+                        </div>
                     </div>
+                    <h1 className="mb-6 text-2xl font-bold text-gray-800">
+                        Chỉnh sửa Chuyến Đi #{instance.id}
+                    </h1>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Thông tin Template */}
@@ -231,7 +232,7 @@ export default function Create({ template, guides }: CreateProps) {
                                                 <PopoverContent className="w-auto p-0" align="start">
                                                     <CalendarComponent
                                                         mode="single"
-                                                        selected={data.date_start ? new Date(new Date(data.date_start).setHours(0, 0, 0, 0)) : undefined}
+                                                        selected={data.date_start ? new Date(data.date_start) : undefined}
                                                         onSelect={(date) => {
                                                             if (date) {
                                                                 const year = date.getFullYear();
@@ -313,6 +314,9 @@ export default function Create({ template, guides }: CreateProps) {
                                             {errors.limit}
                                         </p>
                                     )}
+                                    <div className="text-xs text-gray-500">
+                                        Đã đặt: {instance.booked_count} khách
+                                    </div>
                                 </div>
 
                                 {/* Giá */}
@@ -393,7 +397,7 @@ export default function Create({ template, guides }: CreateProps) {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <Users className="h-5 w-5" /> Hướng dẫn
-                                    viên
+                                    viên (Lưu ý: chưa cập nhật logic xóa/thêm chi tiết trong prototype này, chỉ có thể thay đổi assignment)
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -470,32 +474,12 @@ export default function Create({ template, guides }: CreateProps) {
                                 className="min-w-[200px]"
                             >
                                 {processing
-                                    ? 'Đang tạo...'
-                                    : 'Tạo Chuyến Đi'}
+                                    ? 'Đang lưu...'
+                                    : 'Lưu thay đổi'}
                             </Button>
                         </div>
                     </form>
                 </div>
-
-                {/* Success Modal */}
-                <Dialog open={isSuccessModalOpen} onOpenChange={setIsSuccessModalOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Tạo chuyến đi thành công!</DialogTitle>
-                            <DialogDescription>
-                                Bạn muốn thực hiện thao tác gì tiếp theo với chuyến đi này?
-                            </DialogDescription>
-                        </DialogHeader>
-                        <DialogFooter className="flex gap-2 sm:justify-end">
-                            <Button variant="outline" onClick={handleBackToTour}>
-                                Về trang Tour
-                            </Button>
-                            <Button onClick={handleCreateBooking}>
-                                Tạo Booking ngay
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
             </div>
         </AppLayout>
     );

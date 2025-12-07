@@ -19,6 +19,7 @@ export default function AppLayout({
     useEffect(() => {
         // 1. Xử lý Flash message (như cũ)
         if (flash?.message) toast.success(flash.message);
+        if (flash?.success) toast.success(flash.success);
         if (flash?.error) toast.error(flash.error);
 
         // 2. Xử lý Validation Errors (MỚI)

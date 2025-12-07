@@ -3,12 +3,13 @@ import { ConfirmDeleteDialog } from '@/components/common/ConfirmDeleteDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTourData } from '@/hooks/useTourData';
 import AppLayout from '@/layouts/app-layout';
 import tourUrl from '@/routes/tours';
-import { BreadcrumbItem, Destination, Policy, Service, TourDetailProps, TourPolicy, TourSchedule, TourService, User } from '@/types';
+import { BreadcrumbItem, Destination, Policy, Service, Tour, TourDetailProps, TourPolicy, TourSchedule, TourService, User } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { Calendar, Plus, Users } from 'lucide-react';
+import { Calendar, Edit, Plus, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import TourGallery from './Partials/TourGallery';
 import GuideList from './Partials/TourGuideList';
@@ -17,12 +18,6 @@ import TourInfoCards from './Partials/TourInfoCards';
 import TourPolicyList from './Partials/TourPolicyList';
 import TourScheduleList from './Partials/TourScheduleList';
 import TourServiceList from './Partials/TourServiceList';
-import { TourFormDialog } from './dialog';
-import { TourImageDialog } from './tourImage';
-import { TourPolicyDialog } from './tourPolicy';
-import { FormTourScheduleDialog } from './tourSchedule';
-import { TourServiceDialog } from './tourService';
-import { GuideAssignmentDialog } from './tripAssignment';
 
 interface TourInstance {
     id: number;
@@ -55,8 +50,8 @@ export default function TourDetail({
     // Sử dụng template nếu có (có instances), nếu không dùng tour
     const tourData = template || tour;
     // Sắp xếp instances: ưu tiên instance có giá, sau đó sắp xếp theo date_start mới nhất
-    const rawInstances = (template as any)?.instances || [];
-    const instances = rawInstances.sort((a: TourInstance, b: TourInstance) => {
+    const rawInstances = ((template as any)?.instances || []) as TourInstance[];
+    const instances = rawInstances.sort((a, b) => {
         // Ưu tiên instance có giá
         const aHasPrice = a.price_adult !== null;
         const bHasPrice = b.price_adult !== null;
@@ -102,63 +97,18 @@ export default function TourDetail({
         }
         return tourData;
     }, [tourData, template]);
-    
+
     const {
         galleryImages,
         schedules,
         assignments,
         tourServices,
         tourPolicies,
-        loading,
-        refreshData, // Hàm này giờ gọi router.reload()
-        deleteService,
-        deleteImage,
-        deleteSchedule,
-        deleteTour,
-        deletePolicy,
-        deleteAssignment,
     } = useTourData(tourDataWithAssignments);
 
-    // --- B. UI STATE (Chỉ giữ lại state điều khiển Dialog) ---
-    const [dialogs, setDialogs] = useState({
-        editMain: false,
-        deleteTour: false,
-        addImage: false,
-        addSchedule: false,
-        addPolicy: false,
-        addGuide: false,
-    });
-
-    // State item đang chọn để sửa/xóa
-    const [selectedPolicy, setSelectedPolicy] = useState<{
-        data: TourPolicy | null;
-        mode: 'edit' | 'delete';
-    } | null>(null);
-
-    // State xác định đối tượng đang được chọn để sửa/xóa
-    const [selectedSchedule, setSelectedSchedule] = useState<{
-        data: TourSchedule | null;
-        mode: 'edit' | 'delete';
-    } | null>(null);
-
-    const [deletingAssignmentId, setDeletingAssignmentId] = useState<
-        number | null
-    >(null);
-    // State quản lý Dialog Service
-    const [showServiceDialog, setShowServiceDialog] = useState(false);
-    const [editingService, setEditingService] = useState<TourService | null>(
-        null,
-    );
-    const [deletingService, setDeletingService] = useState<TourService | null>(
-        null,
-    );
-
-    const [deleteImageId, setDeleteImageId] = useState<number | null>(null);
+    // --- B. UI STATE (Removed for Read-Only) ---
 
     // --- C. HELPERS ---
-    const toggleDialog = (key: keyof typeof dialogs, value: boolean) => {
-        setDialogs((prev) => ({ ...prev, [key]: value }));
-    };
 
     const currentCategory = useMemo(
         () => categories.find((c) => c.id === tourData.category_id),
@@ -178,24 +128,7 @@ export default function TourDetail({
 
     // --- D. EVENT HANDLERS (Cầu nối giữa UI và Hook) ---
 
-    const onConfirmDeleteImage = () => {
-        if (deleteImageId) {
-            // Gọi hàm từ hook, sau đó đóng dialog
-            deleteImage(deleteImageId, () => setDeleteImageId(null));
-        }
-    };
 
-    const onConfirmDeleteSchedule = () => {
-        if (selectedSchedule?.data) {
-            deleteSchedule(selectedSchedule.data.id, () =>
-                setSelectedSchedule(null),
-            );
-        }
-    };
-
-    const onConfirmDeleteTour = () => {
-        deleteTour(() => toggleDialog('deleteTour', false));
-    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -209,328 +142,177 @@ export default function TourDetail({
                     <TourHeader
                         tour={tourData}
                         categoryName={currentCategory?.title}
-                        onEdit={() => toggleDialog('editMain', true)}
-                        onDelete={() => toggleDialog('deleteTour', true)}
                     />
 
-                    {/* 2. Main Grid */}
-                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                        {/* Left Column */}
-                        <div className="space-y-6 lg:col-span-2">
-                            <TourGallery
-                                tour={tourData}
-                                images={galleryImages} // Data từ hook
-                                onAddImage={() =>
-                                    toggleDialog('addImage', true)
-                                }
-                                onDeleteImage={setDeleteImageId}
-                            />
-                            <TourServiceList
-                                tourServices={tourServices}
-                                onAdd={() => {
-                                    setEditingService(null);
-                                    setShowServiceDialog(true);
-                                }}
-                                onEdit={(item) => {
-                                    setEditingService(item);
-                                    setShowServiceDialog(true);
-                                }}
-                                onDelete={(item) => setDeletingService(item)}
-                            />
-                        </div>
+                    {/* 2. Tabs Interface */}
+                    <div className="mt-6">
+                        <Tabs defaultValue="overview" className="w-full">
+                            <TabsList className="grid w-full grid-cols-5 bg-white p-1 rounded-lg border">
+                                <TabsTrigger value="overview">Tổng quan</TabsTrigger>
+                                <TabsTrigger value="schedule">Lịch trình</TabsTrigger>
+                                <TabsTrigger value="services">Dịch vụ & Chính sách</TabsTrigger>
+                                <TabsTrigger value="departures">Lịch khởi hành</TabsTrigger>
+                                <TabsTrigger value="guides">Hướng dẫn viên</TabsTrigger>
+                            </TabsList>
 
-                        {/* Right Column */}
-                        <div className="space-y-6">
-                            <TourInfoCards tour={tourData} instances={instances} />
+                            {/* TAB 1: TỔNG QUAN */}
+                            <TabsContent value="overview" className="mt-6 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="md:col-span-2 space-y-6">
+                                        <TourGallery
+                                            tour={tourData}
+                                            images={galleryImages}
+                                        />
+                                        <Card>
+                                            <CardHeader>
+                                                <CardTitle>Mô tả chi tiết</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <div className="prose max-w-none text-gray-700">
+                                                    {tourData.description ? (
+                                                        <div dangerouslySetInnerHTML={{ __html: tourData.description }} />
+                                                    ) : (
+                                                        <p className="text-gray-500 italic">Chưa có mô tả chi tiết cho tour này.</p>
+                                                    )}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                    <div className="space-y-6">
+                                        <TourInfoCards tour={tourData} instances={instances} />
+                                    </div>
+                                </div>
+                            </TabsContent>
 
-                            <TourScheduleList
-                                schedules={schedules} // Data từ hook
-                                onAdd={() => toggleDialog('addSchedule', true)}
-                                onEdit={(item) =>
-                                    setSelectedSchedule({
-                                        data: item,
-                                        mode: 'edit',
-                                    })
-                                }
-                                onDelete={(item) =>
-                                    setSelectedSchedule({
-                                        data: item,
-                                        mode: 'delete',
-                                    })
-                                }
-                            />
+                            {/* TAB 2: LỊCH TRÌNH */}
+                            <TabsContent value="schedule" className="mt-6">
+                                <TourScheduleList
+                                    schedules={schedules}
+                                />
+                            </TabsContent>
 
-                            <GuideList
-                                assignments={assignments}
-                                onAdd={() => toggleDialog('addGuide', true)}
-                                onDelete={(id) => setDeletingAssignmentId(id)}
-                            />
+                            {/* TAB 3: DỊCH VỤ & CHÍNH SÁCH */}
+                            <TabsContent value="services" className="mt-6 space-y-6">
+                                <TourServiceList
+                                    tourServices={tourServices}
+                                />
+                                <TourPolicyList
+                                    tourPolicies={tourPolicies}
+                                />
+                            </TabsContent>
 
-                            <TourPolicyList
-                                tourPolicies={tourPolicies}
-                                onAdd={() => toggleDialog('addPolicy', true)}
-                                onDelete={(item) =>
-                                    setSelectedPolicy({
-                                        data: item,
-                                        mode: 'delete',
-                                    })
-                                }
-                            />
-
-                            {/* Tour Instances */}
-                            {instances.length > 0 && (
-                                <Card>
-                                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                        <CardTitle className="flex items-center gap-2 text-base">
-                                            <Calendar className="h-5 w-5 text-blue-600" /> Chuyến Đi
-                                        </CardTitle>
-                                        <Link href={`/tours/${tourData.id}/instances/create`}>
-                                            <Button variant="outline" size="sm" className="h-8 gap-1 text-xs">
-                                                <Plus className="h-3.5 w-3.5" /> Tạo mới
-                                            </Button>
-                                        </Link>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="space-y-3">
-                                            {instances.map((instance) => (
-                                                <div
-                                                    key={instance.id}
-                                                    className="rounded-lg border p-3 hover:bg-gray-50"
-                                                >
-                                                    <div className="flex items-start justify-between">
-                                                        <div className="flex-1">
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <span className="font-medium text-sm">
+                            {/* TAB 4: LỊCH KHỞI HÀNH (INSTANCES) */}
+                            <TabsContent value="departures" className="mt-6">
+                                <div className="space-y-6">
+                                    {instances.length > 0 ? (
+                                        <Card>
+                                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                                <CardTitle className="flex items-center gap-2 text-base">
+                                                    <Calendar className="h-5 w-5 text-blue-600" /> Danh sách Chuyến Đi
+                                                </CardTitle>
+                                                <Link href={`/tours/${tourData.id}/instances/create`}>
+                                                    <Button variant="outline" size="sm" className="gap-1">
+                                                        <Plus className="h-4 w-4" /> Tạo chuyến đi mới
+                                                    </Button>
+                                                </Link>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                    {instances.map((instance) => (
+                                                        <div
+                                                            key={instance.id}
+                                                            className="rounded-lg border p-4 hover:bg-gray-50 bg-white shadow-sm flex flex-col justify-between"
+                                                        >
+                                                            <div>
+                                                                <div className="flex items-center justify-between mb-2">
+                                                                    <Badge
+                                                                        variant="secondary"
+                                                                        className={`${instance.status === 0 ? 'bg-red-100 text-red-800' :
+                                                                            instance.status === 1 ? 'bg-yellow-100 text-yellow-800' :
+                                                                                instance.status === 2 ? 'bg-blue-100 text-blue-800' :
+                                                                                    'bg-green-100 text-green-800'
+                                                                            }`}
+                                                                    >
+                                                                        {instance.status === 0 ? 'Đã hủy' :
+                                                                            instance.status === 1 ? 'Sắp có' :
+                                                                                instance.status === 2 ? 'Đang diễn ra' : 'Đã hoàn thành'}
+                                                                    </Badge>
+                                                                    <Link href={`/tour-instances/${instance.id}/edit`}>
+                                                                        <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-400 hover:text-blue-600">
+                                                                            <Edit className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </Link>
+                                                                </div>
+                                                                <h3 className="font-semibold text-lg text-blue-700 mb-1">
                                                                     {new Date(instance.date_start).toLocaleDateString('vi-VN')}
-                                                                </span>
-                                                                <Badge
-                                                                    variant="secondary"
-                                                                    className={`text-xs ${
-                                                                        instance.status === 0 ? 'bg-red-100 text-red-800' :
-                                                                        instance.status === 1 ? 'bg-yellow-100 text-yellow-800' :
-                                                                        instance.status === 2 ? 'bg-blue-100 text-blue-800' :
-                                                                        'bg-green-100 text-green-800'
-                                                                    }`}
-                                                                >
-                                                                    {instance.status === 0 ? 'Đã hủy' :
-                                                                     instance.status === 1 ? 'Sắp có' :
-                                                                     instance.status === 2 ? 'Đang diễn ra' : 'Đã hoàn thành'}
-                                                                </Badge>
+                                                                </h3>
+                                                                <p className="text-sm text-gray-500 mb-3">
+                                                                    đến {new Date(instance.date_end).toLocaleDateString('vi-VN')}
+                                                                </p>
+
+                                                                <div className="space-y-2 text-sm">
+                                                                    <div className="flex justify-between border-b pb-1">
+                                                                        <span className="text-gray-600">Giá người lớn:</span>
+                                                                        <span className="font-medium">
+                                                                            {instance.price_adult ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(instance.price_adult) : 'N/A'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex justify-between border-b pb-1">
+                                                                        <span className="text-gray-600">Trẻ em:</span>
+                                                                        <span className="font-medium">
+                                                                            {instance.price_children ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(instance.price_children) : 'N/A'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
                                                             </div>
-                                                            <div className="text-xs text-gray-600 space-y-1">
-                                                                {instance.price_adult && (
-                                                                    <div>
-                                                                        Giá: {new Intl.NumberFormat('vi-VN', {
-                                                                            style: 'currency',
-                                                                            currency: 'VND'
-                                                                        }).format(instance.price_adult)}
-                                                                    </div>
-                                                                )}
-                                                                {instance.limit && (
-                                                                    <div className="flex items-center gap-1">
-                                                                        <Users className="h-3 w-3" />
-                                                                        {instance.booked_count}/{instance.limit} chỗ đã đặt
-                                                                    </div>
-                                                                )}
+
+                                                            <div className="mt-4 pt-3 border-t flex items-center justify-between text-sm">
+                                                                <span className="flex items-center gap-1 text-gray-600">
+                                                                    <Users className="h-4 w-4" />
+                                                                    Chỗ:
+                                                                </span>
+                                                                <span className="font-medium">
+                                                                    {instance.booked_count} / {instance.limit || '∞'}
+                                                                </span>
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    ))}
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            )}
+                                            </CardContent>
+                                        </Card>
+                                    ) : (
+                                        <Card>
+                                            <CardHeader>
+                                                <CardTitle className="flex items-center gap-2 text-base">
+                                                    <Calendar className="h-5 w-5 text-blue-600" /> Chuyến Đi
+                                                </CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="text-center py-8">
+                                                <Calendar className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                                                <p className="text-gray-500 mb-4">Chưa có chuyến đi nào được tạo cho tour này.</p>
+                                                <Link href={`/tours/${tourData.id}/instances/create`}>
+                                                    <Button>
+                                                        <Plus className="mr-2 h-4 w-4" /> Tạo chuyến đi đầu tiên
+                                                    </Button>
+                                                </Link>
+                                            </CardContent>
+                                        </Card>
+                                    )}
+                                </div>
+                            </TabsContent>
 
-                            {/* Nút tạo instance nếu chưa có */}
-                            {instances.length === 0 && (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="flex items-center gap-2 text-base">
-                                            <Calendar className="h-5 w-5 text-blue-600" /> Chuyến Đi
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm text-gray-500 mb-4">
-                                            Chưa có chuyến đi nào cho tour này.
-                                        </p>
-                                        <Link href={`/tours/${tourData.id}/instances/create`}>
-                                            <Button variant="outline" className="w-full">
-                                                <Plus className="mr-2 h-4 w-4" /> Tạo Chuyến Đi Đầu Tiên
-                                            </Button>
-                                        </Link>
-                                    </CardContent>
-                                </Card>
-                            )}
-                        </div>
+                            {/* TAB 5: HƯỚNG DẪN VIÊN */}
+                            <TabsContent value="guides" className="mt-6">
+                                <GuideList
+                                    assignments={assignments}
+                                />
+                            </TabsContent>
+                        </Tabs>
                     </div>
                 </div>
 
                 {/* --- DIALOGS AREA --- */}
 
-                {/* Edit Main Info */}
-                <TourFormDialog
-                    open={dialogs.editMain}
-                    onOpenChange={(v) => toggleDialog('editMain', v)}
-                    initialData={tourData}
-                    title="Chỉnh sửa Tour"
-                    categories={categories}
-                    destinations={destinations}
-                />
-
-                {/* Add Images */}
-                <TourImageDialog
-                    open={dialogs.addImage}
-                    onOpenChange={(v) => toggleDialog('addImage', v)}
-                    tourId={tourData.id}
-                    onSuccess={refreshData}
-                />
-
-                {/* Add/Edit Schedule */}
-
-                <TourServiceDialog
-                    open={showServiceDialog}
-                    onOpenChange={(val) => {
-                        setShowServiceDialog(val);
-                        if (!val) setEditingService(null);
-                    }}
-                    tourId={tourData.id}
-                    availableServices={availableServices}
-                    editingTourService={editingService}
-                    onSuccess={refreshData}
-                />
-
-                <TourPolicyDialog
-                    open={
-                        dialogs.addPolicy ||
-                        (!!selectedPolicy?.data &&
-                            selectedPolicy.mode === 'edit')
-                    }
-                    onOpenChange={(v) => {
-                        if (!v) {
-                            toggleDialog('addPolicy', false);
-                            setSelectedPolicy(null);
-                        }
-                    }}
-                    tourId={tourData.id}
-                    availablePolicies={availablePolicies}
-                    editingTourPolicy={
-                        selectedPolicy?.mode === 'edit'
-                            ? selectedPolicy.data
-                            : null
-                    }
-                    onSuccess={refreshData}
-                />
-
-                <FormTourScheduleDialog
-                    open={
-                        dialogs.addSchedule ||
-                        (!!selectedSchedule?.data &&
-                            selectedSchedule.mode === 'edit')
-                    }
-                    onOpenChange={(v) => {
-                        if (!v) {
-                            toggleDialog('addSchedule', false);
-                            setSelectedSchedule(null);
-                        }
-                    }}
-                    tourId={tourData.id}
-                    schedule={
-                        selectedSchedule?.mode === 'edit'
-                            ? selectedSchedule.data
-                            : undefined
-                    }
-                    onSuccess={refreshData} // Refresh lại list sau khi thêm/sửa
-                    existingSchedules={schedules}
-                    tour={tourData}
-                    allDestinations={destinations}
-                />
-                {/* Dialog thêm Guide */}
-                <GuideAssignmentDialog
-                    open={dialogs.addGuide}
-                    onOpenChange={(v) => toggleDialog('addGuide', v)}
-                    tourId={tourData.id}
-                    allUsers={guides} // Truyền danh sách user vào
-                    currentAssignments={assignments}
-                    onSuccess={refreshData}
-                />
-
-                {/* --- CONFIRM DIALOGS --- */}
-
-                <ConfirmDeleteDialog
-                    open={!!deletingAssignmentId}
-                    onOpenChange={(v) => !v && setDeletingAssignmentId(null)}
-                    onConfirm={() => {
-                        if (deletingAssignmentId) {
-                            deleteAssignment(deletingAssignmentId, () =>
-                                setDeletingAssignmentId(null),
-                            );
-                        }
-                    }}
-                    title="Xóa hướng dẫn viên?"
-                    description="Bạn có chắc chắn muốn gỡ hướng dẫn viên này khỏi tour?"
-                    loading={loading}
-                />
-
-                {/* Confirm Delete Policy */}
-                <ConfirmDeleteDialog
-                    open={!!(selectedPolicy?.mode === 'delete')}
-                    onOpenChange={(v) => !v && setSelectedPolicy(null)}
-                    onConfirm={() => {
-                        if (selectedPolicy?.data) {
-                            deletePolicy(selectedPolicy.data.id, () =>
-                                setSelectedPolicy(null),
-                            );
-                        }
-                    }}
-                    title="Xóa chính sách?"
-                    description="Bạn có chắc chắn muốn xóa chính sách này khỏi tour?"
-                    loading={loading}
-                />
-
-                {/* 1. Delete Image */}
-                <ConfirmDeleteDialog
-                    open={!!deleteImageId}
-                    onOpenChange={(v) => !v && setDeleteImageId(null)}
-                    onConfirm={onConfirmDeleteImage}
-                    title="Xóa ảnh?"
-                    description="Bạn có chắc chắn muốn xóa ảnh này khỏi thư viện?"
-                    loading={loading} // Loading state từ hook
-                />
-
-                {/* 2. Delete Schedule */}
-                <ConfirmDeleteDialog
-                    open={!!(selectedSchedule?.mode === 'delete')}
-                    onOpenChange={(v) => !v && setSelectedSchedule(null)}
-                    onConfirm={onConfirmDeleteSchedule}
-                    title="Xoá lịch trình?"
-                    description={`Bạn có muốn xoá "${selectedSchedule?.data?.name}"?`}
-                    loading={loading}
-                />
-
-                {/* 3. Delete Tour */}
-                <ConfirmDeleteDialog
-                    open={dialogs.deleteTour}
-                    onOpenChange={(v) => toggleDialog('deleteTour', v)}
-                    onConfirm={onConfirmDeleteTour}
-                    title="Xóa Tour?"
-                    description="Hành động này không thể hoàn tác."
-                    isDestructive={true}
-                />
-
-                <ConfirmDeleteDialog
-                    open={!!deletingService}
-                    onOpenChange={(val) => !val && setDeletingService(null)}
-                    onConfirm={() => {
-                        if (deletingService) {
-                            deleteService(deletingService.id, () =>
-                                setDeletingService(null),
-                            );
-                        }
-                    }}
-                    title="Xóa dịch vụ?"
-                    description="Bạn có chắc chắn muốn gỡ dịch vụ này khỏi tour?"
-                />
             </div>
         </AppLayout>
     );
