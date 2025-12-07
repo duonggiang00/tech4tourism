@@ -15,7 +15,7 @@ import tourUrl from '@/routes/tours';
 import { User } from '@/types';
 import { Head, router, useForm } from '@inertiajs/react';
 import { ArrowLeft, Calendar, Users } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
 import { toast } from 'sonner';
 
 interface GuideWithStatus extends User {
@@ -26,7 +26,10 @@ interface TourTemplate {
     id: number;
     title: string;
     day: number;
+    today: number;
     night: number;
+    price_adult?: number;
+    price_children?: number;
 }
 
 interface CreateProps {
@@ -34,12 +37,37 @@ interface CreateProps {
     guides: GuideWithStatus[];
 }
 
+const CurrencyInput = ({ value, onChange, placeholder, id }: { value: any, onChange: (val: string) => void, placeholder?: string, id?: string }) => {
+    const [isFocused, setIsFocused] = useState(false);
+
+    const displayValue = isFocused
+        ? value
+        : value
+            ? Number(value).toLocaleString('vi-VN')
+            : '';
+
+    return (
+        <Input
+            id={id}
+            type="text"
+            value={displayValue}
+            onChange={(e) => {
+                const rawValue = e.target.value.replace(/\D/g, '');
+                onChange(rawValue);
+            }}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            placeholder={placeholder}
+        />
+    );
+};
+
 export default function Create({ template, guides }: CreateProps) {
     const { data, setData, post, processing, errors } = useForm({
         date_start: '',
-        limit: '',
-        price_adult: '',
-        price_children: '',
+        limit: '20', // Default limit
+        price_adult: template.price_adult ? Math.round(Number(template.price_adult)) : '',
+        price_children: template.price_children ? Math.round(Number(template.price_children)) : '',
         status: '1',
         guide_ids: [] as number[],
     });
@@ -71,12 +99,14 @@ export default function Create({ template, guides }: CreateProps) {
     // Tính date_end dựa trên date_start và day
     const dateEnd = data.date_start
         ? new Date(
-              new Date(data.date_start).getTime() +
-                  (template.day - 1) * 24 * 60 * 60 * 1000,
-          )
-              .toISOString()
-              .split('T')[0]
+            new Date(data.date_start).getTime() +
+            (template.day - 1) * 24 * 60 * 60 * 1000,
+        )
+            .toISOString()
+            .split('T')[0]
         : '';
+
+
 
     return (
         <AppLayout
@@ -204,18 +234,10 @@ export default function Create({ template, guides }: CreateProps) {
                                         <Label htmlFor="price_adult">
                                             Giá người lớn (VNĐ)
                                         </Label>
-                                        <Input
+                                        <CurrencyInput
                                             id="price_adult"
-                                            type="number"
-                                            min="0"
-                                            step="1000"
                                             value={data.price_adult}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'price_adult',
-                                                    e.target.value,
-                                                )
-                                            }
+                                            onChange={(val) => setData('price_adult', val)}
                                             placeholder="Ví dụ: 5000000"
                                         />
                                         {errors.price_adult && (
@@ -229,18 +251,10 @@ export default function Create({ template, guides }: CreateProps) {
                                         <Label htmlFor="price_children">
                                             Giá trẻ em (VNĐ)
                                         </Label>
-                                        <Input
+                                        <CurrencyInput
                                             id="price_children"
-                                            type="number"
-                                            min="0"
-                                            step="1000"
                                             value={data.price_children}
-                                            onChange={(e) =>
-                                                setData(
-                                                    'price_children',
-                                                    e.target.value,
-                                                )
-                                            }
+                                            onChange={(val) => setData('price_children', val)}
                                             placeholder="Ví dụ: 3000000"
                                         />
                                         {errors.price_children && (

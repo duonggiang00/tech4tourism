@@ -20,43 +20,43 @@ class TourInstanceController extends Controller
     public function create($tour)
     {
         // Route binding có thể trả về TourTemplate hoặc Tour (backward compatibility)
-        $template = $tour instanceof TourTemplate 
-            ? $tour 
+        $template = $tour instanceof TourTemplate
+            ? $tour
             : TourTemplate::with(['schedules', 'tourServices', 'tourPolicies'])->findOrFail(
                 is_object($tour) && isset($tour->id) ? $tour->id : $tour
             );
-        
+
         // Lấy danh sách HDV (role=2) kèm thông tin đã có tour hay chưa
         // Chỉ lấy assignment của tour/instance còn tồn tại (chưa bị xóa)
         $busyGuideIds = TripAssignment::whereIn('status', ['0', '1']) // Chờ hoặc Đang thực hiện
-            ->where(function($query) {
+            ->where(function ($query) {
                 // Template-level: kiểm tra TourTemplate còn tồn tại (chưa bị soft delete)
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->whereNotNull('tour_id')
-                      ->whereNull('tour_instance_id')
-                      ->whereExists(function($subQuery) {
-                          $subQuery->select(DB::raw(1))
-                              ->from('tour_templates')
-                              ->whereColumn('tour_templates.id', 'trip_assignments.tour_id')
-                              ->whereNull('tour_templates.deleted_at');
-                      });
+                        ->whereNull('tour_instance_id')
+                        ->whereExists(function ($subQuery) {
+                            $subQuery->select(DB::raw(1))
+                                ->from('tour_templates')
+                                ->whereColumn('tour_templates.id', 'trip_assignments.tour_id')
+                                ->whereNull('tour_templates.deleted_at');
+                        });
                 })
-                // Instance-level: kiểm tra TourInstance và TourTemplate còn tồn tại
-                ->orWhere(function($q) {
+                    // Instance-level: kiểm tra TourInstance và TourTemplate còn tồn tại
+                    ->orWhere(function ($q) {
                     $q->whereNotNull('tour_instance_id')
-                      ->whereExists(function($subQuery) {
-                          $subQuery->select(DB::raw(1))
-                              ->from('tour_instances')
-                              ->join('tour_templates', 'tour_instances.tour_template_id', '=', 'tour_templates.id')
-                              ->whereColumn('tour_instances.id', 'trip_assignments.tour_instance_id')
-                              ->whereNull('tour_instances.deleted_at')
-                              ->whereNull('tour_templates.deleted_at');
-                      });
+                        ->whereExists(function ($subQuery) {
+                            $subQuery->select(DB::raw(1))
+                                ->from('tour_instances')
+                                ->join('tour_templates', 'tour_instances.tour_template_id', '=', 'tour_templates.id')
+                                ->whereColumn('tour_instances.id', 'trip_assignments.tour_instance_id')
+                                ->whereNull('tour_instances.deleted_at')
+                                ->whereNull('tour_templates.deleted_at');
+                        });
                 });
             })
             ->pluck('user_id')
             ->toArray();
-        
+
         $guides = User::where('role', 2)->get()->map(function ($user) use ($busyGuideIds) {
             $user->has_active_tour = in_array($user->id, $busyGuideIds);
             return $user;
@@ -93,8 +93,8 @@ class TourInstanceController extends Controller
         ]);
 
         // Route binding có thể trả về TourTemplate hoặc Tour (backward compatibility)
-        $template = $tour instanceof TourTemplate 
-            ? $tour 
+        $template = $tour instanceof TourTemplate
+            ? $tour
             : TourTemplate::findOrFail(
                 is_object($tour) && isset($tour->id) ? $tour->id : $tour
             );
@@ -118,20 +118,20 @@ class TourInstanceController extends Controller
 
             // Tạo trip assignments nếu có guides
             // Nếu không có guide_ids trong request, tự động copy từ template
-            $guideIds = !empty($validated['guide_ids']) 
-                ? $validated['guide_ids'] 
+            $guideIds = !empty($validated['guide_ids'])
+                ? $validated['guide_ids']
                 : TripAssignment::where('tour_id', $template->id)
                     ->whereNull('tour_instance_id')
                     ->pluck('user_id')
                     ->toArray();
-            
+
             if (!empty($guideIds)) {
                 foreach ($guideIds as $guideId) {
                     // Kiểm tra xem đã có assignment cho instance này chưa
                     $exists = TripAssignment::where('tour_instance_id', $instance->id)
                         ->where('user_id', $guideId)
                         ->exists();
-                    
+
                     if (!$exists) {
                         TripAssignment::create([
                             'tour_id' => $template->id, // Backward compatibility
@@ -161,8 +161,8 @@ class TourInstanceController extends Controller
     public function index($tour)
     {
         // Route binding có thể trả về TourTemplate hoặc Tour (backward compatibility)
-        $template = $tour instanceof TourTemplate 
-            ? $tour 
+        $template = $tour instanceof TourTemplate
+            ? $tour
             : TourTemplate::findOrFail(
                 is_object($tour) && isset($tour->id) ? $tour->id : $tour
             );
@@ -211,7 +211,7 @@ class TourInstanceController extends Controller
     public function destroy($instanceId)
     {
         $instance = TourInstance::findOrFail($instanceId);
-        
+
         // Kiểm tra xem có booking nào không
         if ($instance->bookings()->count() > 0) {
             return back()->withErrors(['error' => 'Không thể xóa chuyến đi đã có booking!']);

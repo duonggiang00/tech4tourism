@@ -11,11 +11,9 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Calendar, DollarSign, Mail, Phone, Users, Trash2, CircleCheck, CircleX, Plus, Edit, X } from 'lucide-react';
+import { ArrowLeft, Calendar, DollarSign, Mail, Phone, Users, Trash2, CircleCheck, CircleX } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import bookings from '@/routes/admin/bookings';
-import axios from 'axios';
-import { toast } from 'sonner';
 
 interface Tour {
     id: number;
@@ -100,9 +98,7 @@ const METHOD_OPTIONS = {
 export default function BookingShow({ booking, flash }: Props) {
     const [editingStatus, setEditingStatus] = useState(false);
     const [deletingBooking, setDeletingBooking] = useState(false);
-    const [addingPayment, setAddingPayment] = useState(false);
-    const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
-    const [deletingPayment, setDeletingPayment] = useState<Payment | null>(null);
+
 
     const { data, setData, put, processing, errors } = useForm({
         status: booking.status,
@@ -125,11 +121,10 @@ export default function BookingShow({ booking, flash }: Props) {
     );
 
     const formatPrice = (price: number) => {
-        return new Intl.NumberFormat('en-US', {
+        return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
+            currency: 'VND',
+            maximumFractionDigits: 0,
         }).format(price);
     };
 
@@ -310,18 +305,7 @@ export default function BookingShow({ booking, flash }: Props) {
                                         {formatPrice(booking.final_price)}
                                     </p>
                                 </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">Còn nợ</p>
-                                    <p className={`text-lg font-medium ${booking.left_payment > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                        {formatPrice(booking.left_payment)}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">Đã thanh toán</p>
-                                    <p className="text-lg font-medium text-green-600">
-                                        {formatPrice(booking.final_price - booking.left_payment)}
-                                    </p>
-                                </div>
+
                                 <div>
                                     <p className="text-sm text-gray-500">Số người</p>
                                     <p className="font-medium">
@@ -344,6 +328,7 @@ export default function BookingShow({ booking, flash }: Props) {
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Họ tên</TableHead>
+                                            <TableHead>SĐT</TableHead>
                                             <TableHead>Giới tính</TableHead>
                                             <TableHead>Loại</TableHead>
                                             <TableHead>Ngày sinh</TableHead>
@@ -354,6 +339,7 @@ export default function BookingShow({ booking, flash }: Props) {
                                         {booking.passengers.map((passenger) => (
                                             <TableRow key={passenger.id}>
                                                 <TableCell className="font-medium">{passenger.fullname}</TableCell>
+                                                <TableCell>{passenger.phone || '-'}</TableCell>
                                                 <TableCell>{GENDER_OPTIONS[passenger.gender as keyof typeof GENDER_OPTIONS] || 'N/A'}</TableCell>
                                                 <TableCell>{TYPE_OPTIONS[passenger.type as keyof typeof TYPE_OPTIONS] || 'N/A'}</TableCell>
                                                 <TableCell>{passenger.birth ? formatDate(passenger.birth) : 'N/A'}</TableCell>
@@ -366,71 +352,7 @@ export default function BookingShow({ booking, flash }: Props) {
                         </Card>
                     )}
 
-                    {/* Lịch sử Thanh toán */}
-                    <Card className="mt-6">
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <CardTitle>Lịch sử Thanh toán</CardTitle>
-                                <Button
-                                    onClick={() => setAddingPayment(true)}
-                                    size="sm"
-                                    className="gap-2"
-                                >
-                                    <Plus className="h-4 w-4" />
-                                    Thêm thanh toán
-                                </Button>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            {booking.payments && booking.payments.length > 0 ? (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Ngày</TableHead>
-                                            <TableHead>Số tiền</TableHead>
-                                            <TableHead>Phương thức</TableHead>
-                                            <TableHead>Trạng thái</TableHead>
-                                            <TableHead>Thao tác</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {booking.payments.map((payment) => (
-                                            <TableRow key={payment.id}>
-                                                <TableCell>{formatDateTime(payment.date)}</TableCell>
-                                                <TableCell className="font-medium">{formatPrice(payment.amount)}</TableCell>
-                                                <TableCell>{METHOD_OPTIONS[payment.method as keyof typeof METHOD_OPTIONS] || 'N/A'}</TableCell>
-                                                <TableCell>
-                                                    <Badge className={payment.status === 1 ? 'bg-green-500' : 'bg-red-500'}>
-                                                        {payment.status === 1 ? 'Thành công' : 'Thất bại'}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex gap-2">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => setEditingPayment(payment)}
-                                                        >
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => setDeletingPayment(payment)}
-                                                        >
-                                                            <X className="h-4 w-4 text-red-500" />
-                                                        </Button>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            ) : (
-                                <p className="text-gray-500 text-center py-4">Chưa có thanh toán nào</p>
-                            )}
-                        </CardContent>
-                    </Card>
+
                 </div>
             </div>
 
@@ -494,170 +416,10 @@ export default function BookingShow({ booking, flash }: Props) {
                 </AlertDialogContent>
             </AlertDialog>
 
-            {/* Dialog Thêm/Sửa Thanh toán */}
-            <PaymentFormDialog
-                booking={booking}
-                payment={editingPayment}
-                open={addingPayment || editingPayment !== null}
-                onClose={() => {
-                    setAddingPayment(false);
-                    setEditingPayment(null);
-                }}
-            />
 
-            {/* Alert Dialog Xác nhận xóa thanh toán */}
-            <AlertDialog open={deletingPayment !== null} onOpenChange={(open) => !open && setDeletingPayment(null)}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Xác nhận xóa thanh toán</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Bạn có chắc chắn muốn xóa thanh toán này?
-                            Hành động này không thể hoàn tác.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Hủy</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={async () => {
-                                if (!deletingPayment) return;
-                                try {
-                                    await axios.delete(`/admin/payments/${deletingPayment.id}`);
-                                    toast.success('Xóa thanh toán thành công!');
-                                    router.reload();
-                                } catch (error: any) {
-                                    toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
-                                } finally {
-                                    setDeletingPayment(null);
-                                }
-                            }}
-                            className="bg-red-600 hover:bg-red-700"
-                        >
-                            Xóa
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
         </AppLayout>
     );
 }
 
-// Component form thanh toán
-function PaymentFormDialog({ booking, payment, open, onClose }: { booking: Booking; payment: Payment | null; open: boolean; onClose: () => void }) {
-    const [formData, setFormData] = useState({
-        amount: payment?.amount || 0,
-        method: payment?.method?.toString() || '0',
-        date: payment?.date ? new Date(payment.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        status: payment?.status?.toString() || '1',
-        thumbnail: null as File | null,
-    });
-    const [submitting, setSubmitting] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSubmitting(true);
-
-        try {
-            const formDataToSend = new FormData();
-            formDataToSend.append('amount', formData.amount.toString());
-            formDataToSend.append('method', formData.method);
-            formDataToSend.append('date', formData.date);
-            formDataToSend.append('status', formData.status);
-            if (formData.thumbnail) {
-                formDataToSend.append('thumbnail', formData.thumbnail);
-            }
-
-            if (payment) {
-                await axios.put(`/admin/payments/${payment.id}`, formDataToSend, {
-                    headers: { 'Content-Type': 'multipart/form-data' },
-                });
-                toast.success('Cập nhật thanh toán thành công!');
-            } else {
-                await axios.post(`/admin/bookings/${booking.id}/payments`, formDataToSend, {
-                    headers: { 'Content-Type': 'multipart/form-data' },
-                });
-                toast.success('Thêm thanh toán thành công!');
-            }
-            router.reload();
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    return (
-        <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>{payment ? 'Sửa thanh toán' : 'Thêm thanh toán'}</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                        <Label>Số tiền *</Label>
-                        <Input
-                            type="number"
-                            step="0.01"
-                            min="0.01"
-                            value={formData.amount}
-                            onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-                            required
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Phương thức *</Label>
-                        <Select value={formData.method} onValueChange={(val) => setFormData({ ...formData, method: val })}>
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="0">Tiền mặt</SelectItem>
-                                <SelectItem value="1">Chuyển khoản</SelectItem>
-                                <SelectItem value="2">Thẻ tín dụng</SelectItem>
-                                <SelectItem value="3">Gateway</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Ngày thanh toán *</Label>
-                        <Input
-                            type="date"
-                            value={formData.date}
-                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                            required
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Trạng thái *</Label>
-                        <Select value={formData.status} onValueChange={(val) => setFormData({ ...formData, status: val })}>
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="0">Thất bại</SelectItem>
-                                <SelectItem value="1">Thành công</SelectItem>
-                                <SelectItem value="2">Chờ xử lý</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Ảnh biên lai (tùy chọn)</Label>
-                        <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => setFormData({ ...formData, thumbnail: e.target.files?.[0] || null })}
-                        />
-                    </div>
-                    <DialogFooter>
-                        <Button type="button" variant="ghost" onClick={onClose}>
-                            Hủy
-                        </Button>
-                        <Button type="submit" disabled={submitting}>
-                            {submitting ? 'Đang lưu...' : payment ? 'Cập nhật' : 'Thêm'}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
-    );
-}
 

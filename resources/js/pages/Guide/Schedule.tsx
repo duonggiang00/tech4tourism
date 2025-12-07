@@ -20,6 +20,7 @@ interface Tour {
 interface TourInstance {
     id: number;
     tour_template_id: number;
+    date_start: string; // Add date_start
     tourTemplate?: Tour;
 }
 
@@ -78,7 +79,7 @@ export default function Schedule({ assignments, filters }: Props) {
     return (
         <AppLayout>
             <Head title="Lịch trình của tôi" />
-            
+
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -86,10 +87,10 @@ export default function Schedule({ assignments, filters }: Props) {
                         <h1 className="text-2xl font-bold">📅 Lịch trình của tôi</h1>
                         <p className="text-muted-foreground">Danh sách các chuyến đi được phân công</p>
                     </div>
-                    
+
                     <div className="flex items-center gap-3">
-                        <Select 
-                            value={filters.status || 'all'} 
+                        <Select
+                            value={filters.status || 'all'}
                             onValueChange={handleStatusFilter}
                         >
                             <SelectTrigger className="w-[180px]">
@@ -120,81 +121,87 @@ export default function Schedule({ assignments, filters }: Props) {
                         {assignments.data.map((assignment) => {
                             // Lấy tour từ tourInstance.tourTemplate hoặc tour trực tiếp
                             const tour = assignment.tourInstance?.tourTemplate || assignment.tour;
-                            
+
                             // Nếu không có tour, bỏ qua assignment này
                             if (!tour) {
                                 return null;
                             }
-                            
+
                             const days = tour.days || tour.day || 0;
                             const thumbnail = tour.thumbnail ? `${tour.thumbnail}` : null;
-                            
+
                             return (
-                            <Card key={assignment.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                                <div className="flex flex-col md:flex-row">
-                                    {/* Thumbnail */}
-                                    <div className="w-full md:w-48 h-32 md:h-auto bg-muted flex-shrink-0">
-                                        {thumbnail ? (
-                                            <img 
-                                                src={thumbnail} 
-                                                alt={tour.title}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <MapPin className="h-8 w-8 text-muted-foreground" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    
-                                    {/* Content */}
-                                    <div className="flex-1 p-4">
-                                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
-                                            <div className="space-y-2">
-                                                <div className="flex items-center gap-2">
-                                                    <Badge className={statusLabels[assignment.status]?.color || 'bg-gray-100'}>
-                                                        {statusLabels[assignment.status]?.label || 'Không xác định'}
-                                                    </Badge>
+                                <Card key={assignment.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                                    <div className="flex flex-col md:flex-row">
+                                        {/* Thumbnail */}
+                                        <div className="w-full md:w-48 h-32 md:h-auto bg-muted flex-shrink-0">
+                                            {thumbnail ? (
+                                                <img
+                                                    src={thumbnail}
+                                                    alt={tour.title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <MapPin className="h-8 w-8 text-muted-foreground" />
                                                 </div>
-                                                <h3 className="text-lg font-semibold">{tour.title}</h3>
-                                                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                                                    {days > 0 && (
-                                                        <span className="flex items-center gap-1">
-                                                            <Clock className="h-4 w-4" />
-                                                            {days} ngày
-                                                        </span>
+                                            )}
+                                        </div>
+
+                                        {/* Content */}
+                                        <div className="flex-1 p-4">
+                                            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge className={statusLabels[assignment.status]?.color || 'bg-gray-100'}>
+                                                            {statusLabels[assignment.status]?.label || 'Không xác định'}
+                                                        </Badge>
+                                                    </div>
+                                                    <h3 className="text-lg font-semibold">{tour.title}</h3>
+                                                    {/* Hiển thị ngày khởi hành */}
+                                                    {(assignment.tourInstance?.date_start || (assignment.tour as any)?.date_start) && (
+                                                        <p className="text-sm font-medium text-blue-600">
+                                                            Ngày khởi hành: {new Date(assignment.tourInstance?.date_start || (assignment.tour as any)?.date_start).toLocaleDateString('vi-VN')}
+                                                        </p>
                                                     )}
-                                                    <span className="flex items-center gap-1">
-                                                        <Users className="h-4 w-4" />
-                                                        {assignment.trip_check_ins.length} điểm check-in
-                                                    </span>
-                                                    <span className="flex items-center gap-1">
-                                                        📝 {assignment.trip_notes.length} nhật ký
-                                                    </span>
+                                                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                                        {days > 0 && (
+                                                            <span className="flex items-center gap-1">
+                                                                <Clock className="h-4 w-4" />
+                                                                {days} ngày
+                                                            </span>
+                                                        )}
+                                                        <span className="flex items-center gap-1">
+                                                            <Users className="h-4 w-4" />
+                                                            {assignment.trip_check_ins.length} điểm check-in
+                                                        </span>
+                                                        <span className="flex items-center gap-1">
+                                                            📝 {assignment.trip_notes.length} nhật ký
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            
-                                            <div className="flex flex-col gap-2">
-                                                {assignment.status === '0' && (
-                                                    <Button
-                                                        onClick={() => handleConfirmAssignment(assignment.id)}
-                                                        className="gap-2"
-                                                    >
-                                                        <Check className="h-4 w-4" />
-                                                        Xác nhận đã nhận
-                                                    </Button>
-                                                )}
-                                                <Link href={guide?.trip?.detail ? guide.trip.detail(assignment.id) : `/guide/trip/${assignment.id}`}>
-                                                    <Button variant="outline" className="gap-2">
-                                                        <Eye className="h-4 w-4" />
-                                                        Xem chi tiết
-                                                    </Button>
-                                                </Link>
+
+                                                <div className="flex flex-col gap-2">
+                                                    {assignment.status === '0' && (
+                                                        <Button
+                                                            onClick={() => handleConfirmAssignment(assignment.id)}
+                                                            className="gap-2"
+                                                        >
+                                                            <Check className="h-4 w-4" />
+                                                            Xác nhận đã nhận
+                                                        </Button>
+                                                    )}
+                                                    <Link href={guide?.trip?.detail ? guide.trip.detail(assignment.id) : `/guide/trip/${assignment.id}`}>
+                                                        <Button variant="outline" className="gap-2">
+                                                            <Eye className="h-4 w-4" />
+                                                            Xem chi tiết
+                                                        </Button>
+                                                    </Link>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </Card>
+                                </Card>
                             );
                         })}
                     </div>
@@ -207,11 +214,10 @@ export default function Schedule({ assignments, filters }: Props) {
                             <Link
                                 key={index}
                                 href={link.url || '#'}
-                                className={`px-3 py-1 rounded ${
-                                    link.active 
-                                        ? 'bg-primary text-primary-foreground' 
-                                        : 'bg-muted hover:bg-muted/80'
-                                } ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                className={`px-3 py-1 rounded ${link.active
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-muted hover:bg-muted/80'
+                                    } ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />
                         ))}
