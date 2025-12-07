@@ -36,13 +36,20 @@ interface Provider {
     notes?: string;
 }
 
+interface ServiceType {
+    id: number;
+    name: string;
+    description?: string;
+}
+
 interface PageProps {
     flash: { message?: string };
     providers: Provider[];
+    serviceTypes: ServiceType[];
 }
 
 export default function Index() {
-    const { providers, flash } = usePage<PageProps>().props;
+    const { providers, serviceTypes, flash } = usePage<PageProps>().props;
 
     const { delete: destroy } = useForm();
 
@@ -131,6 +138,7 @@ export default function Index() {
                     open={isDialogOpen}
                     onOpenChange={setIsDialogOpen}
                     initialData={currentProvider}
+                    serviceTypes={serviceTypes}
                     title={
                         currentProvider
                             ? `Chỉnh sửa: ${currentProvider.name}`
@@ -141,85 +149,132 @@ export default function Index() {
 
             {/* Bảng danh sách */}
             <div className="m-8 rounded-lg border border-gray-200 bg-white shadow-sm">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[50px] text-center">
-                                STT
-                            </TableHead>
-                            <TableHead>Tên</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Hotline</TableHead>
-                            <TableHead>Trạng thái</TableHead>
-                            <TableHead className="text-center">
-                                Hành động
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {providers.map((provider, index) => (
-                            <TableRow key={provider.id}>
-                                <TableCell className="text-center">
-                                    {index + 1}
-                                </TableCell>
-                                <TableCell className="font-medium">
-                                    {provider.name}
-                                </TableCell>
-                                <TableCell>{provider.email || '—'}</TableCell>
-                                <TableCell>{provider.hotline || '—'}</TableCell>
-                                <TableCell>
-                                    {getStatusBadge(provider.status)}
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex justify-center gap-2">
-                                        {/* 👁 Nút xem chi tiết */}
-                                        <Link
-                                            href={
-                                                providersUrl.show(provider.id)
-                                                    .url
-                                            }
-                                        >
+                {/* Desktop View */}
+                <div className="hidden md:block">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[50px] text-center">
+                                    STT
+                                </TableHead>
+                                <TableHead>Tên</TableHead>
+                                <TableHead>Email</TableHead>
+                                <TableHead>Hotline</TableHead>
+                                <TableHead>Trạng thái</TableHead>
+                                <TableHead className="text-center">
+                                    Hành động
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {providers.map((provider, index) => (
+                                <TableRow key={provider.id}>
+                                    <TableCell className="text-center">
+                                        {index + 1}
+                                    </TableCell>
+                                    <TableCell className="font-medium">
+                                        {provider.name}
+                                    </TableCell>
+                                    <TableCell>{provider.email || '—'}</TableCell>
+                                    <TableCell>{provider.hotline || '—'}</TableCell>
+                                    <TableCell>
+                                        {getStatusBadge(provider.status)}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex justify-center gap-2">
+                                            {/* 👁 Nút xem chi tiết */}
+                                            <Link
+                                                href={
+                                                    providersUrl.show(provider.id)
+                                                        .url
+                                                }
+                                            >
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="hover:bg-blue-50 hover:text-blue-600"
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                            </Link>
+
+                                            {/* ✏ Sửa */}
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="hover:bg-blue-50 hover:text-blue-600"
+                                                onClick={() =>
+                                                    openEditDialog(provider)
+                                                }
+                                                className="hover:bg-amber-50 hover:text-amber-600"
                                             >
-                                                <Eye className="h-4 w-4" />
+                                                <Pencil className="h-4 w-4" />
                                             </Button>
-                                        </Link>
 
-                                        {/* ✏ Sửa */}
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() =>
-                                                openEditDialog(provider)
-                                            }
-                                            className="hover:bg-amber-50 hover:text-amber-600"
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
+                                            {/* 🗑 Xóa */}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() =>
+                                                    handleDelete(
+                                                        provider.id,
+                                                        provider.name,
+                                                    )
+                                                }
+                                                className="hover:bg-red-50 hover:text-red-600"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
 
-                                        {/* 🗑 Xóa */}
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() =>
-                                                handleDelete(
-                                                    provider.id,
-                                                    provider.name,
-                                                )
-                                            }
-                                            className="hover:bg-red-50 hover:text-red-600"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                {/* Mobile View */}
+                <div className="md:hidden">
+                    <div className="divide-y divide-gray-200">
+                        {providers.map((provider, index) => (
+                            <div key={provider.id} className="p-4 space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex gap-2">
+                                        <span className="text-gray-400 font-mono text-sm pt-0.5">#{index + 1}</span>
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900">{provider.name}</h3>
+                                            <div className="mt-1">{getStatusBadge(provider.status)}</div>
+                                        </div>
                                     </div>
-                                </TableCell>
-                            </TableRow>
+                                </div>
+
+                                <div className="space-y-1 text-sm text-gray-600">
+                                    <div className="flex gap-2">
+                                        <span className="font-medium text-gray-500 w-16">Email:</span>
+                                        <span className="truncate">{provider.email || '—'}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <span className="font-medium text-gray-500 w-16">Hotline:</span>
+                                        <span>{provider.hotline || '—'}</span>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-2 pt-2">
+                                    <Link href={providersUrl.show(provider.id).url} className="w-full">
+                                        <Button variant="outline" size="sm" className="w-full text-blue-600">
+                                            <Eye className="h-4 w-4 mr-1" /> Chi tiết
+                                        </Button>
+                                    </Link>
+                                    <Button variant="outline" size="sm" onClick={() => openEditDialog(provider)} className="w-full text-amber-600">
+                                        <Pencil className="h-4 w-4 mr-1" /> Sửa
+                                    </Button>
+                                    <Button variant="outline" size="sm" onClick={() => handleDelete(provider.id, provider.name)} className="w-full text-red-600">
+                                        <Trash2 className="h-4 w-4 mr-1" /> Xóa
+                                    </Button>
+                                </div>
+                            </div>
                         ))}
-                    </TableBody>
-                </Table>
+                    </div>
+                </div>
 
                 {providers.length === 0 && (
                     <div className="p-8 text-center text-gray-500">

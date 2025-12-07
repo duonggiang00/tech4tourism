@@ -109,71 +109,120 @@ export default function Index() {
             </div>
 
             <div className="m-8 rounded-lg border border-gray-200 bg-white shadow-sm">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="text-center">STT</TableHead>
-                            <TableHead>Tên thuộc tính</TableHead>
-                            <TableHead>Dịch vụ</TableHead>
-                            <TableHead>Giá trị</TableHead>
-                            <TableHead>Loại</TableHead>
-                            <TableHead className="text-center">
-                                Hành động
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {attributes.map((attr, index) => (
-                            <TableRow key={attr.id}>
-                                <TableCell className="text-center">
-                                    {index + 1}
-                                </TableCell>
-                                <TableCell>{attr.name}</TableCell>
-                                <TableCell>
-                                    {attr.service?.name || '—'}
-                                </TableCell>
-                                <TableCell>{attr.value || '—'}</TableCell>
-                                <TableCell>{attr.type || '—'}</TableCell>
-                                <TableCell>
-                                    <div className="flex justify-center gap-2">
-                                        <Link
-                                            href={
-                                                serviceAttributes.show(attr.id)
-                                                    .url
-                                            }
-                                        >
+                {/* Desktop View */}
+                <div className="hidden md:block">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="text-center">STT</TableHead>
+                                <TableHead>Tên thuộc tính</TableHead>
+                                <TableHead>Dịch vụ</TableHead>
+                                <TableHead>Giá trị</TableHead>
+                                <TableHead>Loại</TableHead>
+                                <TableHead className="text-center">
+                                    Hành động
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {attributes.map((attr, index) => (
+                                <TableRow key={attr.id}>
+                                    <TableCell className="text-center">
+                                        {index + 1}
+                                    </TableCell>
+                                    <TableCell className="font-medium">{attr.name}</TableCell>
+                                    <TableCell>
+                                        {attr.service?.name || '—'}
+                                    </TableCell>
+                                    <TableCell className="max-w-[200px] truncate">{attr.value || '—'}</TableCell>
+                                    <TableCell>{attr.type || '—'}</TableCell>
+                                    <TableCell>
+                                        <div className="flex justify-center gap-2">
+                                            <Link
+                                                href={
+                                                    serviceAttributes.show(attr.id)
+                                                        .url
+                                                }
+                                            >
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="hover:bg-blue-50 hover:text-blue-600"
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                            </Link>
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="hover:bg-blue-50 hover:text-blue-600"
+                                                onClick={() => openEditDialog(attr)}
+                                                className="hover:bg-amber-50 hover:text-amber-600"
                                             >
-                                                <Eye className="h-4 w-4" />
+                                                <Pencil className="h-4 w-4" />
                                             </Button>
-                                        </Link>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => openEditDialog(attr)}
-                                            className="hover:bg-amber-50 hover:text-amber-600"
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() =>
-                                                handleDelete(attr.id, attr.name)
-                                            }
-                                            className="hover:bg-red-50 hover:text-red-600"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() =>
+                                                    handleDelete(attr.id, attr.name)
+                                                }
+                                                className="hover:bg-red-50 hover:text-red-600"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                {/* Mobile View */}
+                <div className="md:hidden">
+                    <div className="divide-y divide-gray-200">
+                        {attributes.map((attr, index) => (
+                            <div key={attr.id} className="p-4 space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex gap-2">
+                                        <span className="text-gray-400 font-mono text-sm pt-0.5">#{index + 1}</span>
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900">{attr.name}</h3>
+                                            {attr.service && (
+                                                <p className="text-xs text-blue-600 mt-1 bg-blue-50 px-2 py-0.5 rounded-full inline-block">
+                                                    {attr.service.name}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
-                                </TableCell>
-                            </TableRow>
+                                    <span className="text-xs font-medium px-2 py-1 bg-gray-100 rounded text-gray-600">
+                                        {attr.type}
+                                    </span>
+                                </div>
+
+                                <div className="text-sm bg-gray-50 p-2 rounded text-gray-700">
+                                    <span className="font-medium text-gray-500 block mb-1">Giá trị:</span>
+                                    {attr.value || '—'}
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-2 pt-2">
+                                    <Link href={serviceAttributes.show(attr.id).url} className="w-full">
+                                        <Button variant="outline" size="sm" className="w-full text-blue-600">
+                                            <Eye className="h-4 w-4 mr-1" /> Chi tiết
+                                        </Button>
+                                    </Link>
+                                    <Button variant="outline" size="sm" onClick={() => openEditDialog(attr)} className="w-full text-amber-600">
+                                        <Pencil className="h-4 w-4 mr-1" /> Sửa
+                                    </Button>
+                                    <Button variant="outline" size="sm" onClick={() => handleDelete(attr.id, attr.name)} className="w-full text-red-600">
+                                        <Trash2 className="h-4 w-4 mr-1" /> Xóa
+                                    </Button>
+                                </div>
+                            </div>
                         ))}
-                    </TableBody>
-                </Table>
+                    </div>
+                </div>
+
                 {attributes.length === 0 && (
                     <div className="p-8 text-center text-gray-500">
                         Chưa có thuộc tính nào.

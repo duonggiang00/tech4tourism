@@ -83,105 +83,132 @@ export default function Index({ policies }: Props) {
 
                     {/* Table Section */}
                     <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-gray-50 hover:bg-gray-50">
-                                    <TableHead className="w-[50px] text-center">
-                                        STT
-                                    </TableHead>
-                                    <TableHead className="min-w-[200px]">
-                                        Tiêu đề
-                                    </TableHead>
+                        {/* Desktop View */}
+                        <div className="hidden md:block">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-gray-50 hover:bg-gray-50">
+                                        <TableHead className="w-[50px] text-center">
+                                            STT
+                                        </TableHead>
+                                        <TableHead className="min-w-[200px]">
+                                            Tiêu đề
+                                        </TableHead>
 
-                                    <TableHead className="w-[150px] text-center">
-                                        Hành động
-                                    </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {policies.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell
-                                            colSpan={5}
-                                            className="h-32 text-center text-gray-500"
-                                        >
-                                            Chưa có chính sách nào. Hãy thêm
-                                            mới!
-                                        </TableCell>
+                                        <TableHead className="w-[150px] text-center">
+                                            Hành động
+                                        </TableHead>
                                     </TableRow>
-                                ) : (
-                                    policies.map((policy, index) => (
-                                        <TableRow key={policy.id}>
-                                            <TableCell className="text-center font-medium text-gray-500">
-                                                {index + 1}
+                                </TableHeader>
+                                <TableBody>
+                                    {policies.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell
+                                                colSpan={3}
+                                                className="h-32 text-center text-gray-500"
+                                            >
+                                                Chưa có chính sách nào. Hãy thêm
+                                                mới!
                                             </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        policies.map((policy, index) => (
+                                            <TableRow key={policy.id}>
+                                                <TableCell className="text-center font-medium text-gray-500">
+                                                    {index + 1}
+                                                </TableCell>
 
-                                            <TableCell className="font-semibold text-gray-800">
-                                                <div className="flex items-center gap-2">
-                                                    <FileText className="h-4 w-4 shrink-0 text-blue-500" />
-                                                    <Link
-                                                        href={policyUrl.show(
-                                                            policy.id,
-                                                        )}
-                                                        className="hover:text-blue-600 hover:underline"
-                                                    >
-                                                        {policy.title}
-                                                    </Link>
-                                                </div>
-                                            </TableCell>
+                                                <TableCell className="font-semibold text-gray-800">
+                                                    <div className="flex items-center gap-2">
+                                                        <FileText className="h-4 w-4 shrink-0 text-blue-500" />
+                                                        <Link
+                                                            href={policyUrl.show(
+                                                                policy.id,
+                                                            )}
+                                                            className="hover:text-blue-600 hover:underline"
+                                                        >
+                                                            {policy.title}
+                                                        </Link>
+                                                    </div>
+                                                </TableCell>
 
-                                            <TableCell>
-                                                <div className="flex items-center justify-center gap-1">
-                                                    {/* Nút Xem Chi Tiết (Mới) */}
-                                                    <Link
-                                                        href={policyUrl.show(
-                                                            policy.id,
-                                                        )}
-                                                    >
+                                                <TableCell>
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <Link href={policyUrl.show(policy.id)}>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-gray-500 hover:bg-blue-50 hover:text-blue-600"
+                                                            >
+                                                                <Eye className="h-4 w-4" />
+                                                            </Button>
+                                                        </Link>
+
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            className="h-8 w-8 text-gray-500 hover:bg-blue-50 hover:text-blue-600"
-                                                            title="Xem chi tiết"
+                                                            className="h-8 w-8 text-gray-500 hover:bg-amber-50 hover:text-amber-600"
+                                                            onClick={() => openEditDialog(policy)}
                                                         >
-                                                            <Eye className="h-4 w-4" />
+                                                            <Edit className="h-4 w-4" />
                                                         </Button>
-                                                    </Link>
 
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-gray-500 hover:bg-amber-50 hover:text-amber-600"
-                                                        onClick={() =>
-                                                            openEditDialog(
-                                                                policy,
-                                                            )
-                                                        }
-                                                        title="Chỉnh sửa"
-                                                    >
-                                                        <Edit className="h-4 w-4" />
-                                                    </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-gray-500 hover:bg-red-50 hover:text-red-600"
+                                                            onClick={() => setDeletePolicyId(policy.id)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
 
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-gray-500 hover:bg-red-50 hover:text-red-600"
-                                                        onClick={() =>
-                                                            setDeletePolicyId(
-                                                                policy.id,
-                                                            )
-                                                        }
-                                                        title="Xóa"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
+                        {/* Mobile View */}
+                        <div className="md:hidden">
+                            {policies.length === 0 ? (
+                                <div className="p-8 text-center text-gray-500">
+                                    Chưa có chính sách nào. Hãy thêm mới!
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-gray-200">
+                                    {policies.map((policy, index) => (
+                                        <div key={policy.id} className="p-4 space-y-3">
+                                            <div className="flex items-start gap-3">
+                                                <span className="text-gray-400 font-mono text-sm pt-0.5">#{index + 1}</span>
+                                                <FileText className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                                                <Link
+                                                    href={policyUrl.show(policy.id)}
+                                                    className="font-semibold text-gray-900 leading-tight hover:text-blue-600 flex-1"
+                                                >
+                                                    {policy.title}
+                                                </Link>
+                                            </div>
+
+                                            <div className="grid grid-cols-3 gap-2 pt-2">
+                                                <Link href={policyUrl.show(policy.id)} className="w-full">
+                                                    <Button variant="outline" size="sm" className="w-full text-blue-600">
+                                                        <Eye className="h-4 w-4 mr-1" /> Xem
                                                     </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
+                                                </Link>
+                                                <Button variant="outline" size="sm" onClick={() => openEditDialog(policy)} className="w-full text-amber-600">
+                                                    <Edit className="h-4 w-4 mr-1" /> Sửa
+                                                </Button>
+                                                <Button variant="outline" size="sm" onClick={() => setDeletePolicyId(policy.id)} className="w-full text-red-600">
+                                                    <Trash2 className="h-4 w-4 mr-1" /> Xóa
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 

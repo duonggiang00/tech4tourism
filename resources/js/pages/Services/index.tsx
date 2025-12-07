@@ -127,86 +127,134 @@ export default function Index() {
 
             {/* Bảng danh sách */}
             <div className="m-8 rounded-lg border border-gray-200 bg-white shadow-sm">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[50px] text-center">
-                                STT
-                            </TableHead>
-                            <TableHead>Tên dịch vụ</TableHead>
-                            <TableHead>Loại</TableHead>
-                            <TableHead>Nhà cung cấp</TableHead>
-                            <TableHead>Giá</TableHead>
-                            <TableHead>Đơn vị</TableHead>
-                            <TableHead className="text-center">
-                                Hành động
-                            </TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {services.map((service, index) => (
-                            <TableRow key={service.id}>
-                                <TableCell className="text-center">
-                                    {index + 1}
-                                </TableCell>
-                                <TableCell className="font-medium">
-                                    {service.name}
-                                </TableCell>
-                                <TableCell>
-                                    {
-                                        service_types.find(
-                                            (t) =>
-                                                t.id ===
-                                                service.id_service_type,
-                                        )?.name
-                                    }
-                                </TableCell>
-                                <TableCell>
-                                    {
-                                        providers.find(
-                                            (p) => p.id === service.id_provider,
-                                        )?.name
-                                    }
-                                </TableCell>
-                                <TableCell className="font-medium text-green-600">
-                                    {new Intl.NumberFormat('vi-VN', {
-                                        style: 'currency',
-                                        currency: 'VND',
-                                        minimumFractionDigits: 0,
-                                    }).format(service.price)}
-                                </TableCell>
-                                <TableCell>{service.unit || '—'}</TableCell>
-                                <TableCell>
-                                    <div className="flex justify-center gap-2">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() =>
-                                                openEditDialog(service)
-                                            }
-                                            className="hover:bg-amber-50 hover:text-amber-600"
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() =>
-                                                handleDelete(
-                                                    service.id,
-                                                    service.name,
-                                                )
-                                            }
-                                            className="hover:bg-red-50 hover:text-red-600"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </TableCell>
+                {/* Desktop View */}
+                <div className="hidden md:block">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[50px] text-center">
+                                    STT
+                                </TableHead>
+                                <TableHead>Tên dịch vụ</TableHead>
+                                <TableHead>Loại</TableHead>
+                                <TableHead>Nhà cung cấp</TableHead>
+                                <TableHead>Giá</TableHead>
+                                <TableHead>Đơn vị</TableHead>
+                                <TableHead className="text-center">
+                                    Hành động
+                                </TableHead>
                             </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {services.map((service, index) => (
+                                <TableRow key={service.id}>
+                                    <TableCell className="text-center">
+                                        {index + 1}
+                                    </TableCell>
+                                    <TableCell className="font-medium">
+                                        {service.name}
+                                    </TableCell>
+                                    <TableCell>
+                                        {
+                                            service_types.find(
+                                                (t) =>
+                                                    t.id ===
+                                                    service.id_service_type,
+                                            )?.name
+                                        }
+                                    </TableCell>
+                                    <TableCell>
+                                        {
+                                            providers.find(
+                                                (p) => p.id === service.id_provider,
+                                            )?.name
+                                        }
+                                    </TableCell>
+                                    <TableCell className="font-medium text-green-600">
+                                        {new Intl.NumberFormat('vi-VN', {
+                                            style: 'currency',
+                                            currency: 'VND',
+                                            minimumFractionDigits: 0,
+                                        }).format(service.price)}
+                                    </TableCell>
+                                    <TableCell>{service.unit || '—'}</TableCell>
+                                    <TableCell>
+                                        <div className="flex justify-center gap-2">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() =>
+                                                    openEditDialog(service)
+                                                }
+                                                className="hover:bg-amber-50 hover:text-amber-600"
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() =>
+                                                    handleDelete(
+                                                        service.id,
+                                                        service.name,
+                                                    )
+                                                }
+                                                className="hover:bg-red-50 hover:text-red-600"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                {/* Mobile View */}
+                <div className="md:hidden">
+                    <div className="divide-y divide-gray-200">
+                        {services.map((service, index) => (
+                            <div key={service.id} className="p-4 space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex gap-2">
+                                        <span className="text-gray-400 font-mono text-sm pt-0.5">#{index + 1}</span>
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900 leading-tight">{service.name}</h3>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                {service_types.find((t) => t.id === service.id_service_type)?.name}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className="font-bold text-green-600 text-sm">
+                                        {new Intl.NumberFormat('vi-VN', {
+                                            style: 'currency',
+                                            currency: 'VND',
+                                            minimumFractionDigits: 0,
+                                        }).format(service.price)}
+                                        {service.unit ? ` / ${service.unit}` : ''}
+                                    </span>
+                                </div>
+
+                                <div className="text-sm text-gray-600 pl-6 border-l-2 border-gray-100 ml-1">
+                                    <p className="line-clamp-1">
+                                        <span className="font-medium">NCC: </span>
+                                        {providers.find((p) => p.id === service.id_provider)?.name}
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 pt-2">
+                                    <Button variant="outline" size="sm" onClick={() => openEditDialog(service)} className="w-full text-amber-600">
+                                        <Pencil className="h-4 w-4 mr-1" /> Sửa
+                                    </Button>
+                                    <Button variant="outline" size="sm" onClick={() => handleDelete(service.id, service.name)} className="w-full text-red-600">
+                                        <Trash2 className="h-4 w-4 mr-1" /> Xóa
+                                    </Button>
+                                </div>
+                            </div>
                         ))}
-                    </TableBody>
-                </Table>
+                    </div>
+                </div>
 
                 {services.length === 0 && (
                     <div className="p-8 text-center text-gray-500">

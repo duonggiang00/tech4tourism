@@ -196,17 +196,6 @@ export default function BookingsIndex({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Danh sách Bookings</h2>
-                <div>
-                    <Link href={bookingsRoutes.create().url}>
-                        <Button className="bg-blue-600 hover:bg-blue-700">
-                            <Plus className="mr-2 h-4 w-4" /> Thêm booking
-                        </Button>
-                    </Link>
-                </div>
-            </div>
-
             <Head title="Quản lý Bookings" />
 
             <div className="space-y-4 p-6">
@@ -238,6 +227,11 @@ export default function BookingsIndex({
                         <h2 className="text-2xl font-bold">
                             Danh sách Bookings
                         </h2>
+                        <Link href={bookingsRoutes.create().url}>
+                            <Button className="bg-blue-600 hover:bg-blue-700">
+                                <Plus className="mr-2 h-4 w-4" /> Thêm booking
+                            </Button>
+                        </Link>
                     </div>
 
                     {/* Search Form */}
@@ -308,157 +302,250 @@ export default function BookingsIndex({
                     </form>
 
                     {/* Table */}
-                    {bookingsData.data && bookingsData.data.length > 0 ? (
-                        <>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Mã Booking</TableHead>
-                                        <TableHead>Tour</TableHead>
-                                        <TableHead>Khách hàng</TableHead>
-                                        <TableHead>Ngày đi</TableHead>
-                                        <TableHead>Số người</TableHead>
-                                        <TableHead>Tổng tiền</TableHead>
-                                        <TableHead>Trạng thái</TableHead>
-                                        <TableHead className="text-right">
-                                            Hành động
-                                        </TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {bookingsData.data.map((booking) => (
-                                        <TableRow key={booking.id}>
-                                            <TableCell className="font-medium">
-                                                {booking.code}
-                                            </TableCell>
-                                            <TableCell>
-                                                {booking.tourInstance?.tourTemplate?.title || booking.tour?.title || 'N/A'}
-                                            </TableCell>
-                                            <TableCell>
-                                                <div>
-                                                    <div className="font-medium">
-                                                        {booking.client_name}
+                    {/* Desktop Table */}
+                    <div className="hidden md:block">
+                        {bookingsData.data && bookingsData.data.length > 0 ? (
+                            <>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Mã Booking</TableHead>
+                                            <TableHead>Tour</TableHead>
+                                            <TableHead>Khách hàng</TableHead>
+                                            <TableHead>Ngày đi</TableHead>
+                                            <TableHead>Trạng thái</TableHead>
+                                            <TableHead className="text-right">
+                                                Hành động
+                                            </TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {bookingsData.data.map((booking) => (
+                                            <TableRow key={booking.id}>
+                                                <TableCell className="font-medium">
+                                                    {booking.code}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {booking.tourInstance?.tourTemplate?.title || booking.tour?.title || 'N/A'}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div>
+                                                        <div className="font-medium">
+                                                            {booking.client_name}
+                                                        </div>
+                                                        <div className="text-sm text-gray-500">
+                                                            {booking.client_email}
+                                                        </div>
                                                     </div>
-                                                    <div className="text-sm text-gray-500">
-                                                        {booking.client_email}
-                                                    </div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                {formatDate(booking.date_start)}
-                                            </TableCell>
-                                            <TableCell>
-                                                {booking.count_adult} người lớn
-                                                {booking.count_children > 0 &&
-                                                    `, ${booking.count_children} trẻ em`}
-                                            </TableCell>
-                                            <TableCell className="font-medium">
-                                                {formatPrice(
-                                                    booking.final_price,
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge
-                                                    className={
-                                                        STATUS_OPTIONS[
-                                                            booking.status as keyof typeof STATUS_OPTIONS
-                                                        ]?.color ||
-                                                        'bg-gray-500'
-                                                    }
-                                                >
-                                                    {STATUS_OPTIONS[
-                                                        booking.status as keyof typeof STATUS_OPTIONS
-                                                    ]?.label || 'Unknown'}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Link
-                                                        href={
-                                                            bookingsRoutes.show(
-                                                                booking.id,
-                                                            ).url
+                                                </TableCell>
+                                                <TableCell>
+                                                    {formatDate(booking.date_start)}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge
+                                                        className={
+                                                            STATUS_OPTIONS[
+                                                                booking.status as keyof typeof STATUS_OPTIONS
+                                                            ]?.color ||
+                                                            'bg-gray-500'
                                                         }
                                                     >
+                                                        {STATUS_OPTIONS[
+                                                            booking.status as keyof typeof STATUS_OPTIONS
+                                                        ]?.label || 'Unknown'}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Link
+                                                            href={
+                                                                bookingsRoutes.show(
+                                                                    booking.id,
+                                                                ).url
+                                                            }
+                                                        >
+                                                            <Button
+                                                                variant="outline"
+                                                                size="icon"
+                                                                className="h-8 w-8"
+                                                                title="Xem chi tiết"
+                                                            >
+                                                                <Eye className="h-4 w-4" />
+                                                            </Button>
+                                                        </Link>
                                                         <Button
                                                             variant="outline"
                                                             size="icon"
                                                             className="h-8 w-8"
-                                                            title="Xem chi tiết"
+                                                            onClick={() =>
+                                                                openEditModal(
+                                                                    booking,
+                                                                )
+                                                            }
+                                                            title="Cập nhật trạng thái"
                                                         >
-                                                            <Eye className="h-4 w-4" />
+                                                            <Pencil className="h-4 w-4" />
                                                         </Button>
-                                                    </Link>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="icon"
-                                                        className="h-8 w-8"
-                                                        onClick={() =>
-                                                            openEditModal(
-                                                                booking,
-                                                            )
-                                                        }
-                                                        title="Cập nhật trạng thái"
-                                                    >
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="icon"
-                                                        className="h-8 w-8"
-                                                        onClick={() =>
-                                                            setDeletingBooking(
-                                                                booking,
-                                                            )
-                                                        }
-                                                        title="Xóa booking"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="icon"
+                                                            className="h-8 w-8"
+                                                            onClick={() =>
+                                                                setDeletingBooking(
+                                                                    booking,
+                                                                )
+                                                            }
+                                                            title="Xóa booking"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
 
-                            {/* Pagination */}
-                            {bookingsData.links &&
-                                bookingsData.links.length > 3 && (
-                                    <div className="mt-4 flex items-center justify-between">
-                                        <div className="text-sm text-gray-700">
-                                            Hiển thị {bookingsData.from || 0}{' '}
-                                            đến {bookingsData.to || 0} trong
-                                            tổng số {bookingsData.total || 0}{' '}
-                                            bookings
+                                {/* Pagination */}
+                                {bookingsData.links &&
+                                    bookingsData.links.length > 3 && (
+                                        <div className="mt-4 flex items-center justify-between">
+                                            <div className="text-sm text-gray-700">
+                                                Hiển thị {bookingsData.from || 0}{' '}
+                                                đến {bookingsData.to || 0} trong
+                                                tổng số {bookingsData.total || 0}{' '}
+                                                bookings
+                                            </div>
+                                            <div className="flex gap-2">
+                                                {bookingsData.links.map(
+                                                    (link, index) => (
+                                                        <Link
+                                                            key={index}
+                                                            href={link.url || '#'}
+                                                            className={`rounded-md px-3 py-2 text-sm font-medium ${link.active
+                                                                ? 'bg-blue-600 text-white'
+                                                                : link.url
+                                                                    ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                                                                    : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                                                }`}
+                                                            dangerouslySetInnerHTML={{
+                                                                __html: link.label,
+                                                            }}
+                                                        />
+                                                    ),
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="flex gap-2">
-                                            {bookingsData.links.map(
-                                                (link, index) => (
-                                                    <Link
-                                                        key={index}
-                                                        href={link.url || '#'}
-                                                        className={`rounded-md px-3 py-2 text-sm font-medium ${link.active
-                                                            ? 'bg-blue-600 text-white'
-                                                            : link.url
-                                                                ? 'border bg-white text-gray-700 hover:bg-gray-50'
-                                                                : 'cursor-not-allowed bg-gray-100 text-gray-400'
-                                                            }`}
-                                                        dangerouslySetInnerHTML={{
-                                                            __html: link.label,
-                                                        }}
-                                                    />
-                                                ),
-                                            )}
+                                    )}
+                            </>
+                        ) : (
+                            <div className="py-8 text-center text-gray-500">
+                                Không tìm thấy booking nào.
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Mobile Card Layout */}
+                    <div className="md:hidden space-y-4">
+                        {bookingsData.data && bookingsData.data.length > 0 ? (
+                            bookingsData.data.map((booking) => (
+                                <div key={booking.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div>
+                                            <div className="text-sm font-bold text-gray-900">{booking.code}</div>
+                                            <div className="text-xs text-gray-500">{formatDate(booking.date_start)}</div>
+                                        </div>
+                                        <Badge
+                                            className={
+                                                STATUS_OPTIONS[
+                                                    booking.status as keyof typeof STATUS_OPTIONS
+                                                ]?.color || 'bg-gray-500'
+                                            }
+                                        >
+                                            {STATUS_OPTIONS[
+                                                booking.status as keyof typeof STATUS_OPTIONS
+                                            ]?.label || 'Unknown'}
+                                        </Badge>
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <div className="font-medium text-gray-800 line-clamp-2">
+                                            {booking.tourInstance?.tourTemplate?.title || booking.tour?.title || 'N/A'}
                                         </div>
                                     </div>
-                                )}
-                        </>
-                    ) : (
-                        <div className="py-8 text-center text-gray-500">
-                            Không tìm thấy booking nào.
-                        </div>
-                    )}
+
+                                    <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mb-3 bg-gray-50 p-2 rounded">
+                                        <div>
+                                            <span className="block text-xs text-gray-400 uppercase">Khách hàng</span>
+                                            <span className="font-medium">{booking.client_name}</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="block text-xs text-gray-400 uppercase">Tổng tiền</span>
+                                            <span className="font-bold text-green-600">{formatPrice(booking.final_price)}</span>
+                                        </div>
+                                        <div className="col-span-2 text-xs border-t pt-2 mt-1 border-gray-200">
+                                            {booking.count_adult} người lớn
+                                            {booking.count_children > 0 && `, ${booking.count_children} trẻ em`}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2 border-t pt-3">
+                                        <Link href={bookingsRoutes.show(booking.id).url} className="flex-1">
+                                            <Button variant="outline" size="sm" className="w-full">
+                                                <Eye className="mr-1 h-3 w-3" /> Chi tiết
+                                            </Button>
+                                        </Link>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="flex-1"
+                                            onClick={() => openEditModal(booking)}
+                                        >
+                                            <Pencil className="mr-1 h-3 w-3" /> Cập nhật
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="w-10 px-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                            onClick={() => setDeletingBooking(booking)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="py-8 text-center text-gray-500 bg-gray-50 rounded border border-dashed">
+                                Không tìm thấy booking nào.
+                            </div>
+                        )}
+
+                        {/* Mobile Pagination (Simplified) */}
+                        {bookingsData.links && bookingsData.links.length > 3 && (
+                            <div className="flex items-center justify-center gap-2 mt-4">
+                                {bookingsData.links.map((link, index) => {
+                                    if (link.label.includes('&laquo;') || link.label.includes('&raquo;') || link.active) {
+                                        return (
+                                            <Link
+                                                key={index}
+                                                href={link.url || '#'}
+                                                className={`rounded-md px-3 py-2 text-sm font-medium ${link.active
+                                                    ? 'bg-blue-600 text-white'
+                                                    : link.url
+                                                        ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                                                        : 'cursor-not-allowed bg-gray-100 text-gray-400 opacity-50'
+                                                    }`}
+                                                dangerouslySetInnerHTML={{
+                                                    __html: link.label,
+                                                }}
+                                            />
+                                        );
+                                    }
+                                    return null;
+                                })}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
