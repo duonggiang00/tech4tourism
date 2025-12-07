@@ -81,8 +81,22 @@ class AuthController extends Controller
         // Token sẽ tồn tại 60 phút (tùy chỉnh theo config)
         $cookie = cookie('jwt_token', $token, 60);
 
-        // Chuyển hướng đến dashboard (bây giờ sẽ thành công vì Session đã được thiết lập)
-        return redirect()->route('home')->withCookie($cookie);
+        // Chuyển hướng dựa trên Role
+        $redirectRoute = 'home';
+
+        switch ($user->role) {
+            case 1: // Admin
+                $redirectRoute = 'dashboard';
+                break;
+            case 2: // Guide
+                $redirectRoute = 'guide.schedule';
+                break;
+            default: // User / Others
+                $redirectRoute = 'home';
+                break;
+        }
+
+        return redirect()->route($redirectRoute)->withCookie($cookie);
     }
 
     // Đăng xuất

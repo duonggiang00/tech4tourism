@@ -30,18 +30,18 @@ class TourController extends Controller
     public function index(Request $request)
     {
         $query = TourTemplate::with(['instances', 'category']);
-        
+
         // Tìm kiếm theo title
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where('title', 'like', "%{$search}%");
         }
-        
+
         // Lọc theo danh mục
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
         }
-        
+
         // Lọc theo trạng thái (lọc tour có instance với trạng thái này)
         if ($request->filled('status')) {
             $status = $request->status;
@@ -49,16 +49,16 @@ class TourController extends Controller
                 $q->where('status', $status);
             });
         }
-        
+
         // Phân trang
         $templates = $query->latest()->paginate(15)->withQueryString();
-        
+
         $categories = Category::latest()->get();
         $destinations = Destination::all();
-        
+
         // Giữ $tours để backward compatibility (chỉ lấy data từ pagination)
         $tours = $templates->items();
-        
+
         return Inertia::render('Tours/index', compact('tours', 'templates', 'categories', 'destinations'));
     }
 
@@ -66,38 +66,38 @@ class TourController extends Controller
     {
         $categories = Category::all();
         $policies = Policy::all();
-        
+
         // Lấy danh sách HDV (role=2) kèm thông tin đã có tour hay chưa
         // Chỉ lấy assignment của tour/instance còn tồn tại (chưa bị xóa)
         $busyGuideIds = TripAssignment::whereIn('status', ['0', '1']) // Chờ hoặc Đang thực hiện
-            ->where(function($query) {
+            ->where(function ($query) {
                 // Template-level: kiểm tra TourTemplate còn tồn tại (chưa bị soft delete)
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->whereNotNull('tour_id')
-                      ->whereNull('tour_instance_id')
-                      ->whereExists(function($subQuery) {
-                          $subQuery->select(DB::raw(1))
-                              ->from('tour_templates')
-                              ->whereColumn('tour_templates.id', 'trip_assignments.tour_id')
-                              ->whereNull('tour_templates.deleted_at');
-                      });
+                        ->whereNull('tour_instance_id')
+                        ->whereExists(function ($subQuery) {
+                            $subQuery->select(DB::raw(1))
+                                ->from('tour_templates')
+                                ->whereColumn('tour_templates.id', 'trip_assignments.tour_id')
+                                ->whereNull('tour_templates.deleted_at');
+                        });
                 })
-                // Instance-level: kiểm tra TourInstance và TourTemplate còn tồn tại
-                ->orWhere(function($q) {
+                    // Instance-level: kiểm tra TourInstance và TourTemplate còn tồn tại
+                    ->orWhere(function ($q) {
                     $q->whereNotNull('tour_instance_id')
-                      ->whereExists(function($subQuery) {
-                          $subQuery->select(DB::raw(1))
-                              ->from('tour_instances')
-                              ->join('tour_templates', 'tour_instances.tour_template_id', '=', 'tour_templates.id')
-                              ->whereColumn('tour_instances.id', 'trip_assignments.tour_instance_id')
-                              ->whereNull('tour_instances.deleted_at')
-                              ->whereNull('tour_templates.deleted_at');
-                      });
+                        ->whereExists(function ($subQuery) {
+                            $subQuery->select(DB::raw(1))
+                                ->from('tour_instances')
+                                ->join('tour_templates', 'tour_instances.tour_template_id', '=', 'tour_templates.id')
+                                ->whereColumn('tour_instances.id', 'trip_assignments.tour_instance_id')
+                                ->whereNull('tour_instances.deleted_at')
+                                ->whereNull('tour_templates.deleted_at');
+                        });
                 });
             })
             ->pluck('user_id')
             ->toArray();
-        
+
         $guides = User::where('role', 2)->get()->map(function ($user) use ($busyGuideIds) {
             $user->has_active_tour = in_array($user->id, $busyGuideIds);
             return $user;
@@ -133,7 +133,14 @@ class TourController extends Controller
     public function store(StoreTourRequest $request)
     {
         Log::info('------------ BẮT ĐẦU TẠO TOUR ------------');
-        Log::info('Request Data:', $request->all());
+        Log::info('Request All:', $request->all());
+        Log::info('Request Files:', $request->allFiles());
+        if ($request->hasFile('gallery_images')) {
+            Log::info('Gallery Images detected:', array_map(function ($f) {
+                return $f->getClientOriginalName(); }, $request->file('gallery_images')));
+        } else {
+            Log::info('NO Gallery Images detected.');
+        }
 
         DB::beginTransaction();
 
@@ -272,9 +279,9 @@ class TourController extends Controller
             }
         } else {
             // Nếu là ID (string hoặc int)
-            $tourId = is_numeric($tour) ? (int)$tour : $tour;
+            $tourId = is_numeric($tour) ? (int) $tour : $tour;
             $template = TourTemplate::find($tourId);
-            
+
             // Nếu không tìm thấy TourTemplate, thử tìm Tour cũ
             if (!$template) {
                 $oldTour = Tour::find($tourId);
@@ -287,61 +294,61 @@ class TourController extends Controller
                 }
             }
         }
-        
+
         if (!$template) {
             Log::error('Template is null after processing', ['tour' => $tour]);
             abort(404, 'Tour không tồn tại');
         }
-        
+
         Log::info('Template found', ['template_id' => $template->id, 'template_type' => get_class($template)]);
 
         $availablePolicies = Policy::all();
         $categories = Category::all();
         $destinations = Destination::all();
         $availableServices = Service::all();
-        
+
         // Lấy danh sách HDV đã được gán cho template này
         $currentGuideIds = TripAssignment::where('tour_id', $template->id)
             ->pluck('user_id')
             ->toArray();
-        
+
         // Lấy danh sách HDV bận (đã có tour khác đang hoạt động)
         // Chỉ lấy assignment của tour/instance còn tồn tại (chưa bị xóa)
         $busyGuideIds = TripAssignment::whereIn('status', ['0', '1'])
             ->where('tour_id', '!=', $template->id)
-            ->where(function($query) {
+            ->where(function ($query) {
                 // Template-level: kiểm tra TourTemplate còn tồn tại (chưa bị soft delete)
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->whereNotNull('tour_id')
-                      ->whereNull('tour_instance_id')
-                      ->whereExists(function($subQuery) {
-                          $subQuery->select(DB::raw(1))
-                              ->from('tour_templates')
-                              ->whereColumn('tour_templates.id', 'trip_assignments.tour_id')
-                              ->whereNull('tour_templates.deleted_at');
-                      });
+                        ->whereNull('tour_instance_id')
+                        ->whereExists(function ($subQuery) {
+                            $subQuery->select(DB::raw(1))
+                                ->from('tour_templates')
+                                ->whereColumn('tour_templates.id', 'trip_assignments.tour_id')
+                                ->whereNull('tour_templates.deleted_at');
+                        });
                 })
-                // Instance-level: kiểm tra TourInstance và TourTemplate còn tồn tại
-                ->orWhere(function($q) {
+                    // Instance-level: kiểm tra TourInstance và TourTemplate còn tồn tại
+                    ->orWhere(function ($q) {
                     $q->whereNotNull('tour_instance_id')
-                      ->whereExists(function($subQuery) {
-                          $subQuery->select(DB::raw(1))
-                              ->from('tour_instances')
-                              ->join('tour_templates', 'tour_instances.tour_template_id', '=', 'tour_templates.id')
-                              ->whereColumn('tour_instances.id', 'trip_assignments.tour_instance_id')
-                              ->whereNull('tour_instances.deleted_at')
-                              ->whereNull('tour_templates.deleted_at');
-                      });
+                        ->whereExists(function ($subQuery) {
+                            $subQuery->select(DB::raw(1))
+                                ->from('tour_instances')
+                                ->join('tour_templates', 'tour_instances.tour_template_id', '=', 'tour_templates.id')
+                                ->whereColumn('tour_instances.id', 'trip_assignments.tour_instance_id')
+                                ->whereNull('tour_instances.deleted_at')
+                                ->whereNull('tour_templates.deleted_at');
+                        });
                 });
             })
             ->pluck('user_id')
             ->toArray();
-        
+
         $guides = User::where('role', 2)->get()->map(function ($user) use ($busyGuideIds, $currentGuideIds) {
             $user->has_active_tour = in_array($user->id, $busyGuideIds) && !in_array($user->id, $currentGuideIds);
             return $user;
         });
-        
+
         // Load relationships
         if ($template instanceof TourTemplate) {
             $template->load([
@@ -352,7 +359,7 @@ class TourController extends Controller
                 'province.destinations',
                 'instances', // Load instances
             ]);
-            
+
             // Load trip_assignments ở template level (tour_instance_id = null)
             $template->trip_assignments = TripAssignment::where('tour_id', $template->id)
                 ->whereNull('tour_instance_id')
@@ -360,18 +367,18 @@ class TourController extends Controller
                 ->get();
         } else {
             $template->load([
-            'images',
-            'schedules.destination',
-            'tourServices.service.serviceType',
-            'tourPolicies.policy',
-            'province.destinations',
+                'images',
+                'schedules.destination',
+                'tourServices.service.serviceType',
+                'tourPolicies.policy',
+                'province.destinations',
                 'tripAssignments.user',
             ]);
         }
-        
+
         // Đảm bảo tour luôn có giá trị (dùng template nếu tour không có)
         $tour = $template;
-        
+
         return Inertia::render('Tours/detail', compact('tour', 'template', 'categories', 'availableServices', 'availablePolicies', 'destinations', 'guides'));
     }
 
@@ -394,18 +401,18 @@ class TourController extends Controller
 
         $categories = Category::all();
         $policies = Policy::all();
-        
+
         // Lấy danh sách HDV đã được gán cho template này
         $currentGuideIds = TripAssignment::where('tour_id', $template->id)
             ->pluck('user_id')
             ->toArray();
-        
+
         // Lấy danh sách HDV bận (đã có tour khác đang hoạt động)
         $busyGuideIds = TripAssignment::whereIn('status', ['0', '1'])
             ->where('tour_id', '!=', $template->id)
             ->pluck('user_id')
             ->toArray();
-        
+
         $guides = User::where('role', 2)->get()->map(function ($user) use ($busyGuideIds, $currentGuideIds) {
             // HDV bận = đã có tour khác VÀ không phải là HDV đang được chọn cho tour này
             $user->has_active_tour = in_array($user->id, $busyGuideIds) && !in_array($user->id, $currentGuideIds);
@@ -445,12 +452,12 @@ class TourController extends Controller
             ]);
         } else {
             $template->load([
-            'images',
-            'schedules',
+                'images',
+                'schedules',
                 'tourServices',
-            'tourPolicies',
+                'tourPolicies',
                 'tripAssignments',
-        ]);
+            ]);
         }
 
         // Trả về view edit với dữ liệu đầy đủ
@@ -517,12 +524,12 @@ class TourController extends Controller
                     'price_children' => $data['price_children'] ?? null,
                     'status' => $data['status'] ?? 1,
                 ];
-                
+
                 if (isset($data['day'])) {
                     $instanceData['date_end'] = Carbon::parse($instanceData['date_start'])->addDays($data['day'] - 1)->format('Y-m-d');
                 }
             }
-            
+
             // Loại bỏ các field instance khỏi data template
             // Lưu guide_ids trước khi unset để xử lý sau
             // Giữ lại price_adult và price_children cho template (giá mặc định)
@@ -598,7 +605,7 @@ class TourController extends Controller
             if (!empty($instanceData) && $instanceData['date_start']) {
                 // Tìm instance hiện có hoặc tạo mới
                 $instance = $template->instances()->where('date_start', $instanceData['date_start'])->first();
-                
+
                 if ($instance) {
                     // Cập nhật instance hiện có
                     $instance->update($instanceData);
@@ -616,7 +623,7 @@ class TourController extends Controller
             // Xử lý guide_ids cho template level (tour_instance_id = null)
             if (isset($guideIds) && is_array($guideIds)) {
                 $newGuideIds = $guideIds;
-                
+
                 // Lấy danh sách guide hiện tại ở template level (không có instance)
                 $currentTemplateAssignments = TripAssignment::where('tour_id', $template->id)
                     ->whereNull('tour_instance_id')
@@ -641,7 +648,7 @@ class TourController extends Controller
                     if ($assignment) {
                         $hasCheckIns = $assignment->tripCheckIns()->exists();
                         $hasNotes = $assignment->tripNotes()->exists();
-                        
+
                         if (!$hasCheckIns && !$hasNotes) {
                             $assignment->delete();
                         } else {
@@ -651,7 +658,7 @@ class TourController extends Controller
                     }
                 }
             }
-            
+
             // Xử lý guide_ids cho instance level (nếu có instance)
             if (isset($data['guide_ids']) && $instance) {
                 $newGuideIds = $data['guide_ids'];
@@ -679,7 +686,7 @@ class TourController extends Controller
                         // Kiểm tra xem assignment có dữ liệu liên quan không
                         $hasCheckIns = $assignment->tripCheckIns()->exists();
                         $hasNotes = $assignment->tripNotes()->exists();
-                        
+
                         if (!$hasCheckIns && !$hasNotes) {
                             // An toàn để xóa
                             $assignment->delete();
@@ -695,7 +702,7 @@ class TourController extends Controller
             DB::commit();
             Log::info('------------ CẬP NHẬT TOUR THÀNH CÔNG ------------');
 
-            return redirect()->route('tours.show',$tour);
+            return redirect()->route('tours.show', $tour);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('!!!!!! LỖI KHI CẬP NHẬT TOUR !!!!!!');
@@ -727,7 +734,7 @@ class TourController extends Controller
             $instancesWithBookings = TourInstance::where('tour_template_id', $template->id)
                 ->whereHas('bookings')
                 ->count();
-            
+
             if ($instancesWithBookings > 0) {
                 DB::rollBack();
                 return back()->withErrors(['error' => 'Không thể xóa tour đã có booking!']);
@@ -736,16 +743,16 @@ class TourController extends Controller
             // 2. Xử lý TripAssignment liên quan
             // 2.1. Lấy tất cả instance IDs của template này
             $instanceIds = TourInstance::where('tour_template_id', $template->id)->pluck('id')->toArray();
-            
+
             // 2.2. Lấy tất cả TripAssignment liên quan:
             // - Template-level: tour_id = template.id và tour_instance_id IS NULL
             // - Instance-level: tour_instance_id IN (instance_ids)
-            $allAssignments = TripAssignment::where(function($query) use ($template, $instanceIds) {
-                $query->where(function($q) use ($template) {
+            $allAssignments = TripAssignment::where(function ($query) use ($template, $instanceIds) {
+                $query->where(function ($q) use ($template) {
                     // Template-level assignments
                     $q->where('tour_id', $template->id)
-                      ->whereNull('tour_instance_id');
-                })->orWhere(function($q) use ($instanceIds) {
+                        ->whereNull('tour_instance_id');
+                })->orWhere(function ($q) use ($instanceIds) {
                     // Instance-level assignments
                     if (!empty($instanceIds)) {
                         $q->whereIn('tour_instance_id', $instanceIds);
@@ -757,7 +764,7 @@ class TourController extends Controller
             foreach ($allAssignments as $assignment) {
                 $hasCheckIns = $assignment->tripCheckIns()->exists();
                 $hasNotes = $assignment->tripNotes()->exists();
-                
+
                 if (!$hasCheckIns && !$hasNotes) {
                     // An toàn để xóa
                     $assignment->delete();
@@ -770,9 +777,9 @@ class TourController extends Controller
 
             // 3. Xóa ảnh vật lý
             $thumbnail = $template->getRawOriginal('thumbnail');
-        if ($thumbnail && Storage::disk('public')->exists($thumbnail)) {
-            Storage::disk('public')->delete($thumbnail);
-        }
+            if ($thumbnail && Storage::disk('public')->exists($thumbnail)) {
+                Storage::disk('public')->delete($thumbnail);
+            }
 
             // 4. Xóa record trong DB (TourInstance sẽ tự động xóa do cascade)
             $template->delete();
@@ -780,7 +787,7 @@ class TourController extends Controller
             DB::commit();
             Log::info("Đã xóa TourTemplate ID {$template->id} và cập nhật {$allAssignments->count()} TripAssignment");
 
-        return redirect()->route('tours.index')->with('message', 'Xóa tour thành công!');
+            return redirect()->route('tours.index')->with('message', 'Xóa tour thành công!');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Lỗi khi xóa tour: ' . $e->getMessage());
