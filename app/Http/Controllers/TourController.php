@@ -817,6 +817,14 @@ class TourController extends Controller
             }
         }
 
+        // Load relations explicitly to ensure they exist for replication
+        if ($template instanceof TourTemplate) {
+            $template->load(['images', 'schedules', 'tourServices', 'tourPolicies']);
+        } else {
+            // Fallback for old Tour model
+            $template->load(['images', 'schedules', 'tourServices', 'tourPolicies']);
+        }
+
         DB::beginTransaction();
         try {
             // 1. Sao chép Tour Template

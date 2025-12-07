@@ -39,8 +39,8 @@ interface GuideWithStatus extends User {
 
 // Props nhận từ Controller
 interface EditProps {
-    tour: Tour;
-    template?: Tour & { instances?: any[] };
+    tour: Tour & { province_id?: any };
+    template?: Tour & { instances?: any[], province_id?: any };
     categories: Category[];
     policies: Policy[];
     guides: GuideWithStatus[];
@@ -75,6 +75,9 @@ export default function Edit({
     countries,
 }: EditProps) {
     const tourData = template || tour;
+    console.log('Edit Component Mount - tourData:', tourData);
+    console.log('Edit Component Mount - Schedules from prop:', (tourData as any).schedules);
+
     const instances = (template as any)?.instances || [];
 
     // --- 1. SETUP FORM ---
