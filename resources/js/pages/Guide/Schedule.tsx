@@ -17,10 +17,11 @@ interface Tour {
     thumbnail: string | null;
 }
 
-id: number;
-tour_template_id: number;
-date_start: string; // Add date_start
-tourTemplate ?: Tour;
+interface TourInstance {
+    id: number;
+    tour_template_id: number;
+    date_start: string; // Add date_start
+    tourTemplate?: Tour;
 }
 
 interface TripAssignment {
@@ -214,8 +215,8 @@ export default function Schedule({ assignments, filters }: Props) {
                                 key={index}
                                 href={link.url || '#'}
                                 className={`px-3 py-1 rounded ${link.active
-                                        ? 'bg-primary text-primary-foreground'
-                                        : 'bg-muted hover:bg-muted/80'
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-muted hover:bg-muted/80'
                                     } ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />

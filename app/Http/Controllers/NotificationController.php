@@ -15,7 +15,7 @@ class NotificationController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        
+
         $notifications = Notification::where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->limit(20)
@@ -37,7 +37,7 @@ class NotificationController extends Controller
     public function markAsRead(Request $request, $id)
     {
         $user = $request->user();
-        
+
         $notification = Notification::where('id', $id)
             ->where('user_id', $user->id)
             ->firstOrFail();
@@ -55,7 +55,7 @@ class NotificationController extends Controller
     public function markAllAsRead(Request $request)
     {
         $user = $request->user();
-        
+
         Notification::where('user_id', $user->id)
             ->where('is_read', false)
             ->update([
@@ -74,7 +74,7 @@ class NotificationController extends Controller
     public function confirmAssignment(Request $request, $assignmentId)
     {
         $user = $request->user();
-        
+
         $assignment = TripAssignment::where('id', $assignmentId)
             ->where('user_id', $user->id)
             ->firstOrFail();

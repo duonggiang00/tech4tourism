@@ -28,6 +28,7 @@ class TourInstance extends Model
         'date_end' => 'date',
         'price_adult' => 'decimal:2',
         'price_children' => 'decimal:2',
+        'status' => 'integer',
     ];
 
     /**

@@ -401,7 +401,9 @@ export default function Index() {
                                                                             ? 'Sắp có'
                                                                             : instance.status === 2
                                                                                 ? 'Đang diễn ra'
-                                                                                : 'Đã hoàn thành'}
+                                                                                : instance.status === 3
+                                                                                    ? 'Đã hoàn thành'
+                                                                                    : 'Không xác định'}
                                                                 </Badge>
                                                             ))}
                                                         </div>
@@ -488,10 +490,10 @@ export default function Index() {
                                             key={index}
                                             href={link.url || '#'}
                                             className={`rounded-md px-3 py-2 text-sm font-medium ${link.active
-                                                    ? 'bg-blue-600 text-white'
-                                                    : link.url
-                                                        ? 'border bg-white text-gray-700 hover:bg-gray-50'
-                                                        : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                                ? 'bg-blue-600 text-white'
+                                                : link.url
+                                                    ? 'border bg-white text-gray-700 hover:bg-gray-50'
+                                                    : 'cursor-not-allowed bg-gray-100 text-gray-400'
                                                 }`}
                                             dangerouslySetInnerHTML={{
                                                 __html: link.label,
@@ -516,6 +518,6 @@ export default function Index() {
                         : 'Tạo Danh Mục Mới'
                 }
             />
-        </AppLayout>
+        </AppLayout >
     );
 }
