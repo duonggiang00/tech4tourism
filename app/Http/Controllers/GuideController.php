@@ -19,30 +19,30 @@ class GuideController extends Controller
     public function schedule(Request $request)
     {
         $user = $request->user();
-        
+
         // Lấy cả assignments ở instance level VÀ template level
         // Ưu tiên instance level, nhưng nếu chưa có instance thì lấy template level
         $assignments = TripAssignment::with([
             'tourInstance.tourTemplate.images', // Load tourTemplate từ instance với images
-            'tripCheckIns', 
+            'tripCheckIns',
             'tripNotes'
         ])
             ->where('user_id', $user->id)
             // Lấy cả instance level và template level
             // Nếu có cả 2 (cùng tour_id), chỉ lấy instance level để tránh trùng lặp
-            ->where(function($query) use ($user) {
+            ->where(function ($query) use ($user) {
                 $query->whereNotNull('tour_instance_id') // Instance level
-                      ->orWhere(function($q) use ($user) {
-                          // Template level: chỉ lấy nếu chưa có instance level assignment cho cùng tour_id và user_id
-                          $q->whereNull('tour_instance_id')
-                            ->whereNotExists(function($subQuery) use ($user) {
-                                $subQuery->select(DB::raw(1))
-                                    ->from('trip_assignments as ta2')
-                                    ->whereColumn('ta2.tour_id', 'trip_assignments.tour_id')
-                                    ->where('ta2.user_id', $user->id)
-                                    ->whereNotNull('ta2.tour_instance_id');
-                            });
-                      });
+                    ->orWhere(function ($q) use ($user) {
+                        // Template level: chỉ lấy nếu chưa có instance level assignment cho cùng tour_id và user_id
+                        $q->whereNull('tour_instance_id')
+                            ->whereNotExists(function ($subQuery) use ($user) {
+                            $subQuery->select(DB::raw(1))
+                                ->from('trip_assignments as ta2')
+                                ->whereColumn('ta2.tour_id', 'trip_assignments.tour_id')
+                                ->where('ta2.user_id', $user->id)
+                                ->whereNotNull('ta2.tour_instance_id');
+                        });
+                    });
             })
             ->when($request->status !== null && $request->status !== '', function ($query) use ($request) {
                 $query->where('status', $request->status);
@@ -56,7 +56,7 @@ class GuideController extends Controller
             // Ưu tiên: lấy từ tourInstance.tourTemplate
             if ($assignment->tourInstance && $assignment->tourInstance->tourTemplate) {
                 $assignment->setRelation('tour', $assignment->tourInstance->tourTemplate);
-            } 
+            }
             // Nếu không có tourInstance, thử load TourTemplate từ tour_id
             elseif ($assignment->tour_id) {
                 $tourTemplate = \App\Models\TourTemplate::with('images')->find($assignment->tour_id);
@@ -111,11 +111,11 @@ class GuideController extends Controller
         $passengers = Passenger::whereHas('booking', function ($query) use ($assignment) {
             if ($assignment->tour_instance_id) {
                 $query->where('tour_instance_id', $assignment->tour_instance_id)
-                      ->whereIn('status', [0, 1]); // Lấy cả chờ xác nhận và đã xác nhận
+                    ->whereIn('status', [0, 1]); // Lấy cả chờ xác nhận và đã xác nhận
             } else {
                 // Backward compatibility: nếu chưa có tour_instance_id
                 $query->where('tour_id', $assignment->tour_id)
-                      ->whereIn('status', [0, 1]);
+                    ->whereIn('status', [0, 1]);
             }
         })->with('booking')->get();
 
@@ -136,8 +136,8 @@ class GuideController extends Controller
             abort(403, 'Bạn không có quyền thực hiện');
         }
 
-        if (!$assignment->tourInstance) {
-            return response()->json(['error' => 'Tour instance không tồn tại'], 404);
+        if (!$assignment->tourInstance && !$assignment->tour_id) {
+            return response()->json(['error' => 'Không tìm thấy thông tin tour'], 404);
         }
 
         $request->validate([
@@ -145,18 +145,22 @@ class GuideController extends Controller
         ]);
 
         $checkInDate = \Carbon\Carbon::parse($request->checkin_time)->format('Y-m-d');
-        $tourInstance = $assignment->tourInstance;
 
-        // Lấy danh sách passengers từ booking có:
-        // - tour_instance_id = tour instance được phân công
-        // - status = 0 (Chờ xác nhận) hoặc 1 (Đã xác nhận)
-        // KHÔNG filter theo date_start vì check-in có thể vào bất kỳ ngày nào trong tour
-        $passengers = Passenger::whereHas('booking', function ($query) use ($tourInstance) {
-            $query->where('tour_instance_id', $tourInstance->id)
-                  ->whereIn('status', [0, 1]); // Chỉ lấy booking đã xác nhận hoặc chờ xác nhận
-        })->with(['booking' => function($q) {
-            $q->select('id', 'code', 'status', 'client_name', 'tour_instance_id');
-        }])->get();
+        // Lấy danh sách passengers
+        $passengers = Passenger::whereHas('booking', function ($query) use ($assignment) {
+            if ($assignment->tourInstance) {
+                $query->where('tour_instance_id', $assignment->tourInstance->id)
+                    ->whereIn('status', [0, 1]);
+            } else {
+                // Fallback: nếu chưa có tour_instance_id (assignment theo tour template)
+                $query->where('tour_id', $assignment->tour_id)
+                    ->whereIn('status', [0, 1]);
+            }
+        })->with([
+                    'booking' => function ($q) {
+                        $q->select('id', 'code', 'status', 'client_name', 'tour_instance_id');
+                    }
+                ])->get();
 
         return response()->json($passengers);
     }
@@ -220,6 +224,7 @@ class GuideController extends Controller
     {
         $checkIn = TripCheckIn::with([
             'tripAssignment.tour',
+            'tripAssignment.tourInstance.tourTemplate', // Load thêm để fallback
             'checkInDetails.passenger'
         ])->findOrFail($checkInId);
 
@@ -229,16 +234,30 @@ class GuideController extends Controller
 
         // Lấy ngày check-in để lọc booking
         $checkInDate = \Carbon\Carbon::parse($checkIn->checkin_time)->format('Y-m-d');
-        $tourInstance = $checkIn->tripAssignment->tourInstance;
-        
+        $assignment = $checkIn->tripAssignment;
+
+        // FIX: Đảm bảo assignment có tour data (Fallback logic)
+        if (!$assignment->tour && $assignment->tourInstance && $assignment->tourInstance->tourTemplate) {
+            $assignment->setRelation('tour', $assignment->tourInstance->tourTemplate);
+        } elseif (!$assignment->tour && $assignment->tour_id) {
+            $tourTemplate = \App\Models\TourTemplate::find($assignment->tour_id);
+            if ($tourTemplate) {
+                $assignment->setRelation('tour', $tourTemplate);
+            }
+        }
+
+        $tourInstance = $assignment->tourInstance;
+
         if (!$tourInstance) {
             // Backward compatibility: nếu chưa có tour_instance
             $passengers = Passenger::whereHas('booking', function ($query) use ($checkIn) {
                 $query->where('tour_id', $checkIn->tripAssignment->tour_id)
-                      ->whereIn('status', [0, 1]);
-            })->with(['booking' => function($q) {
-                $q->select('id', 'code', 'status', 'client_name');
-            }])->get();
+                    ->whereIn('status', [0, 1]);
+            })->with([
+                        'booking' => function ($q) {
+                            $q->select('id', 'code', 'status', 'client_name');
+                        }
+                    ])->get();
         } else {
             // Lấy danh sách passengers từ booking có:
             // - tour_instance_id = tour instance được phân công
@@ -246,16 +265,25 @@ class GuideController extends Controller
             // - status = 0 (Chờ xác nhận) hoặc 1 (Đã xác nhận)
             $passengers = Passenger::whereHas('booking.tourInstance', function ($query) use ($tourInstance, $checkInDate) {
                 $query->where('id', $tourInstance->id)
-                      ->whereDate('date_start', $checkInDate);
+                    ->whereDate('date_start', $checkInDate);
             })->whereHas('booking', function ($query) {
                 $query->whereIn('status', [0, 1]);
-            })->with(['booking' => function($q) {
-                $q->select('id', 'code', 'status', 'client_name', 'tour_instance_id');
-            }])->get();
+            })->with([
+                        'booking' => function ($q) {
+                            $q->select('id', 'code', 'status', 'client_name', 'tour_instance_id');
+                        }
+                    ])->get();
         }
 
         // Lấy trạng thái check-in hiện tại
-        $checkedIn = $checkIn->checkInDetails->pluck('is_present', 'passenger_id')->toArray();
+        $checkedIn = $checkIn->checkInDetails->mapWithKeys(function ($detail) {
+            return [
+                $detail->passenger_id => [
+                    'is_present' => (bool) $detail->is_present,
+                    'notes' => $detail->notes,
+                ]
+            ];
+        })->toArray();
 
         return Inertia::render('Guide/CheckIn', [
             'checkIn' => $checkIn,
@@ -435,10 +463,10 @@ class GuideController extends Controller
         $today = \Carbon\Carbon::today();
         $dateEnd = \Carbon\Carbon::parse($assignment->tourInstance->date_end);
 
-        // Kiểm tra xem hôm nay có phải là ngày cuối cùng không
-        if (!$today->isSameDay($dateEnd)) {
+        // Kiểm tra xem hôm nay có phải là ngày cuối cùng (hoặc sau đó) không
+        if ($today->lt($dateEnd)) {
             return response()->json([
-                'error' => 'Chỉ có thể xác nhận kết thúc tour vào ngày cuối cùng của chuyến đi'
+                'error' => 'Chưa đến ngày kết thúc tour, bạn chưa thể xác nhận hoàn thành.'
             ], 400);
         }
 

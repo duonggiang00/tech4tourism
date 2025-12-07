@@ -50,7 +50,7 @@ interface CheckIn {
 interface Props {
     checkIn: CheckIn;
     passengers: Passenger[];
-    checkedIn: Record<number, boolean>;
+    checkedIn: Record<number, { is_present: boolean; notes: string | null }>;
 }
 
 const passengerTypeLabels: Record<number, string> = {
@@ -109,9 +109,10 @@ export default function CheckInPage({ checkIn, passengers, checkedIn: initialChe
     useEffect(() => {
         const initial: Record<number, { is_present: boolean; notes: string }> = {};
         passengers.forEach((p) => {
+            const savedState = initialCheckedIn[p.id];
             initial[p.id] = {
-                is_present: initialCheckedIn[p.id] ?? false,
-                notes: '',
+                is_present: savedState?.is_present ?? false,
+                notes: savedState?.notes ?? '',
             };
         });
         setAttendance(initial);
@@ -158,7 +159,7 @@ export default function CheckInPage({ checkIn, passengers, checkedIn: initialChe
     return (
         <AppLayout>
             <Head title={`Check-in - ${checkIn.title}`} />
-            
+
             <div className="space-y-6 p-6">
                 {/* Header */}
                 <div className="flex items-center gap-4">
@@ -281,7 +282,7 @@ export default function CheckInPage({ checkIn, passengers, checkedIn: initialChe
                                     const bookingPresentCount = bookingPassengers.filter(
                                         (p) => attendance[p.id]?.is_present
                                     ).length;
-                                    
+
                                     return (
                                         <Collapsible
                                             key={bookingCode}
@@ -333,7 +334,7 @@ export default function CheckInPage({ checkIn, passengers, checkedIn: initialChe
                                                             </TableHeader>
                                                             <TableBody>
                                                                 {bookingPassengers.map((passenger, idx) => (
-                                                                    <TableRow 
+                                                                    <TableRow
                                                                         key={passenger.id}
                                                                         className={attendance[passenger.id]?.is_present ? 'bg-green-50' : ''}
                                                                     >

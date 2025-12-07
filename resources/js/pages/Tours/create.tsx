@@ -101,12 +101,38 @@ export default function Create({
 
     // --- 2. LOGIC LỌC DỮ LIỆU ---
 
-    // Lọc danh sách Quốc gia theo ô tìm kiếm
+    // Lọc danh sách Quốc gia theo ô tìm kiếm và Danh mục đã chọn
     const filteredCountries = useMemo(() => {
-        return countries.filter((c) =>
+        let result = countries.filter((c) =>
             c.name.toLowerCase().includes(searchCountry.toLowerCase()),
         );
-    }, [countries, searchCountry]);
+
+        if (data.category_id) {
+            const selectedCategory = categories.find(
+                (c) => String(c.id) === data.category_id,
+            );
+            if (selectedCategory) {
+                const categoryTitle = selectedCategory.title.toLowerCase();
+                // Nếu là Quốc tế -> Không cho chọn Việt Nam
+                if (categoryTitle.includes('quốc tế')) {
+                    result = result.filter(
+                        (c) => c.name.toLowerCase() !== 'việt nam',
+                    );
+                }
+                // Nếu là Nội địa/Trong nước -> Chỉ cho chọn Việt Nam
+                else if (
+                    categoryTitle.includes('nội địa') ||
+                    categoryTitle.includes('trong nước')
+                ) {
+                    result = result.filter(
+                        (c) => c.name.toLowerCase() === 'việt nam',
+                    );
+                }
+            }
+        }
+
+        return result;
+    }, [countries, searchCountry, data.category_id, categories]);
 
     // Lấy danh sách Tỉnh theo Quốc gia đã chọn
     const filteredProvinces = useMemo(() => {
@@ -471,6 +497,7 @@ export default function Create({
                                     onChange={(e) =>
                                         setData('day', Number(e.target.value))
                                     }
+                                    onFocus={(e) => e.target.select()}
                                 />
                             </div>
                             <div>
@@ -482,12 +509,13 @@ export default function Create({
                                     onChange={(e) =>
                                         setData('night', Number(e.target.value))
                                     }
+                                    onFocus={(e) => e.target.select()}
                                 />
-                                    {nightWarning && (
-                                        <p className="mt-1 text-xs text-red-500">
-                                            {nightWarning}
-                                        </p>
-                                    )}
+                                {nightWarning && (
+                                    <p className="mt-1 text-xs text-red-500">
+                                        {nightWarning}
+                                    </p>
+                                )}
                             </div>
                         </div>
                         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -498,13 +526,12 @@ export default function Create({
                                 </Label>
                                 <Input
                                     type="number"
-                                    min="0"
-                                    step="1000"
+                                    placeholder="VD: 5000000"
                                     value={data.price_adult}
                                     onChange={(e) =>
-                                        setData('price_adult', e.target.value ? Number(e.target.value) : '')
+                                        setData('price_adult', e.target.value)
                                     }
-                                    placeholder="VD: 5000000"
+                                    className={errors.price_adult ? 'border-red-500' : ''}
                                 />
                                 {errors.price_adult && (
                                     <p className="mt-1 text-xs text-red-500">
@@ -519,13 +546,12 @@ export default function Create({
                                 </Label>
                                 <Input
                                     type="number"
-                                    min="0"
-                                    step="1000"
+                                    placeholder="VD: 3000000"
                                     value={data.price_children}
                                     onChange={(e) =>
-                                        setData('price_children', e.target.value ? Number(e.target.value) : '')
+                                        setData('price_children', e.target.value)
                                     }
-                                    placeholder="VD: 3000000"
+                                    className={errors.price_children ? 'border-red-500' : ''}
                                 />
                                 {errors.price_children && (
                                     <p className="mt-1 text-xs text-red-500">
@@ -583,8 +609,8 @@ export default function Create({
                                                 <span>{country.name}</span>
                                                 {String(country.id) ===
                                                     selectedCountryId && (
-                                                    <Check className="h-4 w-4" />
-                                                )}
+                                                        <Check className="h-4 w-4" />
+                                                    )}
                                             </button>
                                         ))}
                                     </div>
@@ -631,8 +657,8 @@ export default function Create({
                                                 {province.name}
                                                 {String(province.id) ===
                                                     data.province_id && (
-                                                    <Check className="h-4 w-4" />
-                                                )}
+                                                        <Check className="h-4 w-4" />
+                                                    )}
                                             </button>
                                         ))}
                                     </div>
@@ -652,7 +678,7 @@ export default function Create({
                                         )}
                                         {data.province_id &&
                                             availableDestinations.length ===
-                                                0 && (
+                                            0 && (
                                                 <div className="py-4 text-center text-sm text-gray-400">
                                                     Chưa có dữ liệu địa điểm
                                                 </div>
@@ -806,7 +832,7 @@ export default function Create({
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {availableDestinations.length >
-                                                        0 ? (
+                                                            0 ? (
                                                             availableDestinations.map(
                                                                 (d) => (
                                                                     <SelectItem
@@ -1009,6 +1035,11 @@ export default function Create({
                                             ))}
                                         </div>
                                     )}
+                                    {errors.gallery_images && (
+                                        <p className="mt-2 text-xs text-red-500">
+                                            {errors.gallery_images}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -1072,7 +1103,7 @@ export default function Create({
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {availableServices.length >
-                                                    0 ? (
+                                                        0 ? (
                                                         availableServices.map(
                                                             (s) => (
                                                                 <SelectItem
@@ -1209,11 +1240,10 @@ export default function Create({
                                     guides.map((guide) => (
                                         <div
                                             key={guide.id}
-                                            className={`flex items-center justify-between rounded-md border p-3 ${
-                                                guide.has_active_tour
-                                                    ? 'border-amber-200 bg-amber-50'
-                                                    : 'border-gray-200 bg-white'
-                                            }`}
+                                            className={`flex items-center justify-between rounded-md border p-3 ${guide.has_active_tour
+                                                ? 'border-amber-200 bg-amber-50'
+                                                : 'border-gray-200 bg-white'
+                                                }`}
                                         >
                                             <div className="flex items-center gap-3">
                                                 <Checkbox
@@ -1233,11 +1263,10 @@ export default function Create({
                                                 />
                                                 <Label
                                                     htmlFor={`guide-${guide.id}`}
-                                                    className={`cursor-pointer ${
-                                                        guide.has_active_tour
-                                                            ? 'text-gray-400'
-                                                            : 'text-gray-700'
-                                                    }`}
+                                                    className={`cursor-pointer ${guide.has_active_tour
+                                                        ? 'text-gray-400'
+                                                        : 'text-gray-700'
+                                                        }`}
                                                 >
                                                     {guide.name} ({guide.email})
                                                 </Label>

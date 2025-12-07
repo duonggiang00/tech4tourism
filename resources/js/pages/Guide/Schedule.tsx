@@ -127,7 +127,7 @@ export default function Schedule({ assignments, filters }: Props) {
                             }
                             
                             const days = tour.days || tour.day || 0;
-                            const thumbnail = tour.thumbnail ? `/storage/${tour.thumbnail}` : null;
+                            const thumbnail = tour.thumbnail ? `${tour.thumbnail}` : null;
                             
                             return (
                             <Card key={assignment.id} className="overflow-hidden hover:shadow-lg transition-shadow">

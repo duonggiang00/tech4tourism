@@ -24,12 +24,12 @@ class DashboardController extends Controller
         $endOfLastMonth = $now->copy()->subMonth()->endOfMonth();
 
         // === 1. STATS CARDS ===
-        
+
         // Booking tháng này
         $bookingsThisMonth = Booking::whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
         $bookingsLastMonth = Booking::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->count();
-        $bookingChange = $bookingsLastMonth > 0 
-            ? round((($bookingsThisMonth - $bookingsLastMonth) / $bookingsLastMonth) * 100, 1) 
+        $bookingChange = $bookingsLastMonth > 0
+            ? round((($bookingsThisMonth - $bookingsLastMonth) / $bookingsLastMonth) * 100, 1)
             : 0;
 
         // Doanh thu tháng này
@@ -39,8 +39,8 @@ class DashboardController extends Controller
         $revenueLastMonth = Booking::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])
             ->whereIn('status', [1, 3])
             ->sum('final_price');
-        $revenueChange = $revenueLastMonth > 0 
-            ? round((($revenueThisMonth - $revenueLastMonth) / $revenueLastMonth) * 100, 1) 
+        $revenueChange = $revenueLastMonth > 0
+            ? round((($revenueThisMonth - $revenueLastMonth) / $revenueLastMonth) * 100, 1)
             : 0;
 
         // Khách hàng mới tháng này (role = 0)
@@ -50,8 +50,8 @@ class DashboardController extends Controller
         $newCustomersLastMonth = User::where('role', 0)
             ->whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])
             ->count();
-        $customerChange = $newCustomersLastMonth > 0 
-            ? round((($newCustomers - $newCustomersLastMonth) / $newCustomersLastMonth) * 100, 1) 
+        $customerChange = $newCustomersLastMonth > 0
+            ? round((($newCustomers - $newCustomersLastMonth) / $newCustomersLastMonth) * 100, 1)
             : 0;
 
         // Tour đang hoạt động (TourInstance với status = 1 hoặc 2)
@@ -65,7 +65,7 @@ class DashboardController extends Controller
                 ->whereMonth('created_at', $month->month)
                 ->whereIn('status', [1, 3])
                 ->sum('final_price');
-            
+
             $revenueChart[] = [
                 'month' => $month->format('m/Y'),
                 'monthName' => 'T' . $month->format('m'),
@@ -105,7 +105,7 @@ class DashboardController extends Controller
                     'bookings_count' => (int) $template->bookings_count,
                 ];
             });
-        
+
         $maxBookings = $popularTours->max('bookings_count') ?: 1;
         $popularTours = $popularTours->map(function ($tour) use ($maxBookings) {
             return [
@@ -142,8 +142,8 @@ class DashboardController extends Controller
             ->orderBy('date_start', 'asc')
             ->take(5)
             ->get(['id', 'tour_template_id', 'date_start']);
-        
-        $upcomingBookings = $upcomingInstances->map(function($instance) {
+
+        $upcomingBookings = $upcomingInstances->map(function ($instance) {
             return [
                 'id' => $instance->id,
                 'tour' => [
@@ -154,7 +154,59 @@ class DashboardController extends Controller
             ];
         });
 
-        return Inertia::render('dashboard', [
+        $user = auth()->user();
+
+        // === GUIDE DASHBOARD (Role: 2) ===
+        if ($user->role === 2) {
+            $now = Carbon::now();
+
+            // 1. Tour Sắp tới (Assignments chưa hoàn thành, sắp khởi hành)
+            $upcomingAssignments = \App\Models\TripAssignment::with(['tourInstance.tourTemplate'])
+                ->where('user_id', $user->id)
+                ->whereHas('tourInstance', function ($q) use ($now) {
+                    $q->where('date_start', '>=', $now->copy()->subDays(1)) // Lấy cả những tour vừa bắt đầu hôm qua
+                        ->whereIN('status', [1, 2]); // Sắp có hoặc Đang diễn ra
+                })
+                ->get()
+                ->sortBy('tourInstance.date_start')
+                ->values()
+                ->take(5);
+
+            // 2. Lịch sử Tour (Đã hoàn thành)
+            $pastAssignments = \App\Models\TripAssignment::with(['tourInstance.tourTemplate'])
+                ->where('user_id', $user->id)
+                ->whereHas('tourInstance', function ($q) use ($now) {
+                    $q->where('date_start', '<', $now)
+                        ->where('status', 3); // Đã hoàn thành
+                })
+                ->orderByDesc('created_at')
+                ->take(10)
+                ->get();
+
+            // 3. Thống kê nhanh
+            $stats = [
+                'total_trips' => \App\Models\TripAssignment::where('user_id', $user->id)->count(),
+                'upcoming_count' => $upcomingAssignments->count(),
+                'completed_month' => \App\Models\TripAssignment::where('user_id', $user->id)
+                    ->whereHas('tourInstance', function ($q) use ($startOfMonth, $endOfMonth) {
+                        $q->whereBetween('date_start', [$startOfMonth, $endOfMonth]);
+                    })->count(),
+                'next_trip_days' => $upcomingAssignments->first()
+                    ? Carbon::parse($upcomingAssignments->first()->tourInstance->date_start)->diffInDays($now)
+                    : null
+            ];
+
+            return Inertia::render('GuideDashboard', [
+                'upcomingAssignments' => $upcomingAssignments,
+                'pastAssignments' => $pastAssignments,
+                'stats' => $stats,
+                'user' => $user
+            ]);
+        }
+
+        // === ADMIN DASHBOARD (Role: 1) ===
+        // ... (Giữ nguyên logic cũ cho Admin)
+        return Inertia::render('Dashboard', [
             'stats' => [
                 'bookings' => [
                     'value' => $bookingsThisMonth,
