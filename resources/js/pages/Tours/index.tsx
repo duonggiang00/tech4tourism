@@ -115,7 +115,7 @@ export default function Index() {
     const tourTemplates = isPaginated
         ? templatesData.data
         : ((templates || tours) as TourTemplate[]);
-
+    console.log('All Tours for Cloning:', tourTemplates);
     // --- STATE ---
     const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
     const [currentCategory, setCurrentCategory] = useState<Category | undefined>(undefined);
@@ -357,7 +357,7 @@ export default function Index() {
 
                     {/* Search và Filter */}
                     <div className="rounded-lg border bg-white p-4 shadow-sm">
-                        <form onSubmit={handleSearch} className="flex gap-3">
+                        <form onSubmit={handleSearch} className="flex flex-col gap-3 md:flex-row md:items-center">
                             <div className="flex-1">
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -366,45 +366,47 @@ export default function Index() {
                                         placeholder="Tìm kiếm theo tên tour..."
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
-                                        className="pl-10"
+                                        className="pl-10 w-full"
                                     />
                                 </div>
                             </div>
-                            <Select
-                                value={categoryFilter}
-                                onValueChange={handleCategoryFilterChange}
-                            >
-                                <SelectTrigger className="w-[200px]">
-                                    <SelectValue placeholder="Tất cả danh mục" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Tất cả danh mục</SelectItem>
-                                    {categories.map((category) => (
-                                        <SelectItem
-                                            key={category.id}
-                                            value={String(category.id)}
-                                        >
-                                            {category.title}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select
-                                value={statusFilter}
-                                onValueChange={handleStatusFilterChange}
-                            >
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Tất cả trạng thái" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                                    <SelectItem value="0">Đã hủy</SelectItem>
-                                    <SelectItem value="1">Sắp có</SelectItem>
-                                    <SelectItem value="2">Đang diễn ra</SelectItem>
-                                    <SelectItem value="3">Đã hoàn thành</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Button type="submit" variant="outline">
+                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:flex md:gap-3">
+                                <Select
+                                    value={categoryFilter}
+                                    onValueChange={handleCategoryFilterChange}
+                                >
+                                    <SelectTrigger className="w-full md:w-[200px]">
+                                        <SelectValue placeholder="Tất cả danh mục" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Tất cả danh mục</SelectItem>
+                                        {categories.map((category) => (
+                                            <SelectItem
+                                                key={category.id}
+                                                value={String(category.id)}
+                                            >
+                                                {category.title}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Select
+                                    value={statusFilter}
+                                    onValueChange={handleStatusFilterChange}
+                                >
+                                    <SelectTrigger className="w-full md:w-[180px]">
+                                        <SelectValue placeholder="Tất cả trạng thái" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                                        <SelectItem value="0">Đã hủy</SelectItem>
+                                        <SelectItem value="1">Sắp có</SelectItem>
+                                        <SelectItem value="2">Đang diễn ra</SelectItem>
+                                        <SelectItem value="3">Đã hoàn thành</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <Button type="submit" variant="outline" className="w-full md:w-auto">
                                 <Search className="mr-2 h-4 w-4" /> Tìm kiếm
                             </Button>
                         </form>
@@ -412,168 +414,170 @@ export default function Index() {
 
                     {/* Bảng danh sách Tour */}
                     <div className="rounded-lg border bg-white shadow-sm">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-gray-50">
-                                    <TableHead className="w-[60px] text-center">
-                                        STT
-                                    </TableHead>
-                                    <TableHead>Tour</TableHead>
-                                    <TableHead>Danh mục</TableHead>
-                                    <TableHead>Thời gian</TableHead>
-                                    <TableHead>Giá</TableHead>
-                                    <TableHead>Trạng thái</TableHead>
-                                    <TableHead className="w-[180px] text-center">
-                                        Hành động
-                                    </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {tourTemplates.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell
-                                            colSpan={7}
-                                            className="h-24 text-center"
-                                        >
-                                            <div className="flex flex-col items-center justify-center py-8">
-                                                <p className="text-gray-500">
-                                                    Không tìm thấy tour nào.
-                                                </p>
-                                                <Link href={tourUrl.create()}>
-                                                    <Button
-                                                        variant="link"
-                                                        className="mt-2 text-blue-600"
-                                                    >
-                                                        Tạo tour mới
-                                                    </Button>
-                                                </Link>
-                                            </div>
-                                        </TableCell>
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-gray-50">
+                                        <TableHead className="w-[60px] text-center">
+                                            STT
+                                        </TableHead>
+                                        <TableHead>Tour</TableHead>
+                                        <TableHead>Danh mục</TableHead>
+                                        <TableHead>Thời gian</TableHead>
+                                        <TableHead>Giá</TableHead>
+                                        <TableHead>Trạng thái</TableHead>
+                                        <TableHead className="w-[180px] text-center">
+                                            Hành động
+                                        </TableHead>
                                     </TableRow>
-                                ) : (
-                                    tourTemplates.map((tour, index) => {
-                                        const baseIndex = isPaginated && templatesData.from
-                                            ? templatesData.from - 1
-                                            : 0;
-                                        return (
-                                            <TableRow key={tour.id}>
-                                                <TableCell className="text-center text-gray-500">
-                                                    {baseIndex + index + 1}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-3">
-                                                        <img
-                                                            src={
-                                                                tour.thumbnail
-                                                                    ? `${tour.thumbnail}`
-                                                                    : 'https://placehold.co/48x48?text=No+Img'
-                                                            }
-                                                            alt={tour.title}
-                                                            className="h-12 w-12 rounded border object-cover"
-                                                        />
-                                                        <div>
-                                                            <p className="font-medium text-gray-900">
-                                                                {tour.title}
-                                                            </p>
+                                </TableHeader>
+                                <TableBody>
+                                    {tourTemplates.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell
+                                                colSpan={7}
+                                                className="h-24 text-center"
+                                            >
+                                                <div className="flex flex-col items-center justify-center py-8">
+                                                    <p className="text-gray-500">
+                                                        Không tìm thấy tour nào.
+                                                    </p>
+                                                    <Link href={tourUrl.create()}>
+                                                        <Button
+                                                            variant="link"
+                                                            className="mt-2 text-blue-600"
+                                                        >
+                                                            Tạo tour mới
+                                                        </Button>
+                                                    </Link>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        tourTemplates.map((tour, index) => {
+                                            const baseIndex = isPaginated && templatesData.from
+                                                ? templatesData.from - 1
+                                                : 0;
+                                            return (
+                                                <TableRow key={tour.id}>
+                                                    <TableCell className="text-center text-gray-500">
+                                                        {baseIndex + index + 1}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-3">
+                                                            <img
+                                                                src={
+                                                                    tour.thumbnail
+                                                                        ? `${tour.thumbnail}`
+                                                                        : 'https://placehold.co/48x48?text=No+Img'
+                                                                }
+                                                                alt={tour.title}
+                                                                className="h-12 w-12 rounded border object-cover"
+                                                            />
+                                                            <div>
+                                                                <p className="font-medium text-gray-900">
+                                                                    {tour.title}
+                                                                </p>
 
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant="outline">
-                                                        {tour.category?.title || 'Chưa phân loại'}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="text-sm whitespace-nowrap">
-                                                    {tour.day} ngày {tour.night} đêm
-                                                    {tour.instances && tour.instances.length > 0 && (
-                                                        <span className="ml-2 text-xs text-gray-500">
-                                                            ({tour.instances.length} chuyến)
-                                                        </span>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="text-sm font-medium whitespace-nowrap">
-                                                    {tour.instances && tour.instances.length > 0 ? (
-                                                        <div className="space-y-1">
-                                                            {tour.instances.slice(0, 1).map((instance) => (
-                                                                <div
-                                                                    key={instance.id}
-                                                                    className="text-green-600"
-                                                                >
-                                                                    {instance.price_adult
-                                                                        ? new Intl.NumberFormat('vi-VN', {
-                                                                            style: 'currency',
-                                                                            currency: 'VND',
-                                                                        }).format(instance.price_adult)
-                                                                        : 'Chưa có giá'}
-                                                                </div>
-                                                            ))}
-                                                            {tour.instances.length > 1 && (
-                                                                <div className="text-xs text-gray-500">
-                                                                    +{tour.instances.length - 1} chuyến khác
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-gray-400">
-                                                            Chưa có chuyến đi
-                                                        </span>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {tour.instances && tour.instances.length > 0 ? (
-                                                        <div className="space-y-1">
-                                                            {tour.instances.slice(0, 1).map((instance) => (
-                                                                <Badge
-                                                                    key={instance.id}
-                                                                    variant="secondary"
-                                                                    className={`text-xs whitespace-nowrap ${getStatusColor(instance.status)}`}
-                                                                >
-                                                                    {instance.status === 0
-                                                                        ? 'Đã hủy'
-                                                                        : instance.status === 1
-                                                                            ? 'Sắp có'
-                                                                            : instance.status === 2
-                                                                                ? 'Đang diễn ra'
-                                                                                : instance.status === 3
-                                                                                    ? 'Đã hoàn thành'
-                                                                                    : 'Không xác định'}
-                                                                </Badge>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <Badge variant="outline" className="text-xs">
-                                                            Chưa có chuyến
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge variant="outline">
+                                                            {tour.category?.title || 'Chưa phân loại'}
                                                         </Badge>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center justify-center gap-1">
-                                                        <Link
-                                                            href={tourUrl.show(tour.id).url}
-                                                        >
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-8 w-8 hover:text-blue-600"
-                                                                title="Xem chi tiết"
+                                                    </TableCell>
+                                                    <TableCell className="text-sm whitespace-nowrap">
+                                                        {tour.day} ngày {tour.night} đêm
+                                                        {tour.instances && tour.instances.length > 0 && (
+                                                            <span className="ml-2 text-xs text-gray-500">
+                                                                ({tour.instances.length} chuyến)
+                                                            </span>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell className="text-sm font-medium whitespace-nowrap">
+                                                        {tour.instances && tour.instances.length > 0 ? (
+                                                            <div className="space-y-1">
+                                                                {tour.instances.slice(0, 1).map((instance) => (
+                                                                    <div
+                                                                        key={instance.id}
+                                                                        className="text-green-600"
+                                                                    >
+                                                                        {instance.price_adult
+                                                                            ? new Intl.NumberFormat('vi-VN', {
+                                                                                style: 'currency',
+                                                                                currency: 'VND',
+                                                                            }).format(instance.price_adult)
+                                                                            : 'Chưa có giá'}
+                                                                    </div>
+                                                                ))}
+                                                                {tour.instances.length > 1 && (
+                                                                    <div className="text-xs text-gray-500">
+                                                                        +{tour.instances.length - 1} chuyến khác
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-gray-400">
+                                                                Chưa có chuyến đi
+                                                            </span>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {tour.instances && tour.instances.length > 0 ? (
+                                                            <div className="space-y-1">
+                                                                {tour.instances.slice(0, 1).map((instance) => (
+                                                                    <Badge
+                                                                        key={instance.id}
+                                                                        variant="secondary"
+                                                                        className={`text-xs whitespace-nowrap ${getStatusColor(instance.status)}`}
+                                                                    >
+                                                                        {instance.status === 0
+                                                                            ? 'Đã hủy'
+                                                                            : instance.status === 1
+                                                                                ? 'Sắp có'
+                                                                                : instance.status === 2
+                                                                                    ? 'Đang diễn ra'
+                                                                                    : instance.status === 3
+                                                                                        ? 'Đã hoàn thành'
+                                                                                        : 'Không xác định'}
+                                                                    </Badge>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <Badge variant="outline" className="text-xs">
+                                                                Chưa có chuyến
+                                                            </Badge>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            <Link
+                                                                href={tourUrl.show(tour.id).url}
                                                             >
-                                                                <Eye className="h-4 w-4" />
-                                                            </Button>
-                                                        </Link>
-                                                        <Link
-                                                            href={tourUrl.edit(tour.id).url}
-                                                        >
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-8 w-8 hover:text-amber-600"
-                                                                title="Chỉnh sửa"
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 hover:text-blue-600"
+                                                                    title="Xem chi tiết"
+                                                                >
+                                                                    <Eye className="h-4 w-4" />
+                                                                </Button>
+                                                            </Link>
+                                                            <Link
+                                                                href={tourUrl.edit(tour.id).url}
                                                             >
-                                                                <Pencil className="h-4 w-4" />
-                                                            </Button>
-                                                        </Link>
-                                                        
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 hover:text-amber-600"
+                                                                    title="Chỉnh sửa"
+                                                                >
+                                                                    <Pencil className="h-4 w-4" />
+                                                                </Button>
+                                                            </Link>
+
                                                             <Link
                                                                 href={`/tours/${tour.id}/instances/create`}
                                                             >
@@ -586,29 +590,124 @@ export default function Index() {
                                                                     <Plus className="h-4 w-4" />
                                                                 </Button>
                                                             </Link>
-                                                        
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8 hover:text-red-600"
-                                                            onClick={() =>
-                                                                handleDeleteTour(
-                                                                    tour.id,
-                                                                    tour.title,
-                                                                )
+
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 hover:text-red-600"
+                                                                onClick={() =>
+                                                                    handleDeleteTour(
+                                                                        tour.id,
+                                                                        tour.title,
+                                                                    )
+                                                                }
+                                                                title="Xóa"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="md:hidden space-y-4">
+                            {tourTemplates.length === 0 ? (
+                                <div className="text-center p-8 text-gray-500 bg-gray-50 rounded-lg border border-dashed">
+                                    <p>Không tìm thấy tour nào.</p>
+                                    <Link href={tourUrl.create()}>
+                                        <Button variant="link" className="mt-2 text-blue-600 font-medium">
+                                            + Tạo tour mới
+                                        </Button>
+                                    </Link>
+                                </div>
+                            ) : (
+                                tourTemplates.map((tour) => (
+                                    <div key={tour.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                                        <div className="flex gap-4">
+                                            <img
+                                                src={tour.thumbnail || 'https://placehold.co/80x80?text=No+Img'}
+                                                alt={tour.title}
+                                                className="h-20 w-20 rounded-md object-cover border bg-gray-100 flex-shrink-0"
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-semibold text-gray-900 line-clamp-2 leading-tight">
+                                                    {tour.title}
+                                                </h3>
+                                                <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-600">
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200">
+                                                        {tour.category?.title || 'Chưa phân loại'}
+                                                    </span>
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                                                        {tour.day}N{tour.night}Đ
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
+                                            <div>
+                                                {tour.instances && tour.instances.length > 0 ? (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-bold text-green-600">
+                                                            {tour.instances[0].price_adult
+                                                                ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(tour.instances[0].price_adult))
+                                                                : 'Chưa có giá'
                                                             }
-                                                            title="Xóa"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
+                                                        </span>
+
+                                                        <div className="mt-1">
+                                                            <Badge variant="secondary" className={`${getStatusColor(tour.instances[0].status)} text-[10px] px-1.5 h-5`}>
+                                                                {tour.instances[0].status === 0 ? 'Đã hủy' :
+                                                                    tour.instances[0].status === 1 ? 'Sắp có' :
+                                                                        tour.instances[0].status === 2 ? 'Đang diễn ra' :
+                                                                            tour.instances[0].status === 3 ? 'Đã hoàn thành' : 'Unknown'}
+                                                            </Badge>
+                                                            {tour.instances.length > 1 && (
+                                                                <span className="ml-1 text-[10px] text-gray-400">+{tour.instances.length - 1} khác</span>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })
-                                )}
-                            </TableBody>
-                        </Table>
+                                                ) : (
+                                                    <span className="text-sm text-gray-400 italic">Chưa có chuyến</span>
+                                                )}
+                                            </div>
+
+                                            <div className="mt-3 grid grid-cols-2 gap-2 border-t border-gray-100 pt-3">
+                                                <Link href={tourUrl.show(tour.id).url} className="w-full">
+                                                    <Button variant="outline" size="sm" className="w-full text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100">
+                                                        <Eye className="mr-1.5 h-3.5 w-3.5" /> Chi tiết
+                                                    </Button>
+                                                </Link>
+                                                <Link href={tourUrl.edit(tour.id).url} className="w-full">
+                                                    <Button variant="outline" size="sm" className="w-full text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100">
+                                                        <Pencil className="mr-1.5 h-3.5 w-3.5" /> Chỉnh sửa
+                                                    </Button>
+                                                </Link>
+                                                <Link href={`/tours/${tour.id}/instances/create`} className="w-full">
+                                                    <Button variant="outline" size="sm" className="w-full text-green-600 bg-green-50 border-green-200 hover:bg-green-100">
+                                                        <Plus className="mr-1.5 h-3.5 w-3.5" /> Lên lịch
+                                                    </Button>
+                                                </Link>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="w-full text-red-600 bg-red-50 border-red-200 hover:bg-red-100"
+                                                    onClick={() => handleDeleteTour(tour.id, tour.title)}
+                                                >
+                                                    <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Xóa tour
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
 
                         {/* Pagination */}
                         {isPaginated && templatesData.links && templatesData.links.length > 3 && (
