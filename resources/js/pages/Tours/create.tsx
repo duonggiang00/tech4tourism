@@ -673,8 +673,8 @@ export default function Create({
                                 <div>
                                     <Label>Số ngày</Label>
                                     <Input
-                                        type="string"
-                                        min="1"
+                                        type="number"
+                                        // min="1"
                                         value={data.day}
                                         onChange={(e) =>
                                             handleDayChange(e.target.value)
@@ -685,8 +685,8 @@ export default function Create({
                                 <div>
                                     <Label>Số đêm</Label>
                                     <Input
-                                        type="string"
-                                        min="0"
+                                        type="number"
+                                        // min="0"
                                         value={data.night}
                                         onChange={(e) =>
                                             setData('night', Number(e.target.value))

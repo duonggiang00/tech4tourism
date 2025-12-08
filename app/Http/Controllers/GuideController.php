@@ -479,5 +479,62 @@ class GuideController extends Controller
             'assignment' => $assignment->fresh(['tourInstance.tourTemplate'])
         ]);
     }
+    /**
+     * Xuất danh sách hành khách ra file CSV
+     */
+    public function exportPassengers($assignmentId)
+    {
+        $assignment = TripAssignment::with('tourInstance.tourTemplate')->findOrFail($assignmentId);
+
+        if ($assignment->user_id !== auth()->id()) {
+            abort(403, 'Bạn không có quyền thực hiện');
+        }
+
+        $tourName = $assignment->tourInstance?->tourTemplate?->title ?? 'Tour';
+        $fileName = 'danh-sach-khach-' . \Illuminate\Support\Str::slug($tourName) . '.csv';
+
+        $passengers = Passenger::whereHas('booking', function ($query) use ($assignment) {
+            if ($assignment->tour_instance_id) {
+                $query->where('tour_instance_id', $assignment->tour_instance_id)
+                    ->whereIn('status', [0, 1]);
+            } else {
+                $query->where('tour_id', $assignment->tour_id)
+                    ->whereIn('status', [0, 1]);
+            }
+        })->with('booking')->get();
+
+        $headers = [
+            "Content-type" => "text/csv; charset=UTF-8",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma" => "no-cache",
+            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+            "Expires" => "0"
+        ];
+
+        $callback = function () use ($passengers) {
+            $file = fopen('php://output', 'w');
+
+            // Add BOM for Excel UTF-8 compatibility
+            fputs($file, "\xEF\xBB\xBF");
+
+            // Header Row
+            fputcsv($file, ['Tên khách hàng', 'CCCD', 'Số điện thoại', 'Yêu cầu đặc biệt', 'Ngày giờ check-in', 'Điểm danh'], ';');
+
+            foreach ($passengers as $pax) {
+                fputcsv($file, [
+                    $pax->fullname,
+                    $pax->cccd ?? '',
+                    $pax->phone ?? $pax->booking->phone,
+                    $pax->request ?? '',
+                    '',
+                    ''
+                ], ';');
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }
 

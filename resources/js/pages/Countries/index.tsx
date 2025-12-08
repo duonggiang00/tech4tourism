@@ -1,5 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
     Table,
     TableBody,
@@ -64,48 +66,83 @@ export default function Index() {
                 </Link>
             </div>
             {countries.length > 0 && (
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>STT</TableHead>
-                            <TableHead>Tên Nước</TableHead>
-                            <TableHead>Mã</TableHead>
-                            <TableHead>Mô tả</TableHead>
-                            <TableHead>Hành Động</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                <>
+                    {/* Desktop View */}
+                    <div className="hidden md:block">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>STT</TableHead>
+                                    <TableHead>Tên Nước</TableHead>
+                                    <TableHead>Mã</TableHead>
+                                    <TableHead>Mô tả</TableHead>
+                                    <TableHead className="text-center">Hành Động</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {countries.map((country: any, index) => (
+                                    <TableRow key={country.id}>
+                                        <TableCell>{index + 1}</TableCell>
+                                        <TableCell>{country.name}</TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline">{country.code}</Badge>
+                                        </TableCell>
+                                        <TableCell>{country.description}</TableCell>
+                                        <TableCell className="space-x-2 text-center">
+                                            <Link href={countriesUrl.edit(country.id).url}>
+                                                <Button size="sm" className="bg-amber-500 hover:bg-amber-700">
+                                                    Edit
+                                                </Button>
+                                            </Link>
+                                            <Button
+                                                size="sm"
+                                                disabled={processing}
+                                                onClick={() => handleDelete(country.id, country.name)}
+                                                className="bg-red-500 hover:bg-red-700"
+                                            >
+                                                Delete
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+
+                    {/* Mobile View */}
+                    <div className="md:hidden grid grid-cols-1 gap-4">
                         {countries.map((country: any) => (
-                            <TableRow>
-                                <TableCell>{country.id}</TableCell>
-                                <TableCell>{country.name}</TableCell>
-                                <TableCell>{country.code}</TableCell>
-                                <TableCell>{country.description}</TableCell>
-                                <TableCell className="space-x-7 text-center">
-                                    <Link
-                                        href={countriesUrl.edit(country.id).url}
-                                    >
-                                        <Button className="bg-amber-500 hover:bg-amber-700">
-                                            Edit
+                            <Card key={country.id} className="shadow-sm">
+                                <CardHeader className="pb-2">
+                                    <div className="flex justify-between items-start">
+                                        <CardTitle className="text-lg font-bold">{country.name}</CardTitle>
+                                        <Badge variant="secondary">{country.code}</Badge>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="pb-2">
+                                    <p className="text-sm text-gray-600 line-clamp-2">
+                                        {country.description || 'Không có mô tả'}
+                                    </p>
+                                </CardContent>
+                                <CardFooter className="grid grid-cols-2 gap-3 pt-2">
+                                    <Link href={countriesUrl.edit(country.id).url} className="w-full">
+                                        <Button variant="outline" className="w-full border-amber-200 text-amber-700 hover:bg-amber-50">
+                                            Sửa
                                         </Button>
                                     </Link>
                                     <Button
+                                        variant="outline"
+                                        className="w-full border-red-200 text-red-700 hover:bg-red-50"
                                         disabled={processing}
-                                        onClick={() =>
-                                            handleDelete(
-                                                country.id,
-                                                country.name,
-                                            )
-                                        }
-                                        className="bg-red-500 hover:bg-red-700"
+                                        onClick={() => handleDelete(country.id, country.name)}
                                     >
-                                        Delete
+                                        Xóa
                                     </Button>
-                                </TableCell>
-                            </TableRow>
+                                </CardFooter>
+                            </Card>
                         ))}
-                    </TableBody>
-                </Table>
+                    </div>
+                </>
             )}
         </AppLayout>
     );

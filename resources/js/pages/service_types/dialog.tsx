@@ -95,7 +95,7 @@ export function ServiceTypeFormDialog({
                         )}
                     </div>
 
-                    <div>
+                    {/* <div>
                         <label className="text-sm font-medium">
                             Icon (URL)
                         </label>
@@ -109,7 +109,7 @@ export function ServiceTypeFormDialog({
                                 {errors.icon}
                             </p>
                         )}
-                    </div>
+                    </div> */}
 
                     <div>
                         <label className="text-sm font-medium">Mô tả</label>

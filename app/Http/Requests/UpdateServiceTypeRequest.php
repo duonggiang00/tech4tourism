@@ -23,7 +23,12 @@ class UpdateServiceTypeRequest extends FormRequest
     {
 
         return [
-            'name' => 'required|string|max:100|unique:service_types,name',
+            'name' => [
+                'required',
+                'string',
+                'max:100',
+                \Illuminate\Validation\Rule::unique('service_types', 'name')->ignore($this->service_type),
+            ],
             'icon' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'order' => 'nullable|integer|min:0',

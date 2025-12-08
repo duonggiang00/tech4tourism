@@ -115,7 +115,7 @@ export default function Index() {
                                     STT
                                 </TableHead>
                                 <TableHead>Tên Loại Dịch Vụ</TableHead>
-                                <TableHead>Icon</TableHead>
+                                {/* <TableHead>Icon</TableHead> */}
                                 <TableHead>Mô tả</TableHead>
                                 <TableHead>Thứ tự</TableHead>
                                 <TableHead className="text-center">
@@ -132,7 +132,7 @@ export default function Index() {
                                     <TableCell className="font-medium">
                                         {type.name}
                                     </TableCell>
-                                    <TableCell>
+                                    {/* <TableCell>
                                         {type.icon ? (
                                             <img
                                                 src={type.icon}
@@ -142,7 +142,7 @@ export default function Index() {
                                         ) : (
                                             <Badge variant="outline">No Icon</Badge>
                                         )}
-                                    </TableCell>
+                                    </TableCell> */}
                                     <TableCell className="max-w-xs truncate">
                                         {type.description || '—'}
                                     </TableCell>
