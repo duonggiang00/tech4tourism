@@ -152,6 +152,9 @@ export default function CreateBooking({
         const id = Number(data.booking.tour_instance_id);
         if (!id) return initialInstance || null;
 
+        // Ưu tiên check initialInstance trước
+        if (initialInstance && initialInstance.id === id) return initialInstance;
+
         // Tìm trong list đã lọc trước
         let found = availableInstances.find(i => i.id === id);
         if (found) return found;

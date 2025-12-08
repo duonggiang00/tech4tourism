@@ -269,11 +269,13 @@ export default function TourDetail({
                                                             <div className="mt-4 pt-3 border-t flex items-center justify-between text-sm">
                                                                 <span className="flex items-center gap-1 text-gray-600">
                                                                     <Users className="h-4 w-4" />
-                                                                    Chỗ:
+                                                                    Chỗ: <span className="font-medium text-gray-900">{instance.booked_count} / {instance.limit || '∞'}</span>
                                                                 </span>
-                                                                <span className="font-medium">
-                                                                    {instance.booked_count} / {instance.limit || '∞'}
-                                                                </span>
+                                                                <Link href={`/booking/create?tour_instance_id=${instance.id}`}>
+                                                                    <Button size="sm" variant="default" className="bg-blue-600 hover:bg-blue-700">
+                                                                        Đặt chỗ ngay
+                                                                    </Button>
+                                                                </Link>
                                                             </div>
                                                         </div>
                                                     ))}
