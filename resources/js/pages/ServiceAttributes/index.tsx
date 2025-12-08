@@ -125,8 +125,8 @@ export default function Index() {
                 </div>
             )}
 
-            {/* 🔍 Bộ lọc và Thêm mới - Đã chỉnh sửa responsive */}
-            <div className="m-4 flex flex-col justify-between gap-3 md:flex-row md:items-center">
+            {/* 🔍 Bộ lọc và Thêm mới */}
+            <div className="m-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 {/* Khu vực tìm kiếm và lọc */}
                 <div className="flex flex-col gap-3 md:w-2/3 md:flex-row md:items-center">
                     <form onSubmit={handleSearch} className="flex w-full items-center gap-2 md:flex-1">
@@ -134,7 +134,7 @@ export default function Index() {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Tìm theo tên, giá trị, loại hoặc dịch vụ..."
-                            className="w-full flex-1" // Chiếm toàn bộ chiều rộng trên mobile
+                            className="w-full flex-1"
                         />
                         <Button type="submit" variant="secondary" className="max-md:hidden">
                             <Search className="h-4 w-4" />
@@ -145,7 +145,7 @@ export default function Index() {
                     <select
                         value={serviceName}
                         onChange={handleServiceChange}
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 md:w-auto" // Chiếm toàn bộ chiều rộng trên mobile
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 md:w-auto"
                     >
                         <option value="all">Tất cả dịch vụ</option>
                         {service_names.map((name, index) => (
@@ -160,7 +160,7 @@ export default function Index() {
                     </Button>
                 </div>
 
-                {/* Nút Thêm mới - Chuyển sang bên phải */}
+                {/* Nút Thêm mới */}
                 <Button onClick={openCreateDialog} className="w-full md:w-auto">
                     <Pencil className="mr-2 h-4 w-4" /> Thêm Thuộc tính
                 </Button>
@@ -169,7 +169,65 @@ export default function Index() {
             {/* Danh sách */}
             <div className="m-8 rounded-lg border bg-white shadow-sm">
                 {/* BỌC BẢNG TRONG DIV OVERFLOW */}
-                <div className="overflow-x-auto">
+                {/* Mobile View: Card Layout */}
+                <div className="grid grid-cols-1 gap-4 p-4 md:hidden">
+                    {attributes.data.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                            Không có thuộc tính nào.
+                        </div>
+                    ) : (
+                        attributes.data.map((attr) => (
+                            <div key={attr.id} className="bg-gray-50 p-4 rounded-lg border shadow-sm space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex-1">
+                                        <h3 className="font-semibold text-gray-900">{attr.name}</h3>
+                                        <p className="text-sm text-gray-500">Service: {attr.service?.name || '—'}</p>
+                                    </div>
+                                    <div className="shrink-0 bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">
+                                        {attr.type || '—'}
+                                    </div>
+                                </div>
+
+                                <div className="border-t pt-2 mt-2">
+                                    <span className="text-gray-500 text-sm block mb-1">Giá trị:</span>
+                                    <div className="font-mono text-sm bg-white p-2 rounded border break-all">
+                                        {attr.value || '—'}
+                                    </div>
+                                </div>
+
+                                <div className="pt-2 flex justify-end gap-2 border-t mt-2">
+                                    <Link href={serviceAttributes.show(attr.id).url} className="flex-1">
+                                        <Button variant="outline" size="sm" className="w-full">
+                                            <Eye className="h-4 w-4 mr-2" /> Chi tiết
+                                        </Button>
+                                    </Link>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                            setCurrentAttr(attr);
+                                            setIsDialogOpen(true);
+                                        }}
+                                        className="flex-1"
+                                    >
+                                        <Pencil className="h-4 w-4 mr-2" /> Sửa
+                                    </Button>
+                                    <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => handleDelete(attr.id, attr.name)}
+                                        className="px-3"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                {/* Desktop View: Table Layout */}
+                <div className="hidden md:block overflow-x-auto">
                     <Table className="min-w-full">
                         <TableHeader>
                             <TableRow>
@@ -209,13 +267,13 @@ export default function Index() {
                                         <TableCell className="text-center whitespace-nowrap">
                                             {index + 1}
                                         </TableCell>
-                                        <TableCell className="whitespace-nowrap">
+                                        <TableCell className="whitespace-nowrap font-medium">
                                             {attr.name}
                                         </TableCell>
                                         <TableCell className="whitespace-nowrap">
                                             {attr.service?.name || '—'}
                                         </TableCell>
-                                        <TableCell className="whitespace-nowrap">
+                                        <TableCell className="whitespace-nowrap max-w-xs truncate" title={attr.value}>
                                             {attr.value || '—'}
                                         </TableCell>
                                         <TableCell className="whitespace-nowrap">

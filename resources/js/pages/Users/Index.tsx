@@ -156,70 +156,137 @@ export default function UserIndex({ users: usersData, filters = {}, flash }: Pro
                     {/* Table */}
                     {usersData.data && usersData.data.length > 0 ? (
                         <>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>ID</TableHead>
-                                        <TableHead>Tên</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead>Vai trò</TableHead>
-                                        <TableHead>Trạng thái</TableHead>
-                                        <TableHead className="text-right">Hành động</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {usersData.data.map((user) => (
-                                        <TableRow key={user.id}>
-                                            <TableCell className="font-medium">{user.id}</TableCell>
-                                            <TableCell className="font-medium">
-                                                <div className="flex items-center gap-2">
-                                                    {user.avatar && (
-                                                        <img
-                                                            src={user.avatar}
-                                                            alt={user.name}
-                                                            className="w-8 h-8 rounded-full"
-                                                        />
-                                                    )}
-                                                    <span>{user.name}</span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>{user.email}</TableCell>
-                                            <TableCell>
-                                                <Badge className={ROLES[user.role as keyof typeof ROLES]?.color || 'bg-gray-500'}>
-                                                    {ROLES[user.role as keyof typeof ROLES]?.label || 'Unknown'}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                {user.is_active ? (
-                                                    <Badge variant="outline" className="text-green-600 border-green-600">
-                                                        Hoạt động
-                                                    </Badge>
+                            {/* Mobile View: Card Layout */}
+                            <div className="grid grid-cols-1 gap-4 sm:hidden">
+                                {usersData.data.map((user) => (
+                                    <div key={user.id} className="bg-gray-50 p-4 rounded-lg border shadow-sm space-y-3">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex items-center gap-3">
+                                                {user.avatar ? (
+                                                    <img
+                                                        src={user.avatar}
+                                                        alt={user.name}
+                                                        className="w-10 h-10 rounded-full object-cover"
+                                                    />
                                                 ) : (
-                                                    <Badge variant="destructive">Đã khóa</Badge>
+                                                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                                                        {user.name.charAt(0)}
+                                                    </div>
                                                 )}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => openEditModal(user)}
-                                                    >
-                                                        Cập nhật
-                                                    </Button>
-                                                    <Button
-                                                        variant="destructive"
-                                                        size="sm"
-                                                        onClick={() => setDeletingUser(user)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                <div>
+                                                    <h3 className="font-semibold text-gray-900">{user.name}</h3>
+                                                    <p className="text-sm text-gray-500">ID: {user.id}</p>
                                                 </div>
-                                            </TableCell>
+                                            </div>
+                                            <Badge className={ROLES[user.role as keyof typeof ROLES]?.color || 'bg-gray-500'}>
+                                                {ROLES[user.role as keyof typeof ROLES]?.label || 'Unknown'}
+                                            </Badge>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2 text-sm">
+                                            <div>
+                                                <span className="text-gray-500 block">Email:</span>
+                                                <span className="font-medium text-gray-900 break-all">{user.email}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-gray-500 block">Trạng thái:</span>
+                                                {user.is_active ? (
+                                                    <span className="text-green-600 font-medium">Hoạt động</span>
+                                                ) : (
+                                                    <span className="text-red-600 font-medium">Đã khóa</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-3 border-t flex justify-end gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => openEditModal(user)}
+                                                className="flex-1"
+                                            >
+                                                Cập nhật
+                                            </Button>
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                onClick={() => setDeletingUser(user)}
+                                                className="w-10 px-0"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Desktop View: Table Layout */}
+                            <div className="hidden sm:block overflow-x-auto">
+                                <Table className="min-w-full">
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="whitespace-nowrap">ID</TableHead>
+                                            <TableHead className="whitespace-nowrap">Tên</TableHead>
+                                            <TableHead className="whitespace-nowrap">Email</TableHead>
+                                            <TableHead className="whitespace-nowrap">Vai trò</TableHead>
+                                            <TableHead className="whitespace-nowrap">Trạng thái</TableHead>
+                                            <TableHead className="text-right whitespace-nowrap">Hành động</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {usersData.data.map((user) => (
+                                            <TableRow key={user.id}>
+                                                <TableCell className="font-medium">{user.id}</TableCell>
+                                                <TableCell className="font-medium">
+                                                    <div className="flex items-center gap-2">
+                                                        {user.avatar && (
+                                                            <img
+                                                                src={user.avatar}
+                                                                alt={user.name}
+                                                                className="w-8 h-8 rounded-full"
+                                                            />
+                                                        )}
+                                                        <span>{user.name}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>{user.email}</TableCell>
+                                                <TableCell>
+                                                    <Badge className={ROLES[user.role as keyof typeof ROLES]?.color || 'bg-gray-500'}>
+                                                        {ROLES[user.role as keyof typeof ROLES]?.label || 'Unknown'}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {user.is_active ? (
+                                                        <Badge variant="outline" className="text-green-600 border-green-600">
+                                                            Hoạt động
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge variant="destructive">Đã khóa</Badge>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <div className="flex justify-end gap-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => openEditModal(user)}
+                                                        >
+                                                            Cập nhật
+                                                        </Button>
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            onClick={() => setDeletingUser(user)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
 
                             {/* Pagination */}
                             {usersData.links && usersData.links.length > 3 && (
@@ -232,13 +299,12 @@ export default function UserIndex({ users: usersData, filters = {}, flash }: Pro
                                             <Link
                                                 key={index}
                                                 href={link.url || '#'}
-                                                className={`px-3 py-2 rounded-md text-sm font-medium ${
-                                                    link.active
-                                                        ? 'bg-blue-600 text-white'
-                                                        : link.url
+                                                className={`px-3 py-2 rounded-md text-sm font-medium ${link.active
+                                                    ? 'bg-blue-600 text-white'
+                                                    : link.url
                                                         ? 'bg-white text-gray-700 hover:bg-gray-50 border'
                                                         : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                }`}
+                                                    }`}
                                                 dangerouslySetInnerHTML={{ __html: link.label }}
                                             />
                                         ))}
@@ -260,13 +326,13 @@ export default function UserIndex({ users: usersData, filters = {}, flash }: Pro
                     <DialogHeader>
                         <DialogTitle>Cập nhật: {editingUser?.name}</DialogTitle>
                     </DialogHeader>
-                    
+
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Chọn Role */}
                         <div className="space-y-2">
                             <Label>Vai trò hệ thống</Label>
-                            <Select 
-                                value={String(data.role)} 
+                            <Select
+                                value={String(data.role)}
                                 onValueChange={(val) => setData('role', parseInt(val))}
                             >
                                 <SelectTrigger>
@@ -290,7 +356,7 @@ export default function UserIndex({ users: usersData, filters = {}, flash }: Pro
                                     {data.is_active ? 'Người dùng được phép đăng nhập' : 'Chặn truy cập hệ thống'}
                                 </div>
                             </div>
-                            <Switch 
+                            <Switch
                                 checked={data.is_active}
                                 onCheckedChange={(checked) => setData('is_active', checked)}
                             />

@@ -174,25 +174,79 @@ export default function Index() {
             {/* 🧾 Danh sách */}
             <div className="m-6 rounded-lg border bg-white shadow-sm">
                 <div className="flex flex-col items-start justify-between gap-3 border-b p-4 sm:flex-row sm:items-center">
-                    {' '}
-                    {/* Thêm flex-col trên mobile */}
-                    <h2 className="text-lg font-semibold">
+                    <h2 className="text-xl font-semibold">
                         Danh sách Nhà Cung Cấp
                     </h2>
                     <Button
                         onClick={openCreateDialog}
                         className="w-full sm:w-auto"
                     >
-                        {' '}
                         <Plus className="mr-2 h-4 w-4" /> Thêm Nhà Cung Cấp
                     </Button>
                 </div>
 
                 {/* BỔ SUNG: Thêm `overflow-x-auto` để cuộn ngang trên mobile */}
-                <div className="overflow-x-auto">
+                {/* Mobile View: Card Layout */}
+                <div className="grid grid-cols-1 gap-4 p-4 sm:hidden">
+                    {providers.data.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                            Không có dữ liệu
+                        </div>
+                    ) : (
+                        providers.data.map((provider) => (
+                            <div key={provider.id} className="bg-gray-50 p-4 rounded-lg border shadow-sm space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900 text-lg">{provider.name}</h3>
+                                        <p className="text-sm text-gray-500">ID: {provider.id}</p>
+                                    </div>
+                                    <div className="shrink-0">
+                                        {getStatusBadge(provider.status)}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between border-b pb-2">
+                                        <span className="text-gray-500">Email:</span>
+                                        <span className="font-medium text-gray-900 break-all text-right ml-2">{provider.email || '—'}</span>
+                                    </div>
+                                    <div className="flex justify-between border-b pb-2">
+                                        <span className="text-gray-500">Hotline:</span>
+                                        <span className="font-medium text-gray-900 text-right ml-2">{provider.hotline || '—'}</span>
+                                    </div>
+                                </div>
+
+                                <div className="pt-2 flex justify-end gap-2">
+                                    <Link href={providersUrl.show(provider.id).url} className="flex-1">
+                                        <Button variant="outline" size="sm" className="w-full">
+                                            <Eye className="h-4 w-4 mr-2" /> Chi tiết
+                                        </Button>
+                                    </Link>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => openEditDialog(provider)}
+                                        className="flex-1"
+                                    >
+                                        <Pencil className="h-4 w-4 mr-2" /> Sửa
+                                    </Button>
+                                    <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => handleDelete(provider.id, provider.name)}
+                                        className="px-3"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                {/* Desktop View: Table Layout */}
+                <div className="hidden sm:block overflow-x-auto">
                     <Table className="min-w-full">
-                        {' '}
-                        {/* Thêm min-w-full để kích hoạt cuộn ngang */}
                         <TableHeader>
                             <TableRow>
                                 <TableHead className="w-[50px] text-center whitespace-nowrap">
@@ -231,7 +285,7 @@ export default function Index() {
                                         <TableCell className="text-center whitespace-nowrap">
                                             {index + 1}
                                         </TableCell>
-                                        <TableCell className="whitespace-nowrap">
+                                        <TableCell className="whitespace-nowrap font-medium">
                                             {provider.name}
                                         </TableCell>
                                         <TableCell className="whitespace-nowrap">
