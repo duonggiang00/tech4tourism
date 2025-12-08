@@ -92,17 +92,34 @@ export default function Create({ template, guides }: CreateProps) {
     });
 
     useEffect(() => {
+        if (Object.keys(errors).length > 0) {
+            console.error('Validation errors:', errors);
+            toast.error('Vui lòng kiểm tra lại thông tin trong form (ngày, giá, v.v...)');
+        }
+    }, [errors]);
+
+    useEffect(() => {
         if (flash?.success_instance_id) {
+            console.log('Success instance ID received:', flash.success_instance_id);
             setIsSuccessModalOpen(true);
         }
     }, [flash]);
 
     const handleCreateBooking = () => {
         setIsSuccessModalOpen(false);
-        // Assuming booking.create route exists or we construct URL manually if needed
-        // Just in case, using direct URL pattern if route helper is not reliable
-        // But typically Inertia apps have route(), assuming it's available or we use router.visit
-        router.visit(`/booking/create?tour_instance_id=${flash.success_instance_id}`);
+        const instanceId = flash?.success_instance_id;
+        if (instanceId) {
+            router.visit(`/booking/create?tour_instance_id=${instanceId}`);
+        } else {
+            console.error('Missing instance ID for booking creation');
+            toast.error('Không tìm thấy ID chuyến đi để tạo booking');
+        }
+    };
+
+    const handleContinueCreating = () => {
+        setIsSuccessModalOpen(false);
+        setData('date_start', ''); // Reset date to prevent duplicate submission
+        toast.info('Đã làm mới form. Bạn có thể tiếp tục tạo chuyến đi khác.');
     };
 
     const handleBackToTour = () => {
@@ -112,18 +129,23 @@ export default function Create({ template, guides }: CreateProps) {
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
+        console.log('Submitting tour instance...', data);
 
         post(`/tours/${template.id}/instances`, {
             preserveScroll: true,
             onSuccess: (page) => {
+                console.log('Submission successful', page);
                 const flash = page.props.flash as any;
                 if (flash?.success_instance_id) {
                     setIsSuccessModalOpen(true);
+                } else {
+                    // Fallback purely on hook if this fails, but log it
+                    console.warn('Success ID missing in immediate page prop, relying on useEffect');
                 }
             },
             onError: (errors) => {
-                console.error('Errors:', errors);
-                toast.error('Có lỗi xảy ra khi tạo chuyến đi');
+                console.error('Submission errors:', errors);
+                toast.error('Có lỗi xảy ra: ' + (Object.values(errors)[0] || 'Vui lòng kiểm tra lại form'));
             },
         });
     };
@@ -479,16 +501,19 @@ export default function Create({ template, guides }: CreateProps) {
 
                 {/* Success Modal */}
                 <Dialog open={isSuccessModalOpen} onOpenChange={setIsSuccessModalOpen}>
-                    <DialogContent>
+                    <DialogContent className="max-w-[500px]">
                         <DialogHeader>
                             <DialogTitle>Tạo chuyến đi thành công!</DialogTitle>
                             <DialogDescription>
                                 Bạn muốn thực hiện thao tác gì tiếp theo với chuyến đi này?
                             </DialogDescription>
                         </DialogHeader>
-                        <DialogFooter className="flex gap-2 sm:justify-end">
+                        <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                             <Button variant="outline" onClick={handleBackToTour}>
                                 Về trang Tour
+                            </Button>
+                            <Button variant="secondary" onClick={handleContinueCreating}>
+                                Tạo thêm chuyến khác
                             </Button>
                             <Button onClick={handleCreateBooking}>
                                 Tạo Booking ngay

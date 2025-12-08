@@ -56,7 +56,10 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn() => $request->session()->get('error'),
 
                 // Giữ lại 'message' nếu hệ thống cũ của bạn có dùng
-                'message' => fn() => $request->session()->get('message')
+                'message' => fn() => $request->session()->get('message'),
+
+                // Custom data for success modal
+                'success_instance_id' => fn() => $request->session()->get('success_instance_id'),
             ],
             // --------------------
 

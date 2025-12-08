@@ -8,7 +8,7 @@ import { useTourData } from '@/hooks/useTourData';
 import AppLayout from '@/layouts/app-layout';
 import tourUrl from '@/routes/tours';
 import { BreadcrumbItem, Destination, Policy, Service, Tour, TourDetailProps, TourPolicy, TourSchedule, TourService, User } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { Calendar, Edit, Plus, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import TourGallery from './Partials/TourGallery';
@@ -18,6 +18,8 @@ import TourInfoCards from './Partials/TourInfoCards';
 import TourPolicyList from './Partials/TourPolicyList';
 import TourScheduleList from './Partials/TourScheduleList';
 import TourServiceList from './Partials/TourServiceList';
+
+declare var route: any;
 
 interface TourInstance {
     id: number;
@@ -29,6 +31,10 @@ interface TourInstance {
     price_adult: number | null;
     price_children: number | null;
     status: number;
+    assignments?: Array<{
+        id: number;
+        user?: User;
+    }>;
 }
 
 interface ExtendedProps extends TourDetailProps {
@@ -264,18 +270,49 @@ export default function TourDetail({
                                                                         </span>
                                                                     </div>
                                                                 </div>
+
+                                                                {/* Display Guides */}
+                                                                {instance.assignments && instance.assignments.length > 0 && (
+                                                                    <div className="mb-3">
+                                                                        <p className="text-xs font-semibold text-gray-500 mb-1">Hướng dẫn viên:</p>
+                                                                        <div className="flex flex-wrap gap-1">
+                                                                            {instance.assignments.map(ass => (
+                                                                                <Badge key={ass.id} variant="secondary" className="text-xs font-normal">
+                                                                                    {ass.user?.name || 'Unknown'}
+                                                                                </Badge>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                             </div>
 
-                                                            <div className="mt-4 pt-3 border-t flex items-center justify-between text-sm">
-                                                                <span className="flex items-center gap-1 text-gray-600">
-                                                                    <Users className="h-4 w-4" />
-                                                                    Chỗ: <span className="font-medium text-gray-900">{instance.booked_count} / {instance.limit || '∞'}</span>
-                                                                </span>
-                                                                <Link href={`/booking/create?tour_instance_id=${instance.id}`}>
-                                                                    <Button size="sm" variant="default" className="bg-blue-600 hover:bg-blue-700">
-                                                                        Đặt chỗ ngay
+                                                            <div className="mt-4 pt-3 border-t space-y-3">
+                                                                <div className="flex items-center justify-between text-sm">
+                                                                    <span className="flex items-center gap-1 text-gray-600">
+                                                                        <Users className="h-4 w-4" />
+                                                                        <span className="font-medium text-gray-900">{instance.booked_count} / {instance.limit || '∞'}</span>
+                                                                    </span>
+                                                                </div>
+
+                                                                <div className="grid grid-cols-2 gap-2">
+                                                                    <Link href={`/booking/create?tour_instance_id=${instance.id}`} className="w-full">
+                                                                        <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700">
+                                                                            Đặt chỗ
+                                                                        </Button>
+                                                                    </Link>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                                                                        onClick={() => {
+                                                                            if (confirm('Bạn có chắc muốn xóa lịch khởi hành này?')) {
+                                                                                router.visit(route('tour-instances.destroy', instance.id), { method: 'delete' });
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        Xóa
                                                                     </Button>
-                                                                </Link>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     ))}
