@@ -291,6 +291,14 @@ class TourController extends Controller
 
         Log::info('Template found', ['template_id' => $template->id, 'template_type' => get_class($template)]);
 
+        // Eager load instances with guides manually to ensure data availability
+        $template->load([
+            'instances' => function ($query) {
+                $query->orderBy('date_start', 'asc')
+                    ->with('assignments.user');
+            }
+        ]);
+
         $availablePolicies = Policy::all();
         $categories = Category::all();
         $destinations = Destination::all();

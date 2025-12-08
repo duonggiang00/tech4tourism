@@ -139,6 +139,7 @@ class DashboardController extends Controller
         $upcomingInstances = TourInstance::with('tourTemplate:id,title')
             ->where('status', 1) // Sắp có
             ->whereBetween('date_start', [$now, $now->copy()->addDays(30)])
+            ->whereHas('tourTemplate') // Only get instances with valid template
             ->orderBy('date_start', 'asc')
             ->take(5)
             ->get(['id', 'tour_template_id', 'date_start']);
@@ -147,8 +148,8 @@ class DashboardController extends Controller
             return [
                 'id' => $instance->id,
                 'tour' => [
-                    'id' => $instance->tourTemplate->id,
-                    'title' => $instance->tourTemplate->title,
+                    'id' => $instance->tourTemplate->id ?? 0,
+                    'title' => $instance->tourTemplate->title ?? 'Unknown Tour',
                 ],
                 'date_start' => $instance->date_start,
             ];
