@@ -17,11 +17,35 @@ class ServiceController extends Controller
      */
     public function index()
     {
-        $services = Service::all();
-        $service_types = ServiceType::all();
-        $providers = Provider::all();
-        // dd($services);
-        return Inertia::render('Services/index', compact('services', 'service_types', 'providers'));
+        $search = request('search');
+        $providerId = request('provider_id');
+        $serviceTypeId = request('service_type_id');
+
+        $query = Service::query()
+            ->with(['provider:id,name', 'serviceType:id,name'])
+            ->when($search, function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            })
+            ->when($providerId, fn($q) => $q->where('provider_id', $providerId))
+            ->when($serviceTypeId, fn($q) => $q->where('service_type_id', $serviceTypeId))
+            ->orderBy('id', 'desc');
+
+        $services = $query->paginate(10)->withQueryString();
+
+        $service_types = ServiceType::select('id', 'name')->get();
+        $providers = Provider::select('id', 'name')->get();
+
+        return Inertia::render('Services/index', [
+            'services' => $services,
+            'service_types' => $service_types,
+            'providers' => $providers,
+            'filters' => [
+                'search' => $search,
+                'provider_id' => $providerId,
+                'service_type_id' => $serviceTypeId,
+            ],
+        ]);
     }
 
     /**

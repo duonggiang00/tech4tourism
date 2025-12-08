@@ -2,30 +2,59 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ServiceAttribute;
-use App\Models\Service;
-use App\Http\Requests\StoreServiceAttributesRequest;
-use App\Http\Requests\UpdateServiceAttributesRequest;
 use Inertia\Inertia;
+use App\Models\Service;
+use App\Models\ServiceAttribute;
+use App\Http\Requests\StoreServiceAttributeRequest;
+use App\Http\Requests\StoreServiceAttributesRequest;
+use App\Http\Requests\UpdateServiceAttributeRequest;
+use App\Http\Requests\UpdateServiceAttributesRequest;
+use Illuminate\Http\Request;
 
 class ServiceAttributesController extends Controller
 {
     /**
      * Hiển thị danh sách các thuộc tính dịch vụ.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $attributes = ServiceAttribute::with('service:id,name')->get();
-        $services = Service::select('id', 'name')->get();
-        // dd($attributes);
+        $query = ServiceAttribute::query()->with(['service:id,name']);
 
-        return Inertia::render('ServiceAttributes/index', compact('attributes', 'services'));
+        // 🔍 Tìm kiếm theo tên, giá trị, loại, hoặc tên dịch vụ
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('value', 'like', "%{$search}%")
+                    ->orWhere('type', 'like', "%{$search}%")
+                    ->orWhereHas('service', function ($sub) use ($search) {
+                        $sub->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // 📊 Lọc theo dịch vụ cụ thể
+        if ($serviceId = $request->input('service_id')) {
+            $query->where('service_id', $serviceId);
+        }
+
+        $attributes = $query
+            ->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+
+        $services = Service::select('id', 'name')->orderBy('name')->get();
+
+        return Inertia::render('ServiceAttributes/index', [
+            'attributes' => $attributes,
+            'services' => $services,
+            'filters' => $request->only(['search', 'service_id']),
+        ]);
     }
 
     /**
      * Thêm mới thuộc tính dịch vụ.
      */
-    public function store(StoreServiceAttributesRequest $request)
+    public function store(StoreServiceAttributeRequest $request)
     {
         ServiceAttribute::create($request->validated());
 
@@ -37,7 +66,7 @@ class ServiceAttributesController extends Controller
     /**
      * Cập nhật thuộc tính dịch vụ.
      */
-    public function update(UpdateServiceAttributesRequest $request, ServiceAttribute $serviceAttribute)
+    public function update(UpdateServiceAttributeRequest $request, ServiceAttribute $serviceAttribute)
     {
         $serviceAttribute->update($request->validated());
 

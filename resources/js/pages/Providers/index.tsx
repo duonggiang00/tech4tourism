@@ -1,6 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
     Table,
     TableBody,
@@ -12,26 +13,21 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import providersUrl from '@/routes/providers';
 import { BreadcrumbItem } from '@/types';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { CircleCheck, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { CircleCheck, Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { ProviderFormDialog } from './diablog';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Danh sách Nhà Cung Cấp',
-        href: providersUrl.index().url,
-    },
+    { title: 'Danh sách Nhà Cung Cấp', href: providersUrl.index().url },
 ];
 
 interface Provider {
     id: number;
     name: string;
-    description?: string;
     email?: string;
     hotline?: string;
-    address?: string;
-    website?: string;
     status: string;
     notes?: string;
 }
@@ -39,64 +35,65 @@ interface Provider {
 interface ServiceType {
     id: number;
     name: string;
-    description?: string;
 }
 
 interface PageProps {
     flash: { message?: string };
-    providers: Provider[];
+    providers: {
+        data: Provider[];
+        links: { url: string | null; label: string; active: boolean }[];
+    };
+    filters: { search?: string; status?: string };
     serviceTypes: ServiceType[];
 }
 
 export default function Index() {
-    const { providers, serviceTypes, flash } = usePage<PageProps>().props;
+    const { providers, flash, filters, serviceTypes } =
+        usePage<PageProps>().props;
 
-    const { delete: destroy } = useForm();
-
+    const [search, setSearch] = useState(filters.search || '');
+    const [status, setStatus] = useState(filters.status || 'all');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [currentProvider, setCurrentProvider] = useState<
-        Provider | undefined
-    >(undefined);
+    const [currentProvider, setCurrentProvider] = useState<Provider | null>(
+        null,
+    );
+
+    // 🔍 Tìm kiếm realtime debounce
+    useEffect(() => {
+        const delay = setTimeout(() => {
+            router.get(
+                providersUrl.index().url,
+                { search, status: status === 'all' ? '' : status },
+                { preserveState: true, replace: true, preserveScroll: true },
+            );
+        }, 600);
+
+        return () => clearTimeout(delay);
+    }, [search, status]);
 
     const handleDelete = (id: number, name: string) => {
         if (confirm(`Bạn có chắc muốn xóa nhà cung cấp "${name}"?`)) {
-            destroy(providersUrl.destroy(id).url);
+            router.delete(providersUrl.destroy(id).url, {
+                onSuccess: () =>
+                    toast.success('Đã xóa nhà cung cấp thành công!'),
+                onError: () => toast.error('Không thể xóa nhà cung cấp!'),
+            });
         }
-    };
-
-    const openCreateDialog = () => {
-        setCurrentProvider(undefined);
-        setIsDialogOpen(true);
-    };
-
-    const openEditDialog = (provider: Provider) => {
-        setCurrentProvider(provider);
-        setIsDialogOpen(true);
     };
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case '0':
-                return (
-                    <Badge variant="outline" className="text-gray-600">
-                        Không hoạt động
-                    </Badge>
-                );
             case '1':
                 return (
-                    <Badge
-                        variant="secondary"
-                        className="bg-green-100 text-green-700"
-                    >
+                    <Badge className="bg-green-100 text-green-700">
                         Hoạt động
                     </Badge>
                 );
+            case '0':
+                return <Badge variant="outline">Không hoạt động</Badge>;
             case '2':
                 return (
-                    <Badge
-                        variant="secondary"
-                        className="bg-yellow-100 text-yellow-700"
-                    >
+                    <Badge className="bg-yellow-100 text-yellow-700">
                         Tạm ngưng
                     </Badge>
                 );
@@ -105,183 +102,233 @@ export default function Index() {
         }
     };
 
+    const openCreateDialog = () => {
+        setCurrentProvider(null);
+        setIsDialogOpen(true);
+    };
+
+    const openEditDialog = (provider: Provider) => {
+        setCurrentProvider(provider);
+        setIsDialogOpen(true);
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Danh sách Nhà Cung Cấp" />
+            <Head title="Nhà Cung Cấp" />
 
-            {/* Thông báo */}
-            <div className="m-4">
-                {flash.message && (
-                    <Alert
-                        variant="default"
-                        className="border-green-200 bg-green-50"
-                    >
+            {/* 🟢 Thông báo */}
+            {flash.message && (
+                <div className="m-4">
+                    <Alert className="border-green-200 bg-green-50">
                         <CircleCheck className="h-4 w-4 text-green-600" />
                         <AlertTitle className="text-green-800">
-                            Thông báo!
+                            Thông báo
                         </AlertTitle>
                         <AlertDescription className="text-green-700">
                             {flash.message}
                         </AlertDescription>
                     </Alert>
-                )}
-            </div>
+                </div>
+            )}
 
-            {/* Nút thêm */}
-            <div className="m-4 flex justify-end">
-                <Button onClick={openCreateDialog}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Thêm Nhà Cung Cấp
-                </Button>
-
-                <ProviderFormDialog
-                    open={isDialogOpen}
-                    onOpenChange={setIsDialogOpen}
-                    initialData={currentProvider}
-                    serviceTypes={serviceTypes}
-                    title={
-                        currentProvider
-                            ? `Chỉnh sửa: ${currentProvider.name}`
-                            : 'Thêm Nhà Cung Cấp Mới'
-                    }
+            {/* 🔍 Bộ lọc - Đã chỉnh sửa responsive */}
+            <div className="m-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                {' '}
+                {/* Thêm sm:items-center */}
+                <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Tìm theo tên, email, hotline..."
+                    className="w-full sm:flex-1" // Chiếm toàn bộ chiều rộng trên mobile
                 />
+                <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 sm:w-auto" // Chiếm toàn bộ chiều rộng trên mobile
+                >
+                    <option value="all">Tất cả</option>
+                    <option value="1">Hoạt động</option>
+                    <option value="0">Không hoạt động</option>
+                    <option value="2">Tạm ngưng</option>
+                </select>
+                <Button className="flex w-full items-center gap-2 sm:w-auto">
+                    {' '}
+                    {/* Chiếm toàn bộ chiều rộng trên mobile */}
+                    <Search className="h-4 w-4" /> Lọc
+                </Button>
             </div>
 
-            {/* Bảng danh sách */}
-            <div className="m-8 rounded-lg border border-gray-200 bg-white shadow-sm">
-                {/* Desktop View */}
-                <div className="hidden md:block">
-                    <Table>
+            {/* 🧾 Danh sách */}
+            <div className="m-6 rounded-lg border bg-white shadow-sm">
+                <div className="flex flex-col items-start justify-between gap-3 border-b p-4 sm:flex-row sm:items-center">
+                    {' '}
+                    {/* Thêm flex-col trên mobile */}
+                    <h2 className="text-lg font-semibold">
+                        Danh sách Nhà Cung Cấp
+                    </h2>
+                    <Button
+                        onClick={openCreateDialog}
+                        className="w-full sm:w-auto"
+                    >
+                        {' '}
+                        {/* Chiếm toàn bộ chiều rộng trên mobile */}
+                        <Plus className="mr-2 h-4 w-4" /> Thêm Nhà Cung Cấp
+                    </Button>
+                </div>
+
+                {/* BỔ SUNG: Thêm `overflow-x-auto` để cuộn ngang trên mobile */}
+                <div className="overflow-x-auto">
+                    <Table className="min-w-full">
+                        {' '}
+                        {/* Thêm min-w-full để kích hoạt cuộn ngang */}
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[50px] text-center">
-                                    STT
+                                <TableHead className="w-[50px] text-center whitespace-nowrap">
+                                    #
                                 </TableHead>
-                                <TableHead>Tên</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Hotline</TableHead>
-                                <TableHead>Trạng thái</TableHead>
-                                <TableHead className="text-center">
+                                <TableHead className="whitespace-nowrap">
+                                    Tên
+                                </TableHead>
+                                <TableHead className="whitespace-nowrap">
+                                    Email
+                                </TableHead>
+                                <TableHead className="whitespace-nowrap">
+                                    Hotline
+                                </TableHead>
+                                <TableHead className="whitespace-nowrap">
+                                    Trạng thái
+                                </TableHead>
+                                <TableHead className="text-center whitespace-nowrap">
                                     Hành động
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {providers.map((provider, index) => (
-                                <TableRow key={provider.id}>
-                                    <TableCell className="text-center">
-                                        {index + 1}
+                            {providers.data.length === 0 ? (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={6}
+                                        className="py-8 text-center text-gray-500"
+                                    >
+                                        Không có dữ liệu
                                     </TableCell>
-                                    <TableCell className="font-medium">
-                                        {provider.name}
-                                    </TableCell>
-                                    <TableCell>{provider.email || '—'}</TableCell>
-                                    <TableCell>{provider.hotline || '—'}</TableCell>
-                                    <TableCell>
-                                        {getStatusBadge(provider.status)}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex justify-center gap-2">
-                                            {/* 👁 Nút xem chi tiết */}
-                                            <Link
-                                                href={
-                                                    providersUrl.show(provider.id)
-                                                        .url
-                                                }
-                                            >
+                                </TableRow>
+                            ) : (
+                                providers.data.map((provider, index) => (
+                                    <TableRow key={provider.id}>
+                                        <TableCell className="text-center whitespace-nowrap">
+                                            {index + 1}
+                                        </TableCell>
+                                        <TableCell className="whitespace-nowrap">
+                                            {provider.name}
+                                        </TableCell>
+                                        <TableCell className="whitespace-nowrap">
+                                            {provider.email || '—'}
+                                        </TableCell>
+                                        <TableCell className="whitespace-nowrap">
+                                            {provider.hotline || '—'}
+                                        </TableCell>
+                                        <TableCell className="whitespace-nowrap">
+                                            {getStatusBadge(provider.status)}
+                                        </TableCell>
+                                        <TableCell className="whitespace-nowrap">
+                                            <div className="flex justify-center gap-2">
+                                                <Link
+                                                    href={
+                                                        providersUrl.show(
+                                                            provider.id,
+                                                        ).url
+                                                    }
+                                                >
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        title="Xem chi tiết"
+                                                    >
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                </Link>
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="hover:bg-blue-50 hover:text-blue-600"
+                                                    title="Chỉnh sửa"
+                                                    onClick={() =>
+                                                        openEditDialog(provider)
+                                                    }
                                                 >
-                                                    <Eye className="h-4 w-4" />
+                                                    <Pencil className="h-4 w-4" />
                                                 </Button>
-                                            </Link>
-
-                                            {/* ✏ Sửa */}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() =>
-                                                    openEditDialog(provider)
-                                                }
-                                                className="hover:bg-amber-50 hover:text-amber-600"
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-
-                                            {/* 🗑 Xóa */}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() =>
-                                                    handleDelete(
-                                                        provider.id,
-                                                        provider.name,
-                                                    )
-                                                }
-                                                className="hover:bg-red-50 hover:text-red-600"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    title="Xóa"
+                                                    onClick={() =>
+                                                        handleDelete(
+                                                            provider.id,
+                                                            provider.name,
+                                                        )
+                                                    }
+                                                    className="text-red-500 hover:text-red-700"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
                         </TableBody>
                     </Table>
                 </div>
 
-                {/* Mobile View */}
-                <div className="md:hidden">
-                    <div className="divide-y divide-gray-200">
-                        {providers.map((provider, index) => (
-                            <div key={provider.id} className="p-4 space-y-3">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex gap-2">
-                                        <span className="text-gray-400 font-mono text-sm pt-0.5">#{index + 1}</span>
-                                        <div>
-                                            <h3 className="font-semibold text-gray-900">{provider.name}</h3>
-                                            <div className="mt-1">{getStatusBadge(provider.status)}</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-1 text-sm text-gray-600">
-                                    <div className="flex gap-2">
-                                        <span className="font-medium text-gray-500 w-16">Email:</span>
-                                        <span className="truncate">{provider.email || '—'}</span>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <span className="font-medium text-gray-500 w-16">Hotline:</span>
-                                        <span>{provider.hotline || '—'}</span>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-3 gap-2 pt-2">
-                                    <Link href={providersUrl.show(provider.id).url} className="w-full">
-                                        <Button variant="outline" size="sm" className="w-full text-blue-600">
-                                            <Eye className="h-4 w-4 mr-1" /> Chi tiết
-                                        </Button>
-                                    </Link>
-                                    <Button variant="outline" size="sm" onClick={() => openEditDialog(provider)} className="w-full text-amber-600">
-                                        <Pencil className="h-4 w-4 mr-1" /> Sửa
-                                    </Button>
-                                    <Button variant="outline" size="sm" onClick={() => handleDelete(provider.id, provider.name)} className="w-full text-red-600">
-                                        <Trash2 className="h-4 w-4 mr-1" /> Xóa
-                                    </Button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                {/* 📄 Phân trang */}
+                <div className="flex flex-wrap justify-center gap-2 p-4">
+                    {' '}
+                    {/* Thêm flex-wrap cho phân trang */}
+                    {providers.links.map((link, index) => (
+                        <button
+                            key={index}
+                            disabled={!link.url}
+                            onClick={() => {
+                                if (link.url) {
+                                    router.get(
+                                        link.url,
+                                        {
+                                            search,
+                                            status:
+                                                status === 'all' ? '' : status,
+                                        },
+                                        {
+                                            preserveScroll: true,
+                                            preserveState: true,
+                                            replace: true,
+                                        },
+                                    );
+                                }
+                            }}
+                            className={`rounded-md border px-3 py-1 text-sm transition-all ${
+                                link.active
+                                    ? 'border-blue-600 bg-blue-600 text-white'
+                                    : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-100'
+                            } ${!link.url ? 'cursor-not-allowed opacity-50' : ''}`}
+                            dangerouslySetInnerHTML={{ __html: link.label }}
+                        />
+                    ))}
                 </div>
-
-                {providers.length === 0 && (
-                    <div className="p-8 text-center text-gray-500">
-                        Chưa có nhà cung cấp nào. Hãy tạo mới!
-                    </div>
-                )}
             </div>
+
+            {/* 🧩 Dialog thêm / sửa */}
+            <ProviderFormDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                initialData={currentProvider || undefined}
+                title={
+                    currentProvider
+                        ? `Chỉnh sửa: ${currentProvider.name}`
+                        : 'Thêm Nhà Cung Cấp Mới'
+                }
+                serviceTypes={serviceTypes}
+            />
         </AppLayout>
     );
 }

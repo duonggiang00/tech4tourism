@@ -14,7 +14,7 @@ class StoreServiceAttributeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_service' => 'required|exists:services,id',
+            'service_id' => 'required|exists:services,id',
             'name' => 'required|string|max:100',
             'value' => 'nullable|string|max:200',
             'type' => 'nullable|string|max:50',

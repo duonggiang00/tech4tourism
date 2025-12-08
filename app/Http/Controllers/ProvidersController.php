@@ -5,19 +5,41 @@ namespace App\Http\Controllers;
 use App\Models\Provider;
 use App\Http\Requests\StoreProviderRequest;
 use App\Http\Requests\UpdateProviderRequest;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ProvidersController extends Controller
 {
     /**
      * Hiển thị danh sách nhà cung cấp.
-     */
-    public function index()
+     */ public function index(\Illuminate\Http\Request $request)
     {
-        $providers = Provider::with('services')->get();
-        $serviceTypes = \App\Models\ServiceType::all();
-        return Inertia::render('Providers/index', compact('providers', 'serviceTypes'));
+        $query = Provider::query()->with('services');
+
+        // 🔍 Tìm kiếm theo tên, email, hotline
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('hotline', 'like', "%{$search}%");
+            });
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        $providers = $query->orderBy('created_at', 'desc')->paginate(8)->withQueryString();
+        $serviceTypes = \App\Models\ServiceType::select('id', 'name')->get();
+
+        return \Inertia\Inertia::render('Providers/index', [
+            'providers' => $providers,
+            'filters' => $request->only(['search', 'status']),
+            'serviceTypes' => $serviceTypes,
+        ]);
     }
+
+
 
     /**
      * Lưu nhà cung cấp mới.
@@ -28,6 +50,9 @@ class ProvidersController extends Controller
             \Illuminate\Support\Facades\DB::beginTransaction();
 
             $providerData = $request->validated();
+            if (empty($providerData['province_id'])) {
+                $providerData['province_id'] = null;
+            }
             $provider = Provider::create($providerData);
 
             if ($request->has('services')) {
