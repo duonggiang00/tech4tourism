@@ -15,7 +15,7 @@ import providersUrl from '@/routes/providers';
 import { BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { CircleCheck, Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { ProviderFormDialog } from './diablog';
 
@@ -45,6 +45,7 @@ interface PageProps {
     };
     filters: { search?: string; status?: string };
     serviceTypes: ServiceType[];
+    [key: string]: unknown;
 }
 
 export default function Index() {
@@ -58,18 +59,27 @@ export default function Index() {
         null,
     );
 
-    // 🔍 Tìm kiếm realtime debounce
-    useEffect(() => {
-        const delay = setTimeout(() => {
-            router.get(
-                providersUrl.index().url,
-                { search, status: status === 'all' ? '' : status },
-                { preserveState: true, replace: true, preserveScroll: true },
-            );
-        }, 600);
+    // 🔍 Tìm kiếm realtime debounce - REMOVED
+    // useEffect(() => { ... });
 
-        return () => clearTimeout(delay);
-    }, [search, status]);
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        router.get(
+            providersUrl.index().url,
+            { search, status: status === 'all' ? '' : status },
+            { preserveState: true, replace: true, preserveScroll: true },
+        );
+    };
+
+    const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newStatus = e.target.value;
+        setStatus(newStatus);
+        router.get(
+            providersUrl.index().url,
+            { search, status: newStatus === 'all' ? '' : newStatus },
+            { preserveState: true, replace: true, preserveScroll: true },
+        );
+    };
 
     const handleDelete = (id: number, name: string) => {
         if (confirm(`Bạn có chắc muốn xóa nhà cung cấp "${name}"?`)) {
@@ -80,6 +90,8 @@ export default function Index() {
             });
         }
     };
+
+    // ... helper functions ...
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -132,16 +144,21 @@ export default function Index() {
 
             {/* 🔍 Bộ lọc - Đã chỉnh sửa responsive */}
             <div className="m-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-                {' '}
-                <Input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Tìm theo tên, email, hotline..."
-                    className="w-full sm:flex-1" // Chiếm toàn bộ chiều rộng trên mobile
-                />
+                <form onSubmit={handleSearch} className="flex flex-1 gap-2">
+                    <Input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Tìm theo tên, email, hotline..."
+                        className="w-full flex-1"
+                    />
+                    <Button type="submit" variant="secondary" className="max-sm:hidden">
+                        <Search className="h-4 w-4" />
+                    </Button>
+                </form>
+
                 <select
                     value={status}
-                    onChange={(e) => setStatus(e.target.value)}
+                    onChange={handleStatusChange}
                     className="w-full rounded-md border border-gray-300 px-3 py-2 sm:w-auto" // Chiếm toàn bộ chiều rộng trên mobile
                 >
                     <option value="all">Tất cả</option>
@@ -149,10 +166,8 @@ export default function Index() {
                     <option value="0">Không hoạt động</option>
                     <option value="2">Tạm ngưng</option>
                 </select>
-                <Button className="flex w-full items-center gap-2 sm:w-auto">
-                    {' '}
-                    {/* Chiếm toàn bộ chiều rộng trên mobile */}
-                    <Search className="h-4 w-4" /> Lọc
+                <Button onClick={handleSearch} className="flex w-full items-center gap-2 sm:hidden">
+                    <Search className="h-4 w-4" /> Tìm kiếm
                 </Button>
             </div>
 
@@ -301,11 +316,10 @@ export default function Index() {
                                     );
                                 }
                             }}
-                            className={`rounded-md border px-3 py-1 text-sm transition-all ${
-                                link.active
-                                    ? 'border-blue-600 bg-blue-600 text-white'
-                                    : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-100'
-                            } ${!link.url ? 'cursor-not-allowed opacity-50' : ''}`}
+                            className={`rounded-md border px-3 py-1 text-sm transition-all ${link.active
+                                ? 'border-blue-600 bg-blue-600 text-white'
+                                : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-100'
+                                } ${!link.url ? 'cursor-not-allowed opacity-50' : ''}`}
                             dangerouslySetInnerHTML={{ __html: link.label }}
                         />
                     ))}

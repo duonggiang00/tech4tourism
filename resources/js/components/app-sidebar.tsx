@@ -55,16 +55,16 @@ const mainNavItems: NavItem[] = [
 ];
 
 const footerNavItems: NavItem[] = [
-    {
-        title: 'Mã nguồn',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Tài liệu',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
-    },
+    // {
+    //     title: 'Mã nguồn',
+    //     href: 'https://github.com/laravel/react-starter-kit',
+    //     icon: Folder,
+    // },
+    // {
+    //     title: 'Tài liệu',
+    //     href: 'https://laravel.com/docs/starter-kits#react',
+    //     icon: BookOpen,
+    // },
 ];
 
 export function AppSidebar() {
@@ -166,16 +166,16 @@ export function AppSidebar() {
     const mainNavItems = getNavItems();
 
     const footerNavItems: NavItem[] = [
-        {
-            title: 'Mã nguồn',
-            href: 'https://github.com/laravel/react-starter-kit',
-            icon: Folder,
-        },
-        {
-            title: 'Tài liệu',
-            href: 'https://laravel.com/docs/starter-kits#react',
-            icon: BookOpen,
-        },
+        // {
+        //     title: 'Mã nguồn',
+        //     href: 'https://github.com/laravel/react-starter-kit',
+        //     icon: Folder,
+        // },
+        // {
+        //     title: 'Tài liệu',
+        //     href: 'https://laravel.com/docs/starter-kits#react',
+        //     icon: BookOpen,
+        // },
     ];
     return (
         <Sidebar collapsible="icon" variant="inset">

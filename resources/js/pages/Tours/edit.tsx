@@ -489,6 +489,14 @@ export default function Edit({
         });
     };
 
+    // Auto-scroll to active step on mobile
+    useEffect(() => {
+        const activeStepElement = document.getElementById('active-step');
+        if (activeStepElement) {
+            activeStepElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+    }, [currentStep]);
+
     return (
         <AppLayout breadcrumbs={[{ title: 'Chỉnh sửa Tour', href: '#' }]}>
             <Head title={`Chỉnh sửa: ${tourData.title}`} />
@@ -511,7 +519,7 @@ export default function Edit({
 
                         <div className="flex justify-between items-center mb-6 overflow-x-auto pb-2">
                             {steps.map((step) => (
-                                <div key={step.id} className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors
+                                <div key={step.id} id={step.id === currentStep ? "active-step" : undefined} className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors
                                     ${step.id === currentStep ? 'bg-blue-100 text-blue-700 border border-blue-200' :
                                         step.id < currentStep ? 'text-green-600 bg-green-50' : 'text-gray-400 bg-gray-50'}`}>
                                     <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs
@@ -636,10 +644,6 @@ export default function Edit({
                             </div>
 
                             <div>
-                                <div className="mb-4 flex items-center justify-between border-b pb-2">
-                                    <Label className="text-base font-semibold text-blue-700">Lịch trình chi tiết</Label>
-                                    <Button type="button" size="sm" onClick={addSchedule}><Plus className="mr-1 h-4 w-4" /> Thêm Ngày</Button>
-                                </div>
                                 <div className="scrollbar-thin max-h-[600px] space-y-4 overflow-y-auto pr-2">
                                     {data.schedules.length === 0 && <div className="flex h-32 flex-col items-center justify-center rounded-lg border border-dashed bg-gray-50 text-gray-500"><p>Chưa có lịch trình nào.</p></div>}
                                     {scheduleWarning && <div className="rounded border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-700">{scheduleWarning}</div>}
@@ -661,9 +665,20 @@ export default function Edit({
                                                         <SelectTrigger className="bg-white"><SelectValue placeholder="Chọn điểm đến" /></SelectTrigger>
                                                         <SelectContent>
                                                             {availableDestinations.length > 0 ? (
-                                                                availableDestinations.map((d) => (
-                                                                    <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
-                                                                ))
+                                                                availableDestinations.map((d) => {
+                                                                    const isSelectedInOtherDay = data.schedules.some(
+                                                                        (s, i) => i !== index && String(s.destination_id) === String(d.id)
+                                                                    );
+                                                                    return (
+                                                                        <SelectItem
+                                                                            key={d.id}
+                                                                            value={String(d.id)}
+                                                                            disabled={isSelectedInOtherDay}
+                                                                        >
+                                                                            {d.name} {isSelectedInOtherDay ? '(Đã chọn)' : ''}
+                                                                        </SelectItem>
+                                                                    );
+                                                                })
                                                             ) : (<div className="p-2 text-center text-xs text-gray-500">Chưa có địa điểm nào</div>)}
                                                         </SelectContent>
                                                     </Select>
@@ -675,6 +690,9 @@ export default function Edit({
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                                <div className="mt-4 flex justify-center border-t pt-2">
+                                    <Button type="button" size="sm" onClick={addSchedule} className="w-full md:w-auto"><Plus className="mr-1 h-4 w-4" /> Thêm Ngày</Button>
                                 </div>
                             </div>
                         </div>

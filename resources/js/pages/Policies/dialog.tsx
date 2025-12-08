@@ -107,9 +107,8 @@ export function PolicyFormDialog({ open, onOpenChange, policy }: Props) {
                             }}
                             onInput={(e: any) => handleAutoResize(e)}
                             placeholder="Nhập tiêu đề chính sách..."
-                            className={`min-h-[40px] w-full resize-none overflow-hidden ${
-                                errors.title ? 'border-red-500' : ''
-                            }`}
+                            className={`min-h-[40px] w-full resize-none overflow-hidden ${errors.title ? 'border-red-500' : ''
+                                }`}
                         />
                         {errors.title && (
                             <p className="text-sm text-red-500">
@@ -132,9 +131,8 @@ export function PolicyFormDialog({ open, onOpenChange, policy }: Props) {
                             }}
                             onInput={(e: any) => handleAutoResize(e)}
                             placeholder="Nhập nội dung chi tiết..."
-                            className={`w-full resize-none overflow-hidden ${
-                                errors.content ? 'border-red-500' : ''
-                            }`}
+                            className={`w-full resize-none overflow-hidden ${errors.content ? 'border-red-500' : ''
+                                }`}
                         />
                         {errors.content && (
                             <p className="text-sm text-red-500">
@@ -156,8 +154,8 @@ export function PolicyFormDialog({ open, onOpenChange, policy }: Props) {
                             {processing
                                 ? 'Đang lưu...'
                                 : policy
-                                  ? 'Cập nhật'
-                                  : 'Lưu lại'}
+                                    ? 'Cập nhật'
+                                    : 'Lưu lại'}
                         </Button>
                     </DialogFooter>
                 </form>

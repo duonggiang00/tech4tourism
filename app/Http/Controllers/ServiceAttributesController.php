@@ -32,9 +32,11 @@ class ServiceAttributesController extends Controller
             });
         }
 
-        // 📊 Lọc theo dịch vụ cụ thể
-        if ($serviceId = $request->input('service_id')) {
-            $query->where('service_id', $serviceId);
+        // 📊 Lọc theo tên dịch vụ cụ thể
+        if ($serviceName = $request->input('service_name')) {
+            $query->whereHas('service', function ($q) use ($serviceName) {
+                $q->where('name', $serviceName);
+            });
         }
 
         $attributes = $query
@@ -42,12 +44,17 @@ class ServiceAttributesController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        // Lấy danh sách tên dịch vụ duy nhất cho bộ lọc
+        $serviceNames = Service::distinct()->orderBy('name')->pluck('name');
+
+        // Lấy danh sách dịch vụ đầy đủ cho dialog thêm/sửa
         $services = Service::select('id', 'name')->orderBy('name')->get();
 
         return Inertia::render('ServiceAttributes/index', [
             'attributes' => $attributes,
             'services' => $services,
-            'filters' => $request->only(['search', 'service_id']),
+            'service_names' => $serviceNames,
+            'filters' => $request->only(['search', 'service_name']),
         ]);
     }
 

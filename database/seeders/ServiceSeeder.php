@@ -39,15 +39,15 @@ class ServiceSeeder extends Seeder
         $this->types = [
             'transport' => ServiceType::firstOrCreate(
                 ['name' => 'Vận chuyển'],
-                [ 'description' => 'Xe, Máy bay, Tàu hỏa', 'order' => 1]
+                ['description' => 'Xe, Máy bay, Tàu hỏa', 'order' => 1]
             ),
             'restaurant' => ServiceType::firstOrCreate(
                 ['name' => 'Nhà hàng'],
-                [ 'description' => 'Ăn uống, Tiệc', 'order' => 2]
+                ['description' => 'Ăn uống, Tiệc', 'order' => 2]
             ),
             'hotel' => ServiceType::firstOrCreate(
                 ['name' => 'Khách sạn'],
-                [ 'description' => 'Lưu trú, Nghỉ dưỡng', 'order' => 3]
+                ['description' => 'Lưu trú, Nghỉ dưỡng', 'order' => 3]
             ),
         ];
 

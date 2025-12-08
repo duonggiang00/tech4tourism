@@ -217,6 +217,22 @@ export default function Create({
                 setCanSubmit(false);
                 setTimeout(() => setCanSubmit(true), 1000);
             }
+
+            // AUTO-SELECT VIETNAM Logic when moving to Step 2 (Location)
+            if (currentStep === 1) {
+                const selectedCategory = categories.find((c) => String(c.id) === data.category_id);
+                if (selectedCategory) {
+                    const titleParams = selectedCategory.title.toLowerCase();
+                    if (titleParams.includes('trong nước') || titleParams.includes('nội địa')) {
+                        const vietnam = countries.find(c =>
+                            c.name.toLowerCase() === 'việt nam' || c.name.toLowerCase() === 'vietnam'
+                        );
+                        if (vietnam) {
+                            handleSelectCountry(String(vietnam.id));
+                        }
+                    }
+                }
+            }
         } else {
             toast.error(validation as string);
         }
@@ -551,6 +567,14 @@ export default function Create({
         });
     };
 
+    // Auto-scroll to active step on mobile
+    useEffect(() => {
+        const activeStepElement = document.getElementById('active-step');
+        if (activeStepElement) {
+            activeStepElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+    }, [currentStep]);
+
     return (
         <AppLayout breadcrumbs={[{ title: 'Tạo Tour Mới', href: '#' }]}>
             <Head title="Tạo Tour Mới" />
@@ -577,10 +601,11 @@ export default function Create({
                             ></div>
                         </div>
 
-                        <div className="flex justify-between items-center mb-6 overflow-x-auto pb-2">
+                        <div className="flex justify-between items-center mb-6 overflow-x-auto pb-2 no-scrollbar">
                             {steps.map((step) => (
                                 <div
                                     key={step.id}
+                                    id={step.id === currentStep ? "active-step" : undefined}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors
                                         ${step.id === currentStep
                                             ? 'bg-blue-100 text-blue-700 border border-blue-200'
@@ -880,18 +905,6 @@ export default function Create({
 
                             {/* LIST LỊCH TRÌNH */}
                             <div>
-                                <div className="mb-4 flex items-center justify-between border-b pb-2">
-                                    <Label className="text-base font-semibold text-blue-700">
-                                        Lịch trình chi tiết
-                                    </Label>
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        onClick={addSchedule}
-                                    >
-                                        <Plus className="mr-1 h-4 w-4" /> Thêm Ngày
-                                    </Button>
-                                </div>
                                 <div className="scrollbar-thin max-h-[600px] space-y-4 overflow-y-auto pr-2">
                                     {data.schedules.length === 0 && (
                                         <div className="flex h-32 flex-col items-center justify-center rounded-lg border border-dashed bg-gray-50 text-gray-500">
@@ -979,18 +992,20 @@ export default function Create({
                                                             {availableDestinations.length >
                                                                 0 ? (
                                                                 availableDestinations.map(
-                                                                    (d) => (
-                                                                        <SelectItem
-                                                                            key={
-                                                                                d.id
-                                                                            }
-                                                                            value={String(
-                                                                                d.id,
-                                                                            )}
-                                                                        >
-                                                                            {d.name}
-                                                                        </SelectItem>
-                                                                    ),
+                                                                    (d) => {
+                                                                        const isSelectedInOtherDay = data.schedules.some(
+                                                                            (s, i) => i !== index && String(s.destination_id) === String(d.id)
+                                                                        );
+                                                                        return (
+                                                                            <SelectItem
+                                                                                key={d.id}
+                                                                                value={String(d.id)}
+                                                                                disabled={isSelectedInOtherDay}
+                                                                            >
+                                                                                {d.name} {isSelectedInOtherDay ? '(Đã chọn)' : ''}
+                                                                            </SelectItem>
+                                                                        );
+                                                                    }
                                                                 )
                                                             ) : (
                                                                 <div className="p-2 text-center text-xs text-gray-500">
@@ -1022,6 +1037,16 @@ export default function Create({
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                                <div className="mt-4 flex justify-center border-t pt-2">
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        onClick={addSchedule}
+                                        className="w-full md:w-auto"
+                                    >
+                                        <Plus className="mr-1 h-4 w-4" /> Thêm Ngày
+                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -1394,8 +1419,8 @@ export default function Create({
                                         <div className="space-y-2">
                                             <Label>Số khách dự kiến (Người)</Label>
                                             <Input
-                                                type="string"
-                                                min="1"
+                                                type="number"
+                                                // min="1"
                                                 value={pricingConfig.guestEstimate}
                                                 onChange={e => setPricingConfig({ ...pricingConfig, guestEstimate: Number(e.target.value) })}
                                                 className="bg-white"
@@ -1405,7 +1430,7 @@ export default function Create({
                                         <div className="space-y-2">
                                             <Label>Lương Guide/Ngày</Label>
                                             <Input
-                                                type="string"
+                                                type="number"
                                                 min="0"
                                                 value={pricingConfig.guideSalaryDay}
                                                 onChange={e => setPricingConfig({ ...pricingConfig, guideSalaryDay: Number(e.target.value) })}
@@ -1415,7 +1440,7 @@ export default function Create({
                                         <div className="space-y-2">
                                             <Label>Bảo hiểm/Người</Label>
                                             <Input
-                                                type="string"
+                                                type="number"
                                                 min="0"
                                                 value={pricingConfig.insurancePerPax}
                                                 onChange={e => setPricingConfig({ ...pricingConfig, insurancePerPax: Number(e.target.value) })}
@@ -1425,7 +1450,7 @@ export default function Create({
                                         <div className="space-y-2">
                                             <Label>Phí quản lý/Người</Label>
                                             <Input
-                                                type="string"
+                                                type="number"
                                                 min="0"
                                                 value={pricingConfig.managementFee}
                                                 onChange={e => setPricingConfig({ ...pricingConfig, managementFee: Number(e.target.value) })}
@@ -1436,7 +1461,7 @@ export default function Create({
                                             <Label>Lợi nhuận mục tiêu (%)</Label>
                                             <div className="flex items-center gap-2">
                                                 <Input
-                                                    type="string"
+                                                    type="number"
                                                     min="0" max="100"
                                                     value={pricingConfig.profitMargin}
                                                     onChange={e => setPricingConfig({ ...pricingConfig, profitMargin: Number(e.target.value) })}
@@ -1449,7 +1474,7 @@ export default function Create({
                                             <Label>Thuế VAT (%)</Label>
                                             <div className="flex items-center gap-2">
                                                 <Input
-                                                    type="string"
+                                                    type="number"
                                                     min="0" max="100"
                                                     value={pricingConfig.taxRate}
                                                     onChange={e => setPricingConfig({ ...pricingConfig, taxRate: Number(e.target.value) })}
@@ -1462,7 +1487,7 @@ export default function Create({
                                             <Label>Tỷ lệ giá Trẻ em (%)</Label>
                                             <div className="flex items-center gap-2">
                                                 <Input
-                                                    type="string"
+                                                    type="number"
                                                     min="0" max="100"
                                                     value={pricingConfig.childrenPercentage}
                                                     onChange={e => setPricingConfig({ ...pricingConfig, childrenPercentage: Number(e.target.value) })}
