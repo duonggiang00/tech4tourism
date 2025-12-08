@@ -137,7 +137,8 @@ export default function Dashboard({
 
             <div className="flex flex-col gap-6 p-6">
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900">
                             Tổng quan
@@ -146,7 +147,7 @@ export default function Dashboard({
                             Chào mừng bạn trở lại! Đây là tình hình kinh doanh hôm nay.
                         </p>
                     </div>
-                    <Button asChild>
+                    <Button asChild className="w-full sm:w-auto">
                         <Link href="/admin/bookings/create">
                             <Plane className="mr-2 h-4 w-4" />
                             Tạo Booking mới
@@ -340,9 +341,9 @@ export default function Dashboard({
                                             <span>{item.name}</span>
                                         </div>
                                         <span className="font-medium">{item.value}</span>
-                    </div>
+                                    </div>
                                 ))}
-                    </div>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
@@ -365,57 +366,96 @@ export default function Dashboard({
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Mã</TableHead>
-                                        <TableHead>Khách hàng</TableHead>
-                                        <TableHead>Tour</TableHead>
-                                        <TableHead>Trạng thái</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {latestBookings && latestBookings.length > 0 ? (
-                                        latestBookings.map((booking) => (
-                                            <TableRow key={booking.id}>
-                                                <TableCell className="font-mono text-sm font-medium">
-                                                    {booking.code}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div>
-                                                        <div className="font-medium">
-                                                            {booking.client_name}
+                            {/* Desktop View */}
+                            <div className="hidden md:block">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Mã</TableHead>
+                                            <TableHead>Khách hàng</TableHead>
+                                            <TableHead>Tour</TableHead>
+                                            <TableHead>Trạng thái</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {latestBookings && latestBookings.length > 0 ? (
+                                            latestBookings.map((booking) => (
+                                                <TableRow key={booking.id}>
+                                                    <TableCell className="font-mono text-sm font-medium">
+                                                        {booking.code}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div>
+                                                            <div className="font-medium">
+                                                                {booking.client_name}
+                                                            </div>
+                                                            <div className="text-xs text-gray-500">
+                                                                {booking.client_email}
+                                                            </div>
                                                         </div>
-                                                        <div className="text-xs text-gray-500">
-                                                            {booking.client_email}
-                                                        </div>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="max-w-[150px] truncate text-sm">
-                                                    {booking.tour?.title || 'N/A'}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge
-                                                        className={
-                                                            STATUS_MAP[booking.status]?.color ||
-                                                            'bg-gray-500'
-                                                        }
-                                                    >
-                                                        {STATUS_MAP[booking.status]?.label ||
-                                                            'Unknown'}
-                                                    </Badge>
+                                                    </TableCell>
+                                                    <TableCell className="max-w-[150px] truncate text-sm">
+                                                        {booking.tour?.title || 'N/A'}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge
+                                                            className={
+                                                                STATUS_MAP[booking.status]?.color ||
+                                                                'bg-gray-500'
+                                                            }
+                                                        >
+                                                            {STATUS_MAP[booking.status]?.label ||
+                                                                'Unknown'}
+                                                        </Badge>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={4} className="text-center text-gray-500">
+                                                    Chưa có booking nào
                                                 </TableCell>
                                             </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={4} className="text-center text-gray-500">
-                                                Chưa có booking nào
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
+
+                            {/* Mobile View */}
+                            <div className="md:hidden space-y-4">
+                                {latestBookings && latestBookings.length > 0 ? (
+                                    latestBookings.map((booking) => (
+                                        <div key={booking.id} className="border rounded-lg p-3 space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-mono font-bold text-sm">
+                                                    {booking.code}
+                                                </span>
+                                                <Badge
+                                                    className={
+                                                        STATUS_MAP[booking.status]?.color ||
+                                                        'bg-gray-500'
+                                                    }
+                                                >
+                                                    {STATUS_MAP[booking.status]?.label ||
+                                                        'Unknown'}
+                                                </Badge>
+                                            </div>
+
+                                            <div className="text-sm">
+                                                <div className="font-medium">{booking.client_name}</div>
+                                                <div className="text-muted-foreground text-xs">{booking.client_email}</div>
+                                            </div>
+
+                                            <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                                                <MapPin className="h-4 w-4 flex-shrink-0" />
+                                                <span className="truncate">{booking.tour?.title || 'N/A'}</span>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center text-gray-500 py-4">Chưa có booking nào</div>
+                                )}
+                            </div>
                         </CardContent>
                     </Card>
 
@@ -490,11 +530,10 @@ export default function Dashboard({
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div
-                                                    className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                                                        alert.type === 'danger'
+                                                    className={`flex h-10 w-10 items-center justify-center rounded-full ${alert.type === 'danger'
                                                             ? 'bg-red-100 text-red-600'
                                                             : 'bg-yellow-100 text-yellow-600'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {alert.type === 'danger' ? (
                                                         <AlertCircle className="h-5 w-5" />
