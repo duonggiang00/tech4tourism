@@ -117,10 +117,10 @@ export default function UserIndex({ users: usersData, filters = {}, flash }: Pro
                 )}
 
                 <div className="bg-white shadow rounded-lg p-6">
-                    <div className="flex justify-between items-center mb-4">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
                         <h2 className="text-2xl font-bold">Danh sách người dùng</h2>
-                        <Link href={users.create().url}>
-                            <Button>
+                        <Link href={users.create().url} className="w-full sm:w-auto">
+                            <Button className="w-full sm:w-auto">
                                 <Plus className="mr-2 h-4 w-4" />
                                 Tạo người dùng mới
                             </Button>
@@ -183,7 +183,7 @@ export default function UserIndex({ users: usersData, filters = {}, flash }: Pro
                                             </Badge>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-2 text-sm">
+                                        <div className="space-y-2 text-sm">
                                             <div>
                                                 <span className="text-gray-500 block">Email:</span>
                                                 <span className="font-medium text-gray-900 break-all">{user.email}</span>
@@ -191,9 +191,13 @@ export default function UserIndex({ users: usersData, filters = {}, flash }: Pro
                                             <div>
                                                 <span className="text-gray-500 block">Trạng thái:</span>
                                                 {user.is_active ? (
-                                                    <span className="text-green-600 font-medium">Hoạt động</span>
+                                                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium inline-block mt-1">
+                                                        Hoạt động
+                                                    </span>
                                                 ) : (
-                                                    <span className="text-red-600 font-medium">Đã khóa</span>
+                                                    <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium inline-block mt-1">
+                                                        Đã khóa
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>

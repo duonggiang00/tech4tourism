@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, MapPin, Users, Plus, Eye, Trash2, Clock, CheckCircle2, FileText, Check, XCircle, ChevronDown, ChevronRight, Save, FileDown } from 'lucide-react';
+import { ArrowLeft, MapPin, Users, Plus, Eye, Trash2, Clock, CheckCircle2, FileText, Check, XCircle, ChevronDown, ChevronRight, Save, FileDown, CalendarIcon } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import guide from '@/routes/guide';
 import axios from 'axios';
@@ -321,14 +321,14 @@ export default function TripDetail({ assignment, passengers }: Props) {
 
             <div className="space-y-6 p-6">
                 {/* Header */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-start gap-4">
                     <Link href={guide.schedule()}>
                         <Button variant="ghost" size="icon">
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                     </Link>
                     <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex flex-col items-start gap-2 mb-2 sm:flex-row sm:items-center">
                             <Badge className={statusLabels[assignment.status]?.color || 'bg-gray-100'}>
                                 {statusLabels[assignment.status]?.label || 'Không xác định'}
                             </Badge>
@@ -336,7 +336,7 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                 <Button
                                     onClick={handleConfirmAssignment}
                                     size="sm"
-                                    className="gap-2"
+                                    className="gap-2 w-full sm:w-auto justify-center"
                                 >
                                     <Check className="h-4 w-4" />
                                     Xác nhận đã nhận
@@ -346,15 +346,15 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                 <Button
                                     onClick={handleCompleteTour}
                                     size="sm"
-                                    className="gap-2 bg-green-600 hover:bg-green-700"
+                                    className="gap-2 bg-green-600 hover:bg-green-700 w-full sm:w-auto justify-center"
                                 >
                                     <CheckCircle2 className="h-4 w-4" />
                                     Xác nhận đã kết thúc tour
                                 </Button>
                             )}
                         </div>
-                        <h1 className="text-2xl font-bold">{assignment.tour.title}</h1>
-                        <p className="text-muted-foreground flex items-center gap-2">
+                        <h1 className="text-xl sm:text-2xl font-bold">{assignment.tour.title}</h1>
+                        <p className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
                             <Clock className="h-4 w-4" />
                             {assignment.tour.days} ngày
                             <span className="mx-2">•</span>
@@ -643,11 +643,35 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                                         </div>
                                                         <div className="space-y-2">
                                                             <Label>Thời gian check-in *</Label>
-                                                            <Input
-                                                                type="datetime-local"
-                                                                value={checkInForm.data.checkin_time}
-                                                                onChange={(e) => handleCheckInTimeChange(e.target.value)}
-                                                            />
+                                                            <div className="flex flex-col sm:flex-row gap-3">
+                                                                <div className="relative flex-1 w-full">
+                                                                    <Input
+                                                                        type="date"
+                                                                        value={checkInForm.data.checkin_time ? checkInForm.data.checkin_time.split('T')[0] : ''}
+                                                                        onChange={(e) => {
+                                                                            const date = e.target.value;
+                                                                            const time = checkInForm.data.checkin_time ? (checkInForm.data.checkin_time.split('T')[1] || '08:00') : '08:00';
+                                                                            if (date) handleCheckInTimeChange(`${date}T${time}`);
+                                                                        }}
+                                                                        className="pl-10 h-10 w-full"
+                                                                    />
+                                                                    <CalendarIcon className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                                                                </div>
+                                                                <div className="relative w-full sm:w-40">
+                                                                    <Input
+                                                                        type="time"
+                                                                        value={checkInForm.data.checkin_time ? (checkInForm.data.checkin_time.split('T')[1]?.slice(0, 5) || '08:00') : '08:00'}
+                                                                        onChange={(e) => {
+                                                                            const time = e.target.value;
+                                                                            const date = checkInForm.data.checkin_time ? checkInForm.data.checkin_time.split('T')[0] : new Date().toISOString().split('T')[0];
+                                                                            if (date && time) handleCheckInTimeChange(`${date}T${time}`);
+                                                                        }}
+                                                                        className="pl-10 h-10 w-full"
+                                                                    />
+                                                                    <Clock className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                                                                </div>
+                                                            </div>
+
                                                             {checkInForm.errors.checkin_time && (
                                                                 <p className="text-sm text-red-500">{checkInForm.errors.checkin_time}</p>
                                                             )}
@@ -661,13 +685,14 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                                         </div>
                                                     ) : modalPassengers.length > 0 ? (
                                                         <div className="space-y-4">
-                                                            <div className="flex items-center justify-between">
+                                                            <div className="flex flex-col gap-3">
                                                                 <Label className="text-base font-semibold">Điểm danh khách hàng</Label>
-                                                                <div className="flex gap-2">
+                                                                <div className="flex flex-wrap gap-2">
                                                                     <Button
                                                                         type="button"
                                                                         variant="outline"
                                                                         size="sm"
+                                                                        className="flex-1 whitespace-nowrap min-w-[120px]"
                                                                         onClick={() => {
                                                                             const all: Record<number, { is_present: boolean; notes: string }> = {};
                                                                             modalPassengers.forEach((p) => {
@@ -683,6 +708,7 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                                                         type="button"
                                                                         variant="outline"
                                                                         size="sm"
+                                                                        className="flex-1 whitespace-nowrap min-w-[120px]"
                                                                         onClick={() => {
                                                                             const all: Record<number, { is_present: boolean; notes: string }> = {};
                                                                             modalPassengers.forEach((p) => {
@@ -712,29 +738,33 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                                                         >
                                                                             <div className="border rounded-lg">
                                                                                 <CollapsibleTrigger className="w-full">
-                                                                                    <div className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors">
-                                                                                        <div className="flex items-center gap-3">
+                                                                                    <div className="flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors text-left">
+                                                                                        <div className="pt-1 flex-shrink-0">
                                                                                             {isExpanded ? (
                                                                                                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
                                                                                             ) : (
                                                                                                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                                                                             )}
-                                                                                            <Badge variant="secondary" className="font-medium">
-                                                                                                {bookingCode}
-                                                                                            </Badge>
-                                                                                            {booking?.status === 0 && (
-                                                                                                <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                                                                                                    Chờ xác nhận
+                                                                                        </div>
+                                                                                        <div className="flex-1 min-w-0">
+                                                                                            <div className="flex flex-wrap items-center gap-2 mb-1">
+                                                                                                <Badge variant="secondary" className="font-medium">
+                                                                                                    {bookingCode}
                                                                                                 </Badge>
-                                                                                            )}
-                                                                                            <span className="text-sm text-muted-foreground">
-                                                                                                ({bookingPassengers.length} khách)
-                                                                                            </span>
-                                                                                            {isExpanded && (
-                                                                                                <span className="text-xs text-muted-foreground">
-                                                                                                    • {bookingPresentCount}/{bookingPassengers.length} có mặt
-                                                                                                </span>
-                                                                                            )}
+                                                                                                {booking?.status === 0 && (
+                                                                                                    <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 whitespace-nowrap">
+                                                                                                        Chờ xác nhận
+                                                                                                    </Badge>
+                                                                                                )}
+                                                                                            </div>
+                                                                                            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                                                                                                <span>({bookingPassengers.length} khách)</span>
+                                                                                                {isExpanded && (
+                                                                                                    <span className="whitespace-nowrap">
+                                                                                                        • {bookingPresentCount}/{bookingPassengers.length} có mặt
+                                                                                                    </span>
+                                                                                                )}
+                                                                                            </div>
                                                                                         </div>
                                                                                     </div>
                                                                                 </CollapsibleTrigger>
