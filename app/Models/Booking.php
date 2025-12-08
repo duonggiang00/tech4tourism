@@ -49,7 +49,7 @@ class Booking extends Model
     {
         // Nếu có tour_instance_id, lấy tour từ instance
         if ($this->tour_instance_id) {
-            return $this->belongsTo(Tour::class, 'tour_id')->orWhereHas('instances', function($q) {
+            return $this->belongsTo(Tour::class, 'tour_id')->orWhereHas('instances', function ($q) {
                 $q->where('id', $this->tour_instance_id);
             });
         }
@@ -74,7 +74,7 @@ class Booking extends Model
         $totalPaid = $this->payments()
             ->where('status', 1) // Chỉ tính thanh toán thành công
             ->sum('amount');
-        
+
         return max(0, $this->final_price - $totalPaid);
     }
 

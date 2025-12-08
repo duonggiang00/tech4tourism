@@ -20,7 +20,7 @@ class BookingController extends Controller
 
     // 1. Xử lý đặt tour (POST)
 
- 
+
 
     public function create(Request $request)
     {
@@ -58,9 +58,11 @@ class BookingController extends Controller
 
         // Admin tạo booking: hiển thị danh sách tour templates với instances
         // Load tất cả instances (không filter) để có thể hiển thị giá từ instance hoặc template
-        $templates = TourTemplate::with(['instances' => function($q) {
-            $q->orderBy('date_start', 'desc'); // Sắp xếp để instance mới nhất lên đầu
-        }])->get();
+        $templates = TourTemplate::with([
+            'instances' => function ($q) {
+                $q->orderBy('date_start', 'desc'); // Sắp xếp để instance mới nhất lên đầu
+            }
+        ])->get();
 
         return Inertia::render('Bookings/Create', [
             'templates' => $templates,
@@ -106,11 +108,11 @@ class BookingController extends Controller
             $tourInstance = null;
             $tour = null;
             $template = null;
-            
+
             if (!empty($validated['tour_instance_id'])) {
                 $tourInstance = TourInstance::with('tourTemplate')->findOrFail($validated['tour_instance_id']);
                 $template = $tourInstance->tourTemplate;
-                
+
                 // Kiểm tra còn chỗ không
                 if ($tourInstance->isFull()) {
                     return back()->withErrors(['tour_instance_id' => 'Chuyến đi đã hết chỗ!']);
@@ -118,7 +120,7 @@ class BookingController extends Controller
             } elseif (!empty($validated['tour_id'])) {
                 // Chỉ có tour_id (template) - tự động chọn instance phù hợp
                 $template = TourTemplate::findOrFail($validated['tour_id']);
-                
+
                 // Logic chọn instance:
                 // 1. Ưu tiên instance có booking (booked_count > 0) và status = 1 (Sắp có)
                 $tourInstance = $template->instances()
@@ -127,7 +129,7 @@ class BookingController extends Controller
                     ->where('date_start', '>=', now())
                     ->orderBy('date_start', 'asc')
                     ->first();
-                
+
                 // 2. Nếu không có, chọn instance sắp tới nhất (status = 1, date_start >= today)
                 if (!$tourInstance) {
                     $tourInstance = $template->instances()
@@ -136,7 +138,7 @@ class BookingController extends Controller
                         ->orderBy('date_start', 'asc')
                         ->first();
                 }
-                
+
                 // 3. Nếu vẫn không có, chọn instance đầu tiên có sẵn (status = 1)
                 if (!$tourInstance) {
                     $tourInstance = $template->instances()
@@ -144,11 +146,11 @@ class BookingController extends Controller
                         ->orderBy('date_start', 'asc')
                         ->first();
                 }
-                
+
                 if (!$tourInstance) {
                     return back()->withErrors(['tour_id' => 'Tour này chưa có chuyến đi nào khả dụng.']);
                 }
-                
+
                 // Kiểm tra còn chỗ không
                 if ($tourInstance->isFull()) {
                     return back()->withErrors(['tour_id' => 'Chuyến đi đã hết chỗ!']);
@@ -179,7 +181,7 @@ class BookingController extends Controller
             // Xử lý giảm giá
             $discountAmount = 0;
             $discountPercent = null;
-            
+
             if ($request->filled('discount_percent') && $request->discount_percent > 0) {
                 // Giảm giá theo phần trăm
                 $discountPercent = min(100, max(0, $request->discount_percent));
@@ -231,8 +233,8 @@ class BookingController extends Controller
 
             // --- Điều hướng sau khi thành công ---
             // Kiểm tra nếu request đến từ route admin (URL chứa /admin/bookings)
-            $isAdminRoute = str_contains($request->url(), '/admin/bookings') || 
-                           ($request->route() && str_contains($request->route()->getName() ?? '', 'admin.bookings'));
+            $isAdminRoute = str_contains($request->url(), '/admin/bookings') ||
+                ($request->route() && str_contains($request->route()->getName() ?? '', 'admin.bookings'));
 
             if ($isAdminRoute) {
                 return redirect()->route('admin.bookings.index')
@@ -269,7 +271,7 @@ class BookingController extends Controller
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('code', 'like', "%{$search}%")
-                    ->orWhere('client_name', 'like', "%{$search}%")
+                        ->orWhere('client_name', 'like', "%{$search}%")
                         ->orWhere('client_email', 'like', "%{$search}%")
                         ->orWhere('client_phone', 'like', "%{$search}%")
                         // Tìm kiếm theo tên tour từ tourTemplate
@@ -295,6 +297,8 @@ class BookingController extends Controller
             if (!$booking->tour && $booking->tourInstance && $booking->tourInstance->tourTemplate) {
                 $booking->setRelation('tour', $booking->tourInstance->tourTemplate);
             }
+            // Inject date_start manually
+            $booking->date_start = $booking->tourInstance ? $booking->tourInstance->date_start : null;
             return $booking;
         });
 
