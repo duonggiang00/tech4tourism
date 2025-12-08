@@ -116,7 +116,6 @@ export default function Index() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Nhà Cung Cấp" />
 
-            {/* 🟢 Thông báo */}
             {flash.message && (
                 <div className="m-4">
                     <Alert className="border-green-200 bg-green-50">
@@ -134,7 +133,6 @@ export default function Index() {
             {/* 🔍 Bộ lọc - Đã chỉnh sửa responsive */}
             <div className="m-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                 {' '}
-                {/* Thêm sm:items-center */}
                 <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -171,7 +169,6 @@ export default function Index() {
                         className="w-full sm:w-auto"
                     >
                         {' '}
-                        {/* Chiếm toàn bộ chiều rộng trên mobile */}
                         <Plus className="mr-2 h-4 w-4" /> Thêm Nhà Cung Cấp
                     </Button>
                 </div>
@@ -281,10 +278,8 @@ export default function Index() {
                     </Table>
                 </div>
 
-                {/* 📄 Phân trang */}
                 <div className="flex flex-wrap justify-center gap-2 p-4">
                     {' '}
-                    {/* Thêm flex-wrap cho phân trang */}
                     {providers.links.map((link, index) => (
                         <button
                             key={index}
