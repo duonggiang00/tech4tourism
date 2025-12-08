@@ -104,6 +104,7 @@ Route::middleware(['auth', 'role:1'])->group(function () {
 Route::middleware(['auth', 'role:2'])->prefix('guide')->name('guide.')->group(function () {
     Route::get('/schedule', [GuideController::class, 'schedule'])->name('schedule');
     Route::get('/trip/{id}', [GuideController::class, 'tripDetail'])->name('trip.detail');
+    Route::get('/trip/{id}/export', [GuideController::class, 'exportPassengers'])->name('trip.export');
 
     // Check-in
     Route::get('/trip/{assignmentId}/passengers', [GuideController::class, 'getPassengersForCheckIn'])->name('passengers.get');

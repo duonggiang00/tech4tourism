@@ -107,28 +107,12 @@ class TourController extends Controller
         });
 
         // Lấy Quốc gia kèm theo Tỉnh thành
-        // NHƯNG: Chỉ lấy những Tỉnh thỏa mãn điều kiện (có xe + có khách sạn)
+        // UPDATE: Bỏ điều kiện lọc cứng (có xe + khách sạn) để hiển thị hết các quốc gia/tỉnh thành
+        // Frontend sẽ tự xử lý việc hiển thị "Chưa có dịch vụ" nếu cần.
         $countries = Country::with([
-            'provinces' => function ($query) {
-                $query->whereHas('providers.services.serviceType', function (Builder $q) {
-                    $q->where('name', 'Vận chuyển');
-                })
-                    ->whereHas('providers.services.serviceType', function (Builder $q) {
-                        $q->where('name', 'Khách sạn');
-                    })
-                    ->with(['destinations', 'providers.services']);
-            }
-        ])
-            // Lọc luôn ở cấp Quốc gia: Chỉ lấy quốc gia nào có ít nhất 1 tỉnh thỏa mãn điều kiện trên
-            ->whereHas('provinces', function ($query) {
-                $query->whereHas('providers.services.serviceType', function (Builder $q) {
-                    $q->where('name', 'Vận chuyển');
-                })
-                    ->whereHas('providers.services.serviceType', function (Builder $q) {
-                        $q->where('name', 'Khách sạn');
-                    });
-            })
-            ->get();
+            'provinces.destinations',
+            'provinces.providers.services.serviceType'
+        ])->get();
 
         return Inertia::render('Tours/create', compact('categories', 'policies', 'guides', 'countries'));
     }

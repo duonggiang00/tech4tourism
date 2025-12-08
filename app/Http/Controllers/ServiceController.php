@@ -85,6 +85,13 @@ class ServiceController extends Controller
 
     public function destroy(Service $service)
     {
+        // Kiểm tra xem dịch vụ có đang được sử dụng trong Tour nào không
+        if ($service->tourService()->exists()) {
+            return redirect()
+                ->route('services.index')
+                ->with('error', 'Không thể xóa dịch vụ này vì đang được sử dụng trong các Tour!');
+        }
+
         $service->delete();
 
         return redirect()

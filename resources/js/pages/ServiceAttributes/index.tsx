@@ -13,8 +13,8 @@ import AppLayout from '@/layouts/app-layout';
 import serviceAttributes from '@/routes/service-attributes';
 import { BreadcrumbItem } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { CircleCheck, Eye, Pencil, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { CircleCheck, Eye, Pencil, Trash2, Search } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { ServiceAttributeFormDialog } from './dialog';
 
@@ -43,33 +43,49 @@ interface PageProps {
         links: { url: string | null; label: string; active: boolean }[];
     };
     services: Service[];
-    filters: { search?: string; service_id?: string };
+    service_names: string[];
+    filters: { search?: string; service_name?: string };
+    [key: string]: unknown;
 }
 
 export default function Index() {
-    const { attributes, flash, services, filters } = usePage<PageProps>().props;
+    const { attributes, flash, services, service_names, filters } =
+        usePage<PageProps>().props;
     const { delete: destroy } = useForm();
 
     const [search, setSearch] = useState(filters.search || '');
-    const [serviceId, setServiceId] = useState(filters.service_id || 'all');
+    const [serviceName, setServiceName] = useState(filters.service_name || 'all');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [currentAttr, setCurrentAttr] = useState<Attribute | undefined>(
         undefined,
     );
 
-    useEffect(() => {
-        const delay = setTimeout(() => {
-            router.get(
-                serviceAttributes.index().url,
-                {
-                    search,
-                    service_id: serviceId === 'all' ? '' : serviceId,
-                },
-                { preserveState: true, replace: true, preserveScroll: true },
-            );
-        }, 500);
-        return () => clearTimeout(delay);
-    }, [search, serviceId]);
+    // useEffect REMOVED
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        router.get(
+            serviceAttributes.index().url,
+            {
+                search,
+                service_name: serviceName === 'all' ? '' : serviceName,
+            },
+            { preserveState: true, replace: true, preserveScroll: true },
+        );
+    };
+
+    const handleServiceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newServiceName = e.target.value;
+        setServiceName(newServiceName);
+        router.get(
+            serviceAttributes.index().url,
+            {
+                search,
+                service_name: newServiceName === 'all' ? '' : newServiceName,
+            },
+            { preserveState: true, replace: true, preserveScroll: true },
+        );
+    };
 
     const handleDelete = (id: number, name: string) => {
         if (confirm(`Bạn có chắc muốn xóa thuộc tính "${name}"?`)) {
@@ -113,26 +129,35 @@ export default function Index() {
             <div className="m-4 flex flex-col justify-between gap-3 md:flex-row md:items-center">
                 {/* Khu vực tìm kiếm và lọc */}
                 <div className="flex flex-col gap-3 md:w-2/3 md:flex-row md:items-center">
-                    <Input
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Tìm theo tên, giá trị, loại hoặc dịch vụ..."
-                        className="w-full md:flex-1" // Chiếm toàn bộ chiều rộng trên mobile
-                    />
+                    <form onSubmit={handleSearch} className="flex w-full items-center gap-2 md:flex-1">
+                        <Input
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Tìm theo tên, giá trị, loại hoặc dịch vụ..."
+                            className="w-full flex-1" // Chiếm toàn bộ chiều rộng trên mobile
+                        />
+                        <Button type="submit" variant="secondary" className="max-md:hidden">
+                            <Search className="h-4 w-4" />
+                        </Button>
+                    </form>
 
                     {/* Select filter */}
                     <select
-                        value={serviceId}
-                        onChange={(e) => setServiceId(e.target.value)}
+                        value={serviceName}
+                        onChange={handleServiceChange}
                         className="w-full rounded-md border border-gray-300 px-3 py-2 md:w-auto" // Chiếm toàn bộ chiều rộng trên mobile
                     >
                         <option value="all">Tất cả dịch vụ</option>
-                        {services.map((s) => (
-                            <option key={s.id} value={s.id}>
-                                {s.name}
+                        {service_names.map((name, index) => (
+                            <option key={index} value={name}>
+                                {name}
                             </option>
                         ))}
                     </select>
+
+                    <Button onClick={handleSearch} className="w-full md:hidden">
+                        <Search className="mr-2 h-4 w-4" /> Tìm kiếm
+                    </Button>
                 </div>
 
                 {/* Nút Thêm mới - Chuyển sang bên phải */}
@@ -259,10 +284,10 @@ export default function Index() {
                                         link.url,
                                         {
                                             search,
-                                            service_id:
-                                                serviceId === 'all'
+                                            service_name:
+                                                serviceName === 'all'
                                                     ? ''
-                                                    : serviceId,
+                                                    : serviceName,
                                         },
                                         {
                                             preserveScroll: true,
@@ -272,11 +297,10 @@ export default function Index() {
                                     );
                                 }
                             }}
-                            className={`rounded-md border px-3 py-1 text-sm ${
-                                link.active
-                                    ? 'border-blue-600 bg-blue-600 text-white'
-                                    : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-100'
-                            } ${!link.url ? 'cursor-not-allowed opacity-50' : ''}`}
+                            className={`rounded-md border px-3 py-1 text-sm ${link.active
+                                ? 'border-blue-600 bg-blue-600 text-white'
+                                : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-100'
+                                } ${!link.url ? 'cursor-not-allowed opacity-50' : ''}`}
                             dangerouslySetInnerHTML={{ __html: link.label }}
                         />
                     ))}

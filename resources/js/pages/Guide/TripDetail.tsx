@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, MapPin, Users, Plus, Eye, Trash2, Clock, CheckCircle2, FileText, Check, XCircle, ChevronDown, ChevronRight, Save } from 'lucide-react';
+import { ArrowLeft, MapPin, Users, Plus, Eye, Trash2, Clock, CheckCircle2, FileText, Check, XCircle, ChevronDown, ChevronRight, Save, FileDown } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import guide from '@/routes/guide';
 import axios from 'axios';
@@ -460,11 +460,19 @@ export default function TripDetail({ assignment, passengers }: Props) {
                         )}
 
                         <Card>
-                            <CardHeader>
+                            <CardHeader className="flex flex-row items-center justify-between">
                                 <CardTitle className="flex items-center gap-2">
                                     <Users className="h-5 w-5" />
                                     Danh sách khách hàng ({passengers.length})
                                 </CardTitle>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-2 text-green-700 bg-green-50 border-green-200 hover:bg-green-100 hover:text-green-800"
+                                    onClick={() => window.location.href = `/guide/trip/${assignment.id}/export`}
+                                >
+                                    <FileDown className="w-4 h-4" /> Xuất CSV
+                                </Button>
                             </CardHeader>
                             <CardContent>
                                 {passengers.length === 0 ? (

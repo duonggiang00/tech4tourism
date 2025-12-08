@@ -18,14 +18,14 @@ export default function TourScheduleList({
                 <CardTitle className="flex items-center gap-2 text-base">
                     <MapIcon className="h-5 w-5 text-blue-600" /> Lịch trình
                 </CardTitle>
-                <Button
+                {/* <Button
                     variant="outline"
                     size="sm"
                     className="h-8 gap-1 text-xs"
                     onClick={onAdd}
                 >
                     <Plus className="h-3.5 w-3.5" /> Thêm
-                </Button>
+                </Button> */}
             </CardHeader>
             <CardContent>
                 {schedules.length > 0 ? (
@@ -36,7 +36,7 @@ export default function TourScheduleList({
                                 className="group relative pl-6"
                             >
                                 <div className="absolute top-1 -left-[9px] h-4 w-4 rounded-full border-2 border-white bg-blue-600 shadow-sm"></div>
-                                <div className="absolute top-0 right-0 hidden gap-2 rounded-md bg-white/80 p-1 backdrop-blur-sm group-hover:flex">
+                                {/* <div className="absolute top-0 right-0 hidden gap-2 rounded-md bg-white/80 p-1 backdrop-blur-sm group-hover:flex">
                                     <Button
                                         size="icon"
                                         variant="ghost"
@@ -53,7 +53,7 @@ export default function TourScheduleList({
                                     >
                                         <Trash2 className="h-3.5 w-3.5 text-red-600" />
                                     </Button>
-                                </div>
+                                </div> */}
                                 <h4 className="mb-1 text-sm font-bold text-gray-900">
                                     Ngày {schedule.date}: {schedule.name}
                                 </h4>
