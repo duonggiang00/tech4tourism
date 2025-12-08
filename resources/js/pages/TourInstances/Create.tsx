@@ -231,62 +231,38 @@ export default function Create({ template, guides }: CreateProps) {
                                         Ngày khởi hành{' '}
                                         <span className="text-red-500">*</span>
                                     </Label>
-                                    <div className="flex gap-2">
-                                        <div className="flex-1">
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <Button
-                                                        variant={'outline'}
-                                                        className={cn(
-                                                            'w-full justify-start text-left font-normal',
-                                                            !data.date_start && 'text-muted-foreground'
-                                                        )}
-                                                    >
-                                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                                        {data.date_start && !isNaN(new Date(data.date_start).getTime()) ? (
-                                                            format(new Date(data.date_start), 'dd/MM/yyyy')
-                                                        ) : (
-                                                            <span>Chọn ngày</span>
-                                                        )}
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent className="w-auto p-0" align="start">
-                                                    <CalendarComponent
-                                                        mode="single"
-                                                        selected={data.date_start ? new Date(new Date(data.date_start).setHours(0, 0, 0, 0)) : undefined}
-                                                        onSelect={(date) => {
-                                                            if (date) {
-                                                                const year = date.getFullYear();
-                                                                const month = String(date.getMonth() + 1).padStart(2, '0');
-                                                                const day = String(date.getDate()).padStart(2, '0');
-                                                                // Keep existing time or default
-                                                                setData('date_start', `${year}-${month}-${day} ${timeValue}`);
-                                                            } else {
-                                                                setData('date_start', '');
-                                                            }
-                                                        }}
-                                                        initialFocus
-                                                    />
-                                                </PopoverContent>
-                                            </Popover>
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        <div className="relative flex-1">
+                                            <Input
+                                                type="date"
+                                                id="date_start"
+                                                value={data.date_start ? data.date_start.split(' ')[0] : ''}
+                                                onChange={(e) => {
+                                                    const date = e.target.value;
+                                                    const time = data.date_start ? (data.date_start.split(' ')[1] || '08:00:00') : '08:00:00';
+                                                    setData('date_start', `${date} ${time}`);
+                                                }}
+                                                className={cn(
+                                                    "w-full pl-10",
+                                                    errors.date_start && "border-red-500"
+                                                )}
+                                                min={new Date().toISOString().split('T')[0]}
+                                            />
+                                            <CalendarIcon className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
                                         </div>
-                                        <div className="w-[120px]">
-                                            <div className="relative">
-                                                <Clock className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                                                <Input
-                                                    type="time"
-                                                    value={timeValue}
-                                                    onChange={(e) => {
-                                                        const newTime = e.target.value;
-                                                        setTimeValue(newTime);
-                                                        if (data.date_start) {
-                                                            const datePart = data.date_start.split(' ')[0].split('T')[0];
-                                                            setData('date_start', `${datePart} ${newTime}`);
-                                                        }
-                                                    }}
-                                                    className="pl-9"
-                                                />
-                                            </div>
+                                        <div className="relative w-full sm:w-40">
+                                            <Input
+                                                type="time"
+                                                value={data.date_start ? (data.date_start.split(' ')[1]?.slice(0, 5) || '08:00') : '08:00'}
+                                                onChange={(e) => {
+                                                    const time = e.target.value; // HH:yy
+                                                    const date = data.date_start ? data.date_start.split(' ')[0] : new Date().toISOString().split('T')[0];
+                                                    // Ensure seconds are included if backend needs H:i:s
+                                                    setData('date_start', `${date} ${time}:00`);
+                                                }}
+                                                className="pl-10"
+                                            />
+                                            <Clock className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
                                         </div>
                                     </div>
                                     {errors.date_start && (

@@ -243,7 +243,7 @@ export default function TourDetail({
                                                                             instance.status === 1 ? 'Sắp có' :
                                                                                 instance.status === 2 ? 'Đang diễn ra' : 'Đã hoàn thành'}
                                                                     </Badge>
-                                                                    <Link href={`/tour-instances/${instance.id}/edit`}>
+                                                                        <Link href={`/tour-instances/${instance.id}/edit`}>
                                                                         <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-400 hover:text-blue-600">
                                                                             <Edit className="h-4 w-4" />
                                                                         </Button>

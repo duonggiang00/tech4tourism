@@ -342,7 +342,7 @@ export default function TripDetail({ assignment, passengers }: Props) {
                                     Xác nhận đã nhận
                                 </Button>
                             )}
-                            {assignment.status === '1' && isEndedOrLater && (
+                            {assignment.status === '1' && (
                                 <Button
                                     onClick={handleCompleteTour}
                                     size="sm"
