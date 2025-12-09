@@ -58,9 +58,9 @@ export default function BookingSuccess({ code, flash }: Props) {
                                 <li>Bạn sẽ nhận được email xác nhận tại địa chỉ email đã đăng ký</li>
                             </ul>
                         </div>
-
+{/* hahah */}
                         <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                            <Link href={home()}>
+                            <Link href="/dashboard">
                                 <Button size="lg" className="w-full sm:w-auto">
                                     <Home className="mr-2 h-4 w-4" />
                                     Về trang chủ
